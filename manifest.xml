@@ -1,0 +1,31 @@
+<?xml version="1.0"?>
+<!DOCTYPE plugin SYSTEM "manifest.dtd">
+<plugin version="2">
+        <info>
+                <version>0.1</version>
+                <name>calendarimporter</name>
+                <title>ICS Calendar Importer</title>
+                <author>Christoph Haas</author>
+                <authorURL>http://www.sprinternet.at</authorURL>
+                <description>Import a ICS file to the zarafa calendar</description>
+        </info>
+        <config>
+                <configfile>config.php</configfile>
+        </config>
+        <components>
+                <component>
+                        <files>
+                                <server>
+                                        <serverfile>php/plugin.calendarimporter.php</serverfile>
+                                </server>
+                                <client>
+                                        <clientfile load="release">js/calendarimporter.js</clientfile>
+                                        <clientfile load="debug">js/calendarimporter.js</clientfile>
+                                </client>
+                                <resources>
+                                        <resourcefile load="release">resources/css/calendarimporter.css</resourcefile>
+                                </resources>
+                        </files>
+                </component>
+        </components>
+</plugin>
