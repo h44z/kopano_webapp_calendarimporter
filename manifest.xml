@@ -19,11 +19,16 @@
                                         <serverfile>php/plugin.calendarimporter.php</serverfile>
                                 </server>
                                 <client>
-                                        <clientfile load="release">js/calendarimporter.js</clientfile>
-                                        <clientfile load="debug">js/calendarimporter.js</clientfile>
+                                        <clientfile load="release">js/plugin.calendarimporter.js</clientfile>
+										<clientfile load="release">js/dialogs/ImportContentPanel.js</clientfile>
+										
+                                        <clientfile load="debug">js/plugin.calendarimporter.js</clientfile>
+										<clientfile load="debug">js/dialogs/ImportContentPanel.js</clientfile>
                                 </client>
                                 <resources>
                                         <resourcefile load="release">resources/css/calendarimporter.css</resourcefile>
+										
+										<resourcefile load="debug">resources/css/calendarimporter.css</resourcefile>
                                 </resources>
                         </files>
                 </component>
