@@ -11,16 +11,16 @@ Zarafa.plugins.calendarimporter.ImportPlugin = Ext.extend(Zarafa.core.Plugin, { 
 		
 		Zarafa.plugins.calendarimporter.ImportPlugin.superclass.constructor.call(this, config);
 		
-		Zarafa.core.data.SharedComponentType.addProperty('plugins.calendarimporter.dialogs.importevents');
+		
 	},
 	
 	/**
 	 * initialises insertion point for plugin
 	 * @protected
 	 */
-	initPlugin : function()
-	{
-		Zarafa.plugins.calendarimporter.ImportPlugin.superclass.initPlugin.apply(this, arguments);		
+	initPlugin : function()	{
+		Zarafa.plugins.calendarimporter.ImportPlugin.superclass.initPlugin.apply(this, arguments);	
+		Zarafa.core.data.SharedComponentType.addProperty('plugins.calendarimporter.dialogs.importevents');
 		
 		/* add import button to south navigation */
 		this.registerInsertionPoint("navigation.south", this.createImportButton, this);
@@ -32,22 +32,24 @@ Zarafa.plugins.calendarimporter.ImportPlugin = Ext.extend(Zarafa.core.Plugin, { 
      * @return {Object} Configuration object for a {@link Ext.Button button}
      * @private
      */
-	createImportButton: function () {                 // eine Button definition
-		return {
-			xtype				: "button",
-			text				: _("Import Calendar"),
-			iconCls				: "icon_calendarimporter_button",
-			navigationContext	: container.getContextByName("calendar"),
+	createImportButton: function () {
+		var button=
+		{
+			xtype				: 'button',
+			text				: _('Import Calendar'),
+			iconCls				: 'icon_calendarimporter_button',
+			navigationContext	: container.getContextByName('calendar'),
 			handler				: this.onImportButtonClick,
 			scope				: this
 		}
+		return  button;
 	},
 	
 	/**
 	 * Clickhandler for the button
 	 */
 	onImportButtonClick: function () {		
-		Zarafa.core.data.UIFactory.openCreateRecord(Zarafa.core.data.SharedComponentType['plugins.calendarimporter.dialogs.importevents'], undefined, {
+		Zarafa.core.data.UIFactory.openLayerComponent(Zarafa.core.data.SharedComponentType['plugins.calendarimporter.dialogs.importevents'], undefined, {
 			manager : Ext.WindowMgr
 		});
 	},
@@ -63,8 +65,6 @@ Zarafa.plugins.calendarimporter.ImportPlugin = Ext.extend(Zarafa.core.Plugin, { 
 	bidSharedComponent : function(type, record)
 	{
 		var bid = -1;
-		console.log(type);
-		console.log(Zarafa.core.data.SharedComponentType['plugins.calendarimporter.dialogs.importevents']);
 		switch(type)
 		{
 			case Zarafa.core.data.SharedComponentType['plugins.calendarimporter.dialogs.importevents']:

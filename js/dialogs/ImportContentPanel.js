@@ -24,12 +24,10 @@ Zarafa.plugins.calendarimporter.dialogs.ImportContentPanel = Ext.extend(Zarafa.c
 			width					: 400,
 			height					: 300,
 			//Add panel
-			items					: [/*
+			items					: [
 				{
-					xtype			: 'owncloudrcvattachment.folderpanel',
-					ref				: 'treePanel',
-					response		: config.record
-				}*/
+					xtype				: 'calendarimporter.importpanel'
+				}
 			]
 		});
 
@@ -38,4 +36,4 @@ Zarafa.plugins.calendarimporter.dialogs.ImportContentPanel = Ext.extend(Zarafa.c
 
 });
 
-Ext.reg('calendarimportercontentpanel' ,Zarafa.plugins.calendarimporter.dialogs.ImportContentPanel);
+Ext.reg('calendarimporter.contentpanel' ,Zarafa.plugins.calendarimporter.dialogs.ImportContentPanel);
