@@ -6,6 +6,9 @@ Ext.namespace("Zarafa.plugins.calendarimporter.dialogs");
  */
 Zarafa.plugins.calendarimporter.dialogs.ImportPanel = Ext.extend(Ext.form.FormPanel, {
 
+	/* store the imported timezone here... */
+	timezone: null,
+	
 	/**
 	 * @constructor
 	 * @param {object} config
@@ -110,11 +113,11 @@ Zarafa.plugins.calendarimporter.dialogs.ImportPanel = Ext.extend(Ext.form.FormPa
 					sortable: true
 				},
 				columns: [
-					{id: 'title', header: 'Title', width: 300, sortable: true, dataIndex: 'title'},
-					{header: 'startDate', width: 150, sortable: true, dataIndex: 'start'},
-					{header: 'endDate', width: 150, sortable: true, dataIndex: 'end'},
-					{header: 'startDate', width: 150, sortable: true, dataIndex: 'location'},
-					{header: 'endDate', width: 150, sortable: true, dataIndex: 'description'}
+					{id: 'Summary', header: 'Title', width: 300, sortable: true, dataIndex: 'title'},
+					{header: 'Start', width: 150, sortable: true, dataIndex: 'start'},
+					{header: 'End', width: 150, sortable: true, dataIndex: 'end'},
+					{header: 'Location', width: 150, sortable: true, dataIndex: 'location'},
+					{header: 'Description', width: 150, sortable: true, dataIndex: 'description'}
 				]
 			}),
 			sm: new Ext.grid.RowSelectionModel({multiSelect:true})
@@ -246,6 +249,7 @@ Zarafa.plugins.calendarimporter.dialogs.ImportPanel = Ext.extend(Ext.form.FormPa
 				success: function(file, action){
 					uploadField.reset();
 					Ext.getCmp('submitButton').enable();
+					this.timezone = action.result.response.calendar["X-WR-TIMEZONE"];
 					this.insert(this.items.length,this.createGrid(action.result.response));
 					this.doLayout();
 				},
@@ -273,6 +277,7 @@ Zarafa.plugins.calendarimporter.dialogs.ImportPanel = Ext.extend(Ext.form.FormPa
 			commonend: (entry.end) ?
 				new Date(entry.end) :
 				new Date(entry.start).add(Date.HOUR, 1),
+			timezone: this.timezone,
 			parent_entryid: calendarFolder.get('entryid'),
 			store_entryid: calendarFolder.get('store_entryid')
 		});
@@ -288,9 +293,10 @@ Zarafa.plugins.calendarimporter.dialogs.ImportPanel = Ext.extend(Ext.form.FormPa
 		var newRecords = this.eventgrid.selModel.getSelections();
 		Ext.each(newRecords, function(newRecord) {
 			var record = this.convertToAppointmentRecord(calendarFolder,newRecord.data);
-			calendarStore.add(record);
-			calendarStore.save();
+			console.log(record);
+			calendarStore.add(record);			
 		}, this);
+		calendarStore.save();
 		this.dialog.close();
     }
 	
