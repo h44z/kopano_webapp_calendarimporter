@@ -8,7 +8,7 @@ Zarafa.plugins.calendarimporter.dialogs.ImportPanel = Ext.extend(Ext.form.FormPa
 
 	/* store the imported timezone here... */
 	timezone: null,
-	
+
 	/**
 	 * @constructor
 	 * @param {object} config
@@ -34,14 +34,15 @@ Zarafa.plugins.calendarimporter.dialogs.ImportPanel = Ext.extend(Ext.form.FormPa
 				this.initForm()
 			],
 			buttons: [
-				this.createSubmitButton(), 
+				this.createSubmitAllButton(),
+				this.createSubmitButton(),
 				this.createCancelButton()
 			]
 		});
 
 		Zarafa.plugins.calendarimporter.dialogs.ImportPanel.superclass.constructor.call(this, config);
 	},
-	
+
 	/**
 	 * Init embedded form, this is the form that is
 	 * posted and contains the attachments
@@ -66,14 +67,14 @@ Zarafa.plugins.calendarimporter.dialogs.ImportPanel = Ext.extend(Ext.form.FormPa
 			items: [this.createUploadField()]
 		};
 	},
-	
+
 	/**
 	 * Init embedded form, this is the form that is
 	 * posted and contains the attachments
 	 * @private
 	 */
 	createGrid : function(eventdata) {
-	
+
 		if(eventdata == null) {
 			var parsedData = [
 			];
@@ -81,10 +82,10 @@ Zarafa.plugins.calendarimporter.dialogs.ImportPanel = Ext.extend(Ext.form.FormPa
 			var parsedData = new Array(eventdata.events.length);
 			
 			for(var i=0; i < eventdata.events.length; i++) {
-				parsedData[i] = new Array(eventdata.events[i]["SUMMARY"], parseInt(eventdata.events[i]["DTSTART"]), parseInt(eventdata.events[i]["DTEND"]), eventdata.events[i]["LOCATION"], eventdata.events[i]["DESCRIPTION"]);
+				parsedData[i] = new Array(eventdata.events[i]["SUMMARY"], new Date(parseInt(eventdata.events[i]["DTSTART"])), new Date(parseInt(eventdata.events[i]["DTEND"])), eventdata.events[i]["LOCATION"], eventdata.events[i]["DESCRIPTION"]);
 			}
 		}
-		
+
 		// create the data store
 		var store = new Ext.data.ArrayStore({
 			fields: [
@@ -96,8 +97,8 @@ Zarafa.plugins.calendarimporter.dialogs.ImportPanel = Ext.extend(Ext.form.FormPa
 			],
 			data: parsedData
 		});
-		
-		return {			
+
+		return {
 			xtype: 'grid',
 			ref: 'eventgrid',
 			id: 'eventgrid',
@@ -126,16 +127,16 @@ Zarafa.plugins.calendarimporter.dialogs.ImportPanel = Ext.extend(Ext.form.FormPa
 	
 	createSelectBox: function() {
 		ctx = container.getContextByName('calendar');
-        model = ctx.getModel();
-        defaultFolder = model.getDefaultFolder();
-        subFolders = defaultFolder.getChildren();
-        
-        var myStore = new Ext.data.ArrayStore({
-        	fields: ['calendar_id', 'calendar_displayname'],
-        	idIndex: 0 // id for each record will be the first element
-        });
+		model = ctx.getModel();
+		defaultFolder = model.getDefaultFolder(); // @type: Zarafa.hierarchy.data.MAPIFolderRecord
+		subFolders = defaultFolder.getChildren();
 
-        /* Calendar Record holds the name and real name of the calender */
+		var myStore = new Ext.data.ArrayStore({
+			fields: ['calendar_id', 'calendar_displayname'],
+			idIndex: 0 // id for each record will be the first element
+		});
+
+		/* Calendar Record holds the name and real name of the calender */
 		var CalendarRecord = Ext.data.Record.create([
 			{name: 'realname', type: "string"},
 			{name: 'displayname', type: "string"}
@@ -144,85 +145,103 @@ Zarafa.plugins.calendarimporter.dialogs.ImportPanel = Ext.extend(Ext.form.FormPa
 		/* Store the default folder */
 		var myNewRecord = new CalendarRecord({
 			realname: defaultFolder.getDefaultFolderKey(),
-		    displayname: defaultFolder.getDisplayName()
+			displayname: defaultFolder.getDisplayName()
 		});
 		myStore.add(myNewRecord);
-        
-        for(i=0;i<subFolders.length;i++) {
+
+		for(i=0;i<subFolders.length;i++) {
 			/* Store all subfolders */
 			myNewRecord = new CalendarRecord({
 				realname: subFolders[i].getDisplayName(), // TODO: get the real path... 
 			    displayname: subFolders[i].getDisplayName()
 			});
 			myStore.add(myNewRecord);
-        }
-        
-        /* commit the changes to the store */
-        myStore.commitChanges();
-        
+		}
+
+		/* commit the changes to the store */
+		myStore.commitChanges();
+
 		return {
-            xtype: "selectbox",
-            editable: false,
-            name: "choosen_calendar",
-            width: 100,
-            fieldLabel: "Select a calender",
-            store: myStore,
-            valueField: 'realname',
-            displayField: 'displayname',
-            labelSeperator: ":",
-            border: false,
-            anchor: "100%",
-            scope: this,
-            allowBlank: false
-        }
+			xtype: "selectbox",
+			ref: 'calendarselector',
+			id: 'calendarselector',  
+			editable: false,
+			name: "choosen_calendar",
+			width: 100,
+			fieldLabel: "Select a calender",
+			store: myStore,
+			valueField: 'realname',
+			displayField: 'displayname',
+			labelSeperator: ":",
+			border: false,
+			anchor: "100%",
+			scope: this,
+			allowBlank: false
+		}
 	},
 	
 	createUploadField: function() {
 		return {
-            xtype: "fileuploadfield",
+			xtype: "fileuploadfield",
 			ref: 'fileuploadfield',
 			columnWidth: 1.0,
 			id: 'form-file',    
 			name: 'icsdata',
-            emptyText: 'Select an .ics calendar',
-            border: false,
-            anchor: "100%",
-            scope: this,
-            allowBlank: false,
+			emptyText: 'Select an .ics calendar',
+			border: false,
+			anchor: "100%",
+			scope: this,
+			allowBlank: false,
 			listeners: {
 				'fileselected': this.onFileSelected,
 				scope: this
 			}
-        }
+		}
 	},
 	
 	createSubmitButton: function() {
 		return {
-            xtype: "button",
+			xtype: "button",
 			ref: "submitButton",
 			id: "submitButton",
 			disabled: true,
-            width: 100,
-            border: false,
-            text: _("Import"),
-            anchor: "100%",
-            handler: this.importAllEvents,
-            scope: this,
-            allowBlank: false
-        }
+			width: 100,
+			border: false,
+			text: _("Import"),
+			anchor: "100%",
+			handler: this.importCheckedEvents,
+			scope: this,
+			allowBlank: false
+		}
+	},
+	
+	createSubmitAllButton: function() {
+		return {
+			xtype: "button",
+			ref: "submitAllButton",
+			id: "submitAllButton",
+			disabled: true,
+			width: 100,
+			border: false,
+			text: _("Import All"),
+			anchor: "100%",
+			handler: this.importAllEvents,
+			scope: this,
+			allowBlank: false
+		}
 	},
 	
 	createCancelButton: function() {
 		return {
-            xtype: "button",
-            width: 100,
-            border: false,
-            text: _("Cancel"),
-            anchor: "100%",
-            handler: this.close,
-            scope: this,
-            allowBlank: false
-        }
+			xtype: "button",
+			width: 100,
+			border: false,
+			text: _("Cancel"),
+			anchor: "100%",
+			handler: this.close,
+			scope: this,
+			allowBlank: false
+		}
 	},
 	
 	/**
@@ -230,7 +249,7 @@ Zarafa.plugins.calendarimporter.dialogs.ImportPanel = Ext.extend(Ext.form.FormPa
 	 * in the {@link Ext.ux.form.FileUploadField} and the dialog is closed
 	 * @param {Ext.ux.form.FileUploadField} uploadField being added a file to
 	 */
-	onFileSelected	: function(uploadField)	{
+	onFileSelected	: function(uploadField) {
 		var form = this.addFormPanel.getForm();
 
 		if (form.isValid()) {
@@ -238,7 +257,8 @@ Zarafa.plugins.calendarimporter.dialogs.ImportPanel = Ext.extend(Ext.form.FormPa
 				waitMsg: 'Uploading and parsing calendar...',
 				url: 'plugins/calendarimporter/php/upload.php',
 				failure: function(file, action) {
-					Ext.getCmp('submitButton').disable();	// momstly called...
+					Ext.getCmp('submitButton').disable();
+					Ext.getCmp('submitAllButton').disable();
 					Ext.MessageBox.show({
 						title   : _('Error'),
 						msg     : _(action.result.errors[action.result.errors.type]),
@@ -249,6 +269,7 @@ Zarafa.plugins.calendarimporter.dialogs.ImportPanel = Ext.extend(Ext.form.FormPa
 				success: function(file, action){
 					uploadField.reset();
 					Ext.getCmp('submitButton').enable();
+					Ext.getCmp('submitAllButton').enable();
 					this.timezone = action.result.response.calendar["X-WR-TIMEZONE"];
 					this.insert(this.items.length,this.createGrid(action.result.response));
 					this.doLayout();
@@ -257,13 +278,13 @@ Zarafa.plugins.calendarimporter.dialogs.ImportPanel = Ext.extend(Ext.form.FormPa
 			});
 		}
 	},
-	
+
 	close: function () {
 		this.addFormPanel.getForm().reset();
 		this.getForm().reset();
 		this.dialog.close()
 	},
-	
+
 	convertToAppointmentRecord: function (calendarFolder,entry) {
 		var newRecord = Zarafa.core.data.RecordFactory.createRecordObjectByMessageClass('IPM.Appointment', {
 			startdate: new Date(entry.start),
@@ -283,23 +304,95 @@ Zarafa.plugins.calendarimporter.dialogs.ImportPanel = Ext.extend(Ext.form.FormPa
 		});
 		return newRecord;
 	},
-	
-    importAllEvents: function () {
+
+	importAllEvents: function () {
 		//receive existing calendar store
-		var calendarStore = new Zarafa.calendar.AppointmentStore();
-		var calendarFolder =  container.getHierarchyStore().getDefaultFolder('calendar');
-		
-		//receive Records from grid rows
-		var newRecords = this.eventgrid.selModel.getSelections();
-		Ext.each(newRecords, function(newRecord) {
-			var record = this.convertToAppointmentRecord(calendarFolder,newRecord.data);
-			console.log(record);
-			calendarStore.add(record);			
-		}, this);
-		calendarStore.save();
-		this.dialog.close();
+		var selIndex = this.calendarselector.selectedIndex;
+		var calValue = this.calendarselector.value;
+
+		if(selIndex == -1) { // no calendar choosen
+			Ext.MessageBox.show({
+				title   : _('Error'),
+				msg     : _('You have to choose a calendar!'),
+				icon    : Ext.MessageBox.ERROR,
+				buttons : Ext.MessageBox.OK
+			});
+		} else {
+
+			var calendarStore = new Zarafa.calendar.AppointmentStore();
+			var calendarFolder =  container.getHierarchyStore().getDefaultFolder('calendar');
+			if(calValue != "calendar") {
+				var subFolders = calendarFolder.getChildren();
+
+				for(i=0;i<subFolders.length;i++) {
+					// loo up right folder 
+					// TODO: improve!!
+					if(subFolders[i].getDisplayName() == calValue) {
+						calendarFolder = subFolders[i];
+						break;
+					}
+				}
+			}
+
+			//receive Records from grid rows
+			this.eventgrid.selModel.selectAll();  // select all entries
+			var newRecords = this.eventgrid.selModel.getSelections();
+			Ext.each(newRecords, function(newRecord) {
+				var record = this.convertToAppointmentRecord(calendarFolder,newRecord.data);
+				calendarStore.add(record);
+			}, this);
+			calendarStore.save();
+			this.dialog.close();
+		}
+    },
+
+	importCheckedEvents: function () {
+		//receive existing calendar store
+		var selIndex = this.calendarselector.selectedIndex;
+		var calValue = this.calendarselector.value;
+
+		if(selIndex == -1) { // no calendar choosen
+			Ext.MessageBox.show({
+				title   : _('Error'),
+				msg     : _('You have to choose a calendar!'),
+				icon    : Ext.MessageBox.ERROR,
+				buttons : Ext.MessageBox.OK
+			});
+		} else {
+			if(this.eventgrid.selModel.getCount() < 1) {
+				Ext.MessageBox.show({
+					title   : _('Error'),
+					msg     : _('You have to choose at least one event to import!'),
+					icon    : Ext.MessageBox.ERROR,
+					buttons : Ext.MessageBox.OK
+				});
+			} else {
+				var calendarStore = new Zarafa.calendar.AppointmentStore();
+				var calendarFolder =  container.getHierarchyStore().getDefaultFolder('calendar');
+				if(calValue != "calendar") {
+					var subFolders = calendarFolder.getChildren();
+				
+					for(i=0;i<subFolders.length;i++) {
+						// loo up right folder 
+						// TODO: improve!!
+						if(subFolders[i].getDisplayName() == calValue) {
+							calendarFolder = subFolders[i];
+							break;
+						}
+					}
+				}
+
+				//receive Records from grid rows
+				var newRecords = this.eventgrid.selModel.getSelections();
+				Ext.each(newRecords, function(newRecord) {
+					var record = this.convertToAppointmentRecord(calendarFolder,newRecord.data);
+					calendarStore.add(record);
+				}, this);
+				calendarStore.save();
+				this.dialog.close();
+			}
+		}
     }
-	
 });
 
 Ext.reg('calendarimporter.importpanel', Zarafa.plugins.calendarimporter.dialogs.ImportPanel);

@@ -47,7 +47,7 @@ class Plugincalendarimporter extends Plugin {
 					'plugins' => Array(
 						'calendarimporter' => Array(
 							'enable'        => PLUGIN_CALENDARIMPORTER_USER_DEFAULT_ENABLE,
-							'default_calendar'       => PLUGIN_CALENDARIMPORTER_DEFAULT
+							'default_calendar'       => PLUGIN_CALENDARIMPORTER_DEFAULT	// currently not used, maybe in next release
 						)
 					)
 				)
