@@ -16,10 +16,15 @@ Zarafa.plugins.calendarimporter.dialogs.ImportContentPanel = Ext.extend(Zarafa.c
 	constructor : function(config)
 	{
 		config = config || {};
+		
+		var title = _('Import Calendar File');
+		if(container.getSettingsModel().get("zarafa/v1/plugins/calendarimporter/enable_export")){
+			title = _('Import/Export Calendar File');
+		}
 
 		Ext.applyIf(config, {
 			layout					: 'fit',
-			title					: _('Import Calendar File'),
+			title					: title,
 			closeOnSave				: true,
 			width					: 400,
 			height					: 300,

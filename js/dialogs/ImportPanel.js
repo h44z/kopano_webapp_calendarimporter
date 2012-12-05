@@ -13,7 +13,7 @@ Zarafa.plugins.calendarimporter.dialogs.ImportPanel = Ext.extend(Ext.form.FormPa
 	 * @constructor
 	 * @param {object} config
 	 */
-	constructor : function(config)
+	constructor : function (config) 
 	{
 		config = config || {};
 		var self = this;
@@ -34,6 +34,7 @@ Zarafa.plugins.calendarimporter.dialogs.ImportPanel = Ext.extend(Ext.form.FormPa
 				this.initForm()
 			],
 			buttons: [
+				this.createExportAllButton(),
 				this.createSubmitAllButton(),
 				this.createSubmitButton(),
 				this.createCancelButton()
@@ -48,7 +49,7 @@ Zarafa.plugins.calendarimporter.dialogs.ImportPanel = Ext.extend(Ext.form.FormPa
 	 * posted and contains the attachments
 	 * @private
 	 */
-	initForm : function()
+	initForm : function ()
 	{
 		return {
 			xtype: 'form',
@@ -75,10 +76,8 @@ Zarafa.plugins.calendarimporter.dialogs.ImportPanel = Ext.extend(Ext.form.FormPa
 	 */
 	createGrid : function(eventdata) {
 
-		if(eventdata == null) {
-			var parsedData = [
-			];
-		} else {
+		var parsedData = [];
+		if(eventdata !== null) {
 			var parsedData = new Array(eventdata.events.length);
 			
 			for(var i=0; i < eventdata.events.length; i++) {
@@ -231,6 +230,22 @@ Zarafa.plugins.calendarimporter.dialogs.ImportPanel = Ext.extend(Ext.form.FormPa
 		}
 	},
 	
+	createExportAllButton: function() {
+		return {
+			xtype: "button",
+			ref: "exportAllButton",
+			id: "exportAllButton",
+			hidden: !container.getSettingsModel().get("zarafa/v1/plugins/calendarimporter/enable_export"),
+			width: 100,
+			border: false,
+			text: _("Export All"),
+			anchor: "100%",
+			handler: this.exportAllEvents,
+			scope: this,
+			allowBlank: false
+		}
+	},
+	
 	createCancelButton: function() {
 		return {
 			xtype: "button",
@@ -345,6 +360,68 @@ Zarafa.plugins.calendarimporter.dialogs.ImportPanel = Ext.extend(Ext.form.FormPa
 			this.dialog.close();
 		}
     },
+	
+	exportAllEvents: function () {
+		//receive existing calendar store
+		var selIndex = this.calendarselector.selectedIndex;
+		var calValue = this.calendarselector.value;
+
+		if(selIndex == -1 || calValue == "") { // no calendar choosen
+			Ext.MessageBox.show({
+				title   : _('Error'),
+				msg     : _('You have to choose a calendar!'),
+				icon    : Ext.MessageBox.ERROR,
+				buttons : Ext.MessageBox.OK
+			});
+		} else {
+			
+			var calendarFolder =  container.getHierarchyStore().getDefaultFolder('calendar');
+			if(calValue != "calendar") {
+				var subFolders = calendarFolder.getChildren();
+
+				for(i=0;i<subFolders.length;i++) {
+					// loo up right folder 
+					// TODO: improve!!
+					if(subFolders[i].getDisplayName() == calValue) {
+						calendarFolder = subFolders[i];
+						break;
+					}
+				}
+			}
+		
+			// call export function here!
+			var responseHandler = new Zarafa.plugins.calendarimporter.data.ResponseHandler({
+				successCallback: this.exportDone.createDelegate(this)
+			});
+			
+			container.getRequest().singleRequest(
+				'calendarexportermodule',
+				'export',
+				{
+					calFolder : calValue,
+					calIndex : selIndex,
+					store_entryid : calendarFolder.data.store_entryid,
+					entryid : calendarFolder.data.entryid
+				},
+				responseHandler
+			);
+		}
+    },
+	
+	/**
+	 * Export done =)
+	 * @param {Object} response
+	 * @private
+	 */
+	exportDone : function(response)
+	{
+		if(response.status === true) {
+			container.getNotifier().notify('info', 'Exported', 'Exported ' + response.entries + ' entries');
+		} else {
+			container.getNotifier().notify('error', 'Export Failed', 'Failed to export your calendar');
+		}
+		this.dialog.close();
+	},	
 
 	importCheckedEvents: function () {
 		//receive existing calendar store

@@ -2,9 +2,9 @@
 <!DOCTYPE plugin SYSTEM "manifest.dtd">
 <plugin version="2">
         <info>
-                <version>1.0</version>
+                <version>1.1</version>
                 <name>calendarimporter</name>
-                <title>ICS Calendar Importer</title>
+                <title>ICS Calendar Importer/Exporter</title>
                 <author>Christoph Haas</author>
                 <authorURL>http://www.sprinternet.at</authorURL>
                 <description>Import a ICS file to the zarafa calendar</description>
@@ -17,19 +17,21 @@
                         <files>
                                 <server>
                                         <serverfile>php/plugin.calendarimporter.php</serverfile>
+										<serverfile type="module" module="calendarexportermodule">php/module.calendarexporter.php</serverfile>
                                 </server>
                                 <client>
                                         <clientfile load="release">js/plugin.calendarimporter.js</clientfile>
+										<clientfile load="release">js/data/ResponseHandler.js</clientfile>
 										<clientfile load="release">js/dialogs/ImportContentPanel.js</clientfile>
 										<clientfile load="release">js/dialogs/ImportPanel.js</clientfile>
 										
                                         <clientfile load="debug">js/plugin.calendarimporter.js</clientfile>
+										<clientfile load="debug">js/data/ResponseHandler.js</clientfile>
 										<clientfile load="debug">js/dialogs/ImportContentPanel.js</clientfile>
 										<clientfile load="debug">js/dialogs/ImportPanel.js</clientfile>
                                 </client>
                                 <resources>
-                                        <resourcefile load="release">resources/css/calendarimporter.css</resourcefile>
-										
+                                        <resourcefile load="release">resources/css/calendarimporter.css</resourcefile>										
 										<resourcefile load="debug">resources/css/calendarimporter.css</resourcefile>
                                 </resources>
                         </files>
