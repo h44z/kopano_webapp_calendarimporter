@@ -1,6 +1,6 @@
 Ext.namespace("Zarafa.plugins.calendarimporter");    								// Assign the right namespace
 
-Zarafa.plugins.calendarimporter.ImportPlugin = Ext.extend(Zarafa.core.Plugin, {      // create new import plugin
+Zarafa.plugins.calendarimporter.ImportPlugin = Ext.extend(Zarafa.core.Plugin, {		// create new import plugin
 
     /**
      * @constructor

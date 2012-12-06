@@ -23,6 +23,15 @@ Zarafa.plugins.calendarimporter.data.ResponseHandler = Ext.extend(Zarafa.core.da
 	},
 	
 	/**
+	 * Call the successCallback callback function.
+	 * @param {Object} response Object contained the response data.
+	 */
+	doList : function(response)
+	{
+		this.successCallback(response);
+	},
+	
+	/**
 	 * In case exception happened on server, server will return
 	 * exception response with the code of exception.
 	 * @param {Object} response Object contained the response data.

@@ -76,11 +76,86 @@ class CalendarexporterModule extends Module {
 		return $result;
 	}
 	
-	private function exportCalendar($actionType, $actionData) {
-		/* look up functionality in class.appointmentlistmodule.php (webapp/server/modules)*/
+	private function randomstring($length = 6) {
+		// $chars - all allowed charakters
+		$chars = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890";
+
+		srand((double)microtime()*1000000);
+		$i = 0;
+		while ($i < $length) {
+			$num = rand() % strlen($chars);
+			$tmp = substr($chars, $num, 1);
+			$pass = $pass . $tmp;
+			$i++;
+		}
+		return $pass;
+	}
 	
+	private function createSecIDFile($secid) {
+		$lockFile = TMP_PATH . "/secid." . $secid;
+		$fh = fopen($lockFile, 'w') or die("can't open secid file");
+		$stringData = date(DATE_RFC822);
+		fwrite($fh, $stringData);
+		fclose($fh);
+	}
+	
+	private function writeICSHead($fh, $calname) {
+		$icshead = "BEGIN:VCALENDAR\nVERSION:2.0\nPRODID:-//Zarafa Webapp//Zarafa Calendar Exporter//DE\nMETHOD:PUBLISH\nX-WR-CALNAME:" . $calname. "\n";
+		fwrite($fh, $icshead);
+	}
+	
+	private function writeICSEnd($fh) {
+		$icsend = "END:VCALENDAR";
+		fwrite($fh, $icsend);
+	}
+	
+	private function writeEvent($fh, $event) {
+		$head = "BEGIN:VEVENT\n";
+		$end  = "END:VEVENT\n";
+		
+		$fields = array(
+			"DTSTART" => $event["startdate"],
+			"DTEND" => $event["duedate"],
+			"DTSTAMP" => $event["creation_time"],
+			"DESCRIPTION" => "nothing...",
+			"LOCATION" => $event["location"],
+			"SUMMARY" => $event["subject"]		
+		);
+		
+		fwrite($fh, $head);
+		
+		// event fields:
+		foreach ($fields as $key => $value) {
+			fwrite($fh, $key . ": " . $value . "\n");
+		}
+		
+		unset($fields); 
+		
+		fwrite($fh, $end);
+	}
+	
+	private function exportCalendar($actionType, $actionData) {
+		$secid = $this->randomstring();	
+		$this->createSecIDFile($secid);
+		$tmpname = stripslashes($actionData["calendar"] . ".ics." . $this->randomstring(8));
+		$filename = TMP_PATH . "/" . $tmpname . "." . $secid;
+		
+		// create ics file....
+		$fh = fopen($filename, 'w') or die("can't open ics file");
+		$this->writeICSHead($fh, $actionData["calendar"]);
+		
+		foreach($actionData["data"]["item"] as $event) {
+			$this->writeEvent($fh, $event["props"]);
+		}
+		
+		$this->writeICSEnd($fh);
+		fclose($fh);
+		
 		$response['status']	=	true;
-		$response['entries'] =	"1002";	// number of entries that will be exported
+		$response['fileid'] =	$tmpname;	// number of entries that will be exported
+		$response['basedir'] = TMP_PATH;
+		$response['secid']  =   $secid;
+		$response['realname'] = $actionData["calendar"];
 		$this->addActionData($actionType, $response);
 		$GLOBALS["bus"]->addData($this->getResponseData());
 		

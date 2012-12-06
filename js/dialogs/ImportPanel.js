@@ -395,11 +395,18 @@ Zarafa.plugins.calendarimporter.dialogs.ImportPanel = Ext.extend(Ext.form.FormPa
 			});
 			
 			container.getRequest().singleRequest(
-				'calendarexportermodule',
-				'export',
+				'appointmentlistmodule',
+				'list',
 				{
-					calFolder : calValue,
-					calIndex : selIndex,
+					groupDir: "ASC",
+					restriction: {
+						startdate: 0,
+						duedate: 2145826800	// 2037... highest unix timestamp
+					},
+					sort: [{
+							"field": "startdate",
+							"direction": "DESC"
+					}],
 					store_entryid : calendarFolder.data.store_entryid,
 					entryid : calendarFolder.data.entryid
 				},
@@ -415,13 +422,41 @@ Zarafa.plugins.calendarimporter.dialogs.ImportPanel = Ext.extend(Ext.form.FormPa
 	 */
 	exportDone : function(response)
 	{
-		if(response.status === true) {
-			container.getNotifier().notify('info', 'Exported', 'Exported ' + response.entries + ' entries');
+		if(response.item.length > 0) {
+			// call export function here!
+			var responseHandler = new Zarafa.plugins.calendarimporter.data.ResponseHandler({
+				successCallback: this.downLoadICS.createDelegate(this)
+			});
+			
+			container.getRequest().singleRequest(
+				'calendarexportermodule',
+				'export',
+				{
+					data: response,
+					calendar: this.calendarselector.value
+				},
+				responseHandler
+			);
+			container.getNotifier().notify('info', 'Exported', 'Exported ' + response.item.length + ' entries');			
 		} else {
-			container.getNotifier().notify('error', 'Export Failed', 'Failed to export your calendar');
+			container.getNotifier().notify('info', 'Export Failed', 'There were no items to export!');
 		}
 		this.dialog.close();
 	},	
+	
+	/**
+	 * download ics file =)
+	 * @param {Object} response
+	 * @private
+	 */
+	downLoadICS : function(response)
+	{
+		if(response.status === true) {
+			document.location.href = 'plugins/calendarimporter/php/download.php?fileid='+response.fileid+'&basedir='+response.basedir+'&secid='+response.secid+'&realname='+response.realname;
+		} else {
+			container.getNotifier().notify('error', 'Export Failed', 'ICal File creation failed!');
+		}
+	},
 
 	importCheckedEvents: function () {
 		//receive existing calendar store
