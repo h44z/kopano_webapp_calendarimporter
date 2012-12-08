@@ -4,7 +4,7 @@ Ext.namespace("Zarafa.plugins.calendarimporter.dialogs");
  * @class Zarafa.plugins.calendarimporter.dialogs.ImportPanel
  * @extends Ext.form.FormPanel
  */
-Zarafa.plugins.calendarimporter.dialogs.ImportPanel = Ext.extend(Ext.form.FormPanel, {
+Zarafa.plugins.calendarimporter.dialogs.ImportPanel = Ext.extend(Ext.Panel, {
 
 	/* store the imported timezone here... */
 	timezone: null,
@@ -296,7 +296,6 @@ Zarafa.plugins.calendarimporter.dialogs.ImportPanel = Ext.extend(Ext.form.FormPa
 
 	close: function () {
 		this.addFormPanel.getForm().reset();
-		this.getForm().reset();
 		this.dialog.close()
 	},
 
@@ -373,8 +372,7 @@ Zarafa.plugins.calendarimporter.dialogs.ImportPanel = Ext.extend(Ext.form.FormPa
 				icon    : Ext.MessageBox.ERROR,
 				buttons : Ext.MessageBox.OK
 			});
-		} else {
-			
+		} else {			
 			var calendarFolder =  container.getHierarchyStore().getDefaultFolder('calendar');
 			if(calValue != "calendar") {
 				var subFolders = calendarFolder.getChildren();
@@ -388,6 +386,36 @@ Zarafa.plugins.calendarimporter.dialogs.ImportPanel = Ext.extend(Ext.form.FormPa
 					}
 				}
 			}
+			
+			Zarafa.common.dialogs.MessageBox.show({
+				title: 'Please wait',
+				msg: 'Generating ical file...',
+				progressText: 'Exporting...',
+				width:300,
+				progress:true,
+				closable:false
+			});
+			
+			// progress bar... ;)
+			var updateProgressBar = function(v){
+				return function(){
+					if(v == 100){
+						if(Zarafa.common.dialogs.MessageBox.isVisible()) {
+							updateTimer();
+						}
+					}else{
+						Zarafa.common.dialogs.MessageBox.updateProgress(v/100, 'Exporting...');
+					}
+			   };
+			};
+			
+			var updateTimer = function() {
+				for(var i = 1; i < 101; i++){
+					setTimeout(updateProgressBar(i), 20*i);					
+				}
+			};
+			
+			updateTimer();
 		
 			// call export function here!
 			var responseHandler = new Zarafa.plugins.calendarimporter.data.ResponseHandler({
@@ -437,9 +465,10 @@ Zarafa.plugins.calendarimporter.dialogs.ImportPanel = Ext.extend(Ext.form.FormPa
 				},
 				responseHandler
 			);
-			container.getNotifier().notify('info', 'Exported', 'Exported ' + response.item.length + ' entries');			
+			container.getNotifier().notify('info', 'Exported', 'Found ' + response.item.length + ' entries to export.');
 		} else {
 			container.getNotifier().notify('info', 'Export Failed', 'There were no items to export!');
+			Zarafa.common.dialogs.MessageBox.hide();
 		}
 		this.dialog.close();
 	},	
@@ -451,11 +480,13 @@ Zarafa.plugins.calendarimporter.dialogs.ImportPanel = Ext.extend(Ext.form.FormPa
 	 */
 	downLoadICS : function(response)
 	{
-		if(response.status === true) {
-			document.location.href = 'plugins/calendarimporter/php/download.php?fileid='+response.fileid+'&basedir='+response.basedir+'&secid='+response.secid+'&realname='+response.realname;
+		Zarafa.common.dialogs.MessageBox.hide();
+		if(response.status === true) {			
+			// needs to be window.open, document.location.href kills the extjs response handler...
+			window.open('plugins/calendarimporter/php/download.php?fileid='+response.fileid+'&basedir='+response.basedir+'&secid='+response.secid+'&realname='+response.realname,"Download");
 		} else {
 			container.getNotifier().notify('error', 'Export Failed', 'ICal File creation failed!');
-		}
+		}		
 	},
 
 	importCheckedEvents: function () {
