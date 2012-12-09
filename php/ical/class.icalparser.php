@@ -61,6 +61,7 @@ class ICal {
 			foreach ($lines as $line) {
 				$line = trim($line);
 				$add  = $this->keyValueFromString($line);
+				error_log("line: " . $line);
 				if ($add === false) {
 					$this->addCalendarComponentWithKeyAndValue($type, false, $line);
 					continue;
@@ -121,47 +122,48 @@ class ICal {
 			$keyword = $this->last_keyword; 
 			
 			switch ($component) {
-			case 'VEVENT': 
-				if (stristr($keyword, "DTSTART") or stristr($keyword, "DTEND")) {
-					$ts = $this->iCalDateToUnixTimestamp($value);
-					$value = $ts * 1000;
-				}
-				$value = str_replace("\\n", "\n", $value); 
-				$value = $this->cal[$component][$this->event_count - 1]
-											   [$keyword].$value;
-				break;
-			case 'VTODO' : 
-				$value = $this->cal[$component][$this->todo_count - 1]
-											   [$keyword].$value;
-				break;
+				case 'VEVENT': 
+					if (stristr($keyword, "DTSTART") or stristr($keyword, "DTEND")) {
+						$ts = $this->iCalDateToUnixTimestamp($value);
+						$value = $ts * 1000;
+					}
+					$value = str_replace("\\n", "\n", $value); 
+					$value = $this->cal[$component][$this->event_count - 1]
+												   [$keyword].$value;
+					break;
+				case 'VTODO' : 
+					$value = $this->cal[$component][$this->todo_count - 1]
+												   [$keyword].$value;
+					break;
 			}
 		}
 		
-		if (stristr($keyword, "DTSTART") or stristr($keyword, "DTEND")) {
-			$keyword = explode(";", $keyword);
-			$keyword = $keyword[0];	// remove additional content like VALUE=DATE
-		}
+		//always strip additional content....
+		//if (stristr($keyword, "DTSTART") or stristr($keyword, "DTEND")) {
+		$keyword = explode(";", $keyword);
+		$keyword = $keyword[0];	// remove additional content like VALUE=DATE
+		//}
 		
 		if (stristr($keyword, "TIMEZONE")) {
 			$this->default_timezone = $value;	// store the calendertimezone
 		}
 
 		switch ($component) { 
-		case "VTODO": 
-			$this->cal[$component][$this->todo_count - 1][$keyword] = $value;
-			//$this->cal[$component][$this->todo_count]['Unix'] = $unixtime;
-			break; 
-		case "VEVENT": 
-			if (stristr($keyword, "DTSTART") or stristr($keyword, "DTEND")) {
-				$ts = $this->iCalDateToUnixTimestamp($value);
-				$value = $ts * 1000;
-			}
-			$value = str_replace("\\n", "\n", $value); 
-			$this->cal[$component][$this->event_count - 1][$keyword] = $value; 
-			break; 
-		default: 
-			$this->cal[$component][$keyword] = $value; 
-			break; 
+			case "VTODO": 
+				$this->cal[$component][$this->todo_count - 1][$keyword] = $value;
+				//$this->cal[$component][$this->todo_count]['Unix'] = $unixtime;
+				break; 
+			case "VEVENT": 
+				if (stristr($keyword, "DTSTART") or stristr($keyword, "DTEND")) {
+					$ts = $this->iCalDateToUnixTimestamp($value);
+					$value = $ts * 1000;
+				}
+				$value = str_replace("\\n", "\n", $value); 
+				$this->cal[$component][$this->event_count - 1][$keyword] = $value; 
+				break; 
+			default: 
+				$this->cal[$component][$keyword] = $value; 
+				break; 
 		} 
 		$this->last_keyword = $keyword; 
 	}
@@ -174,10 +176,13 @@ class ICal {
 	 * @return {array} array("VCALENDAR", "Begin")
 	 */
 	public function keyValueFromString($text) {
-		preg_match("/(^[^a-z:]+)[:]([\w\W]*)/", $text, $matches);
+		preg_match("/(^[^a-z:]+[;a-zA-Z=\/]*)[:]([\w\W]*)/", $text, $matches);
+		
+		error_log("macthes: " . count($matches). " " . $text);
 		if (count($matches) == 0) {
 			return false;
 		}
+		
 		$matches = array_splice($matches, 1, 2);
 		return $matches;
 	}

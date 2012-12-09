@@ -28,6 +28,7 @@
  */
  
 include_once('mapi/class.recurrence.php');
+include_once('plugins/calendarimporter/php/ical/class.icalcreator.php');
  
 class CalendarexporterModule extends Module {
 
@@ -102,53 +103,46 @@ class CalendarexporterModule extends Module {
 		fclose($fh);
 	}
 	
-	private function writeICSHead($fh, $calname) {
-		$icshead = "BEGIN:VCALENDAR\nVERSION:2.0\nPRODID:-//Zarafa Webapp//Zarafa Calendar Exporter//DE\nMETHOD:PUBLISH\nX-WR-CALNAME:" . $calname. "\nX-WR-TIMEZONE:" . date("e") . "\n";
-		fwrite($fh, $icshead);
-	}
-	
-	private function writeICSEnd($fh) {
-		$icsend = "END:VCALENDAR";
-		fwrite($fh, $icsend);
-	}
-	
 	private function getIcalDate($time, $incl_time = true) {
 		return $incl_time ? date('Ymd\THis', $time) : date('Ymd', $time);
 	}
 	
-	private function writeEvent($fh, $event) {
-		$head = "BEGIN:VEVENT\n";
-		$end  = "END:VEVENT\n";
+	private function addEvent(&$vevent, $event) {
 		
 		$busystate = array("FREE", "TENTATIVE", "BUSY", "OOF");
+		$zlabel = array("NONE", "IMPORTANT", "WORK", "PERSONAL", "HOLIDAY", "REQUIRED", "TRAVEL REQUIRED", "PREPARATION REQUIERED", "BIRTHDAY", "SPECIAL DATE", "PHONE INTERVIEW");
 		
-		$fields = array(
-			"UID" 							=> $this->randomstring(10) . "-" . $this->randomstring(5) . "-ics@zarafa-export-plugin",  // generate uid
-			"DTSTART" 						=> $this->getIcalDate($event["commonstart"]) . "Z",	// this times are utc!
-			"DTEND" 						=> $this->getIcalDate($event["commonend"]) . "Z",
-			"DTSTAMP" 						=> $this->getIcalDate($event["creation_time"]) . "Z",
-			"CREATED" 						=> $this->getIcalDate($event["creation_time"]) . "Z",
-			"X-MICROSOFT-CDO-BUSYSTATUS" 	=> $busystate[$event["busystatus"]],
-			"LAST-MODIFIED" 				=> $this->getIcalDate($event["last_modification_time"]),
-			"DESCRIPTION" 					=> str_replace("\n", "\\n",$event["description"]),
-			"LOCATION" 						=> $event["location"],
-			"SUMMARY" 						=> $event["subject"],
-			
-			// some static content...
-			"TRANSP" 						=> "OPAQUE",
-			"SEQUENCE"						=> "0"
-		);
+		$vevent->setProperty("LOCATION", $event["location"]);       // property name - case independent
+		$vevent->setProperty("SUMMARY", $event["subject"]);
+		$vevent->setProperty("DESCRIPTION", str_replace("\n", "\\n",$event["description"]));
+		$vevent->setProperty("COMMENT", "Exported from Zarafa" );
+		$vevent->setProperty("ORGANIZER", $event["sent_representing_email_address"]);
+		$vevent->setProperty("DTSTART", $this->getIcalDate($event["commonstart"]) . "Z"); 
+		$vevent->setProperty("DTEND", $this->getIcalDate($event["commonend"]) . "Z");
+		$vevent->setProperty("DTSTAMP", $this->getIcalDate($event["creation_time"]) . "Z");
+		$vevent->setProperty("CREATED", $this->getIcalDate($event["creation_time"]) . "Z");
+		$vevent->setProperty("LAST-MODIFIED", $this->getIcalDate($event["last_modification_time"]) . "Z");
+		$vevent->setProperty("X-MICROSOFT-CDO-BUSYSTATUS", $busystate[$event["busystatus"]]);
+		$vevent->setProperty("X-ZARAFA-LABEL", $zlabel[$event["label"]]);
+		$vevent->setProperty("PRIORITY", $event["importance"]);
+		$vevent->setProperty("CLASS", $event["private"] ? "PRIVATE" : "PUBLIC");
 		
-		fwrite($fh, $head);
+		// ATTENDEES
+		if(count($event["attendees"]) > 0) {
+			foreach($event["attendees"] as $attendee) {
+				$vevent->setProperty("ATTENDEE", $attendee["props"]["smtp_address"]);
+			}
+		}		
 		
-		// event fields:
-		foreach ($fields as $key => $value) {
-			fwrite($fh, $key . ":" . $value . "\n");
+		// REMINDERS
+		if($event["reminder"]) {
+			$valarm = & $vevent->newComponent("valarm");	// create an event alarm
+			$valarm->setProperty("action", "DISPLAY" );
+			$valarm->setProperty("description", $vevent->getProperty("SUMMARY"));	// reuse the event summary
+			$valarm->setProperty("trigger", $this->getIcalDate($event["reminder_time"]) . "Z");	// create alarm trigger (in UTC datetime)
 		}
 		
-		unset($fields); 
 		
-		fwrite($fh, $end);
 	}
 	
 	private function loadEventDescription($event) {
@@ -276,23 +270,68 @@ class CalendarexporterModule extends Module {
 		return $data['item']['props']['body'];
 	}
 	
+	private function loadAttendees($event) {
+		$entryid = $this->getActionEntryID($event);
+		$store = $this->getActionStore($event);
+		
+		$basedate = null;
+		
+		$properties = $GLOBALS['properties']->getAppointmentProperties();
+		$plaintext = true;
+		
+		$data = array();
+		
+		if($store && $entryid) {			
+			$message = $GLOBALS['operations']->openMessage($store, $entryid);
+			
+			
+			// add all standard properties from the series/normal message 
+			$data['item'] = $GLOBALS['operations']->getMessageProps($store, $message, $properties, (isset($plaintext) && $plaintext));
+			
+		}
+
+		return $data['item']['recipients']['item'];
+	}
+	
 	private function exportCalendar($actionType, $actionData) {
 		$secid = $this->randomstring();	
 		$this->createSecIDFile($secid);
 		$tmpname = stripslashes($actionData["calendar"] . ".ics." . $this->randomstring(8));
 		$filename = TMP_PATH . "/" . $tmpname . "." . $secid;
 		
-		// create ics file....
-		$fh = fopen($filename, 'w') or die("can't open ics file");
-		$this->writeICSHead($fh, $actionData["calendar"]);
+		$tz = date("e");	// use php timezone (maybe set up in php.ini, date.timezone)
+		
+		if($this->DEBUG) {
+			error_log("PHP Timezone: " . $tz);
+		}		
+		
+		$config = array(
+						"language" => substr($GLOBALS["settings"]->get("zarafa/v1/main/language"),0,2),
+						"directory" => TMP_PATH . "/", 
+						"filename" => $tmpname . "." . $secid,
+						"unique_id" => "zarafa-export-plugin", 
+						"TZID" => $tz
+						);
+		
+		$v = new vcalendar($config); 
+		$v->setProperty("method", "PUBLISH");                    		// required of some calendar software
+		$v->setProperty("x-wr-calname", $actionData["calendar"]);      	// required of some calendar software
+		$v->setProperty("X-WR-CALDESC", "Exported Zarafa Calendar"); 	// required of some calendar software
+		$v->setProperty("X-WR-TIMEZONE", $tz); 
+
+		$xprops = array("X-LIC-LOCATION" => $tz);                	// required of some calendar software
+		iCalUtilityFunctions::createTimezone($v, $tz, $xprops);		// create timezone object in calendar
+				
 		
 		foreach($actionData["data"]["item"] as $event) {
 			$event["props"]["description"] = $this->loadEventDescription($event);
-			$this->writeEvent($fh, $event["props"]);
+			$event["props"]["attendees"] = $this->loadAttendees($event);
+			
+			$vevent = & $v->newComponent("vevent");  // create a new event object
+			$this->addEvent($vevent, $event["props"]);
 		}
 		
-		$this->writeICSEnd($fh);
-		fclose($fh);
+		$v->saveCalendar();
 		
 		$response['status']	=	true;
 		$response['fileid'] =	$tmpname;	// number of entries that will be exported

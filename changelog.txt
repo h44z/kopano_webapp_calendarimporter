@@ -1,0 +1,10 @@
+calendarimporter 1.1 final:
+ - ics exporter
+ - improved ics fileparser
+ - fixed ExtJS Problem in chrome
+
+KNOWN PROBLEMS: 
+ - importer ignores some fields (priority, status...)
+ - attechments are ignored
+ - timezone handling is not perfect
+ - recurrent events are not handled properly (im/export) 
