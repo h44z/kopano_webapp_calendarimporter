@@ -103,7 +103,7 @@ class CalendarexporterModule extends Module {
 	}
 	
 	private function writeICSHead($fh, $calname) {
-		$icshead = "BEGIN:VCALENDAR\nVERSION:2.0\nPRODID:-//Zarafa Webapp//Zarafa Calendar Exporter//DE\nMETHOD:PUBLISH\nX-WR-CALNAME:" . $calname. "\nX-WR-TIMEZONE: " . date("e") . "\n";
+		$icshead = "BEGIN:VCALENDAR\nVERSION:2.0\nPRODID:-//Zarafa Webapp//Zarafa Calendar Exporter//DE\nMETHOD:PUBLISH\nX-WR-CALNAME:" . $calname. "\nX-WR-TIMEZONE:" . date("e") . "\n";
 		fwrite($fh, $icshead);
 	}
 	
@@ -120,21 +120,30 @@ class CalendarexporterModule extends Module {
 		$head = "BEGIN:VEVENT\n";
 		$end  = "END:VEVENT\n";
 		
+		$busystate = array("FREE", "TENTATIVE", "BUSY", "OOF");
+		
 		$fields = array(
-			"UID" => $this->randomstring(10) . "-" . $this->randomstring(5) . "-ics@zarafa-export-plugin",  // generate uid
-			"DTSTART" => $this->getIcalDate($event["commonstart"]) . "Z",	// this times are utc!
-			"DTEND" => $this->getIcalDate($event["commonend"]) . "Z",
-			"DTSTAMP" => $this->getIcalDate($event["creation_time"]) . "Z",
-			"DESCRIPTION" => str_replace("\n", "\\n",$event["description"]),
-			"LOCATION" => $event["location"],
-			"SUMMARY" => $event["subject"]		
+			"UID" 							=> $this->randomstring(10) . "-" . $this->randomstring(5) . "-ics@zarafa-export-plugin",  // generate uid
+			"DTSTART" 						=> $this->getIcalDate($event["commonstart"]) . "Z",	// this times are utc!
+			"DTEND" 						=> $this->getIcalDate($event["commonend"]) . "Z",
+			"DTSTAMP" 						=> $this->getIcalDate($event["creation_time"]) . "Z",
+			"CREATED" 						=> $this->getIcalDate($event["creation_time"]) . "Z",
+			"X-MICROSOFT-CDO-BUSYSTATUS" 	=> $busystate[$event["busystatus"]],
+			"LAST-MODIFIED" 				=> $this->getIcalDate($event["last_modification_time"]),
+			"DESCRIPTION" 					=> str_replace("\n", "\\n",$event["description"]),
+			"LOCATION" 						=> $event["location"],
+			"SUMMARY" 						=> $event["subject"],
+			
+			// some static content...
+			"TRANSP" 						=> "OPAQUE",
+			"SEQUENCE"						=> "0"
 		);
 		
 		fwrite($fh, $head);
 		
 		// event fields:
 		foreach ($fields as $key => $value) {
-			fwrite($fh, $key . ": " . $value . "\n");
+			fwrite($fh, $key . ":" . $value . "\n");
 		}
 		
 		unset($fields); 
