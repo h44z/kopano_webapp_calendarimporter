@@ -176,7 +176,7 @@ class ICal {
 	 * @return {array} array("VCALENDAR", "Begin")
 	 */
 	public function keyValueFromString($text) {
-		preg_match("/(^[^a-z:]+[;a-zA-Z=\/]*)[:]([\w\W]*)/", $text, $matches);
+		preg_match("/(^[^a-z:]+[;a-zA-Z=\/\"\']*)[:]([\w\W]*)/", $text, $matches);
 		
 		error_log("macthes: " . count($matches). " " . $text);
 		if (count($matches) == 0) {
@@ -195,7 +195,11 @@ class ICal {
 	 *
 	 * @return {int} 
 	 */ 
-	public function iCalDateToUnixTimestamp($icalDate) { 
+	public function iCalDateToUnixTimestamp($icalDate) {
+	
+		/* timestring format */
+		$utc = strpos("zZ",substr($icalDate, -1)) === false ? false : true;
+		
 		$icalDate = str_replace('T', '', $icalDate); 
 		$icalDate = str_replace('Z', '', $icalDate); 
 
@@ -206,6 +210,9 @@ class ICal {
 		$pattern .= '([0-9]{0,2})';  // 5: MM
 		$pattern .= '([0-9]{0,2})/'; // 6: SS
 		preg_match($pattern, $icalDate, $date); 
+		
+		
+		
 
 		// Unix timestamp can't represent dates before 1970
 		if ($date[1] <= 1970) {
@@ -221,11 +228,14 @@ class ICal {
 							(int)$date[1]);
 							
 		
-		$utcdate = new DateTime();
-		$utcdate->setTimestamp($timestamp);
-		$utcdate->setTimezone(new DateTimeZone($this->default_timezone));
-		$utcoffset = $utcdate->getOffset();
-		
+		if($utc) {
+			$utcdate = new DateTime();
+			$utcdate->setTimestamp($timestamp);
+			$utcdate->setTimezone(new DateTimeZone($this->default_timezone));
+			$utcoffset = $utcdate->getOffset();
+		} else {
+			$utcoffset = 0;
+		}
 		
 		return  ($timestamp + $utcoffset);
 	} 

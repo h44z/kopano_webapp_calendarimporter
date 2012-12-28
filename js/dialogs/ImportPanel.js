@@ -8,6 +8,9 @@ Zarafa.plugins.calendarimporter.dialogs.ImportPanel = Ext.extend(Ext.Panel, {
 
 	/* store the imported timezone here... */
 	timezone: null,
+	
+	/* keep the parsed result here, for timezone changes... */
+	parsedresult: null,
 
 	/**
 	 * @constructor
@@ -31,6 +34,7 @@ Zarafa.plugins.calendarimporter.dialogs.ImportPanel = Ext.extend(Ext.Panel, {
 			},
 			items : [
 				this.createSelectBox(),
+				this.createTimezoneBox(),
 				this.initForm()
 			],
 			buttons: [
@@ -75,7 +79,6 @@ Zarafa.plugins.calendarimporter.dialogs.ImportPanel = Ext.extend(Ext.Panel, {
 	 * @private
 	 */
 	createGrid : function(eventdata) {
-
 		var parsedData = [];
 		if(eventdata !== null) {
 			var parsedData = new Array(eventdata.events.length);
@@ -179,6 +182,29 @@ Zarafa.plugins.calendarimporter.dialogs.ImportPanel = Ext.extend(Ext.Panel, {
 		}
 	},
 	
+	createTimezoneBox: function() {
+		return {
+			xtype: "selectbox",
+			ref: 'timezoneselector',
+			id: 'timezoneselector',  
+			editable: false,
+			name: "choosen_timezone",
+			width: 100,
+			fieldLabel: "Select a timezone (optional)",
+			store: Zarafa.plugins.calendarimporter.data.Timezones.store,
+			labelSeperator: ":",
+			mode: 'local',
+			border: false,
+			anchor: "100%",
+			scope: this,
+			allowBlank: true,
+			listeners: {
+				'select': this.onTimezoneSelected,
+				scope: this
+			}
+		}
+	},
+	
 	createUploadField: function() {
 		return {
 			xtype: "fileuploadfield",
@@ -260,6 +286,19 @@ Zarafa.plugins.calendarimporter.dialogs.ImportPanel = Ext.extend(Ext.Panel, {
 	},
 	
 	/**
+	 * This is called when a timezone has been seleceted in the timezone dialog
+	 * @param {Ext.form.ComboBox} combo
+	 * @param {Ext.data.Record} record
+	 * @param {Number} index
+	 */
+	onTimezoneSelected : function(combo, record, index) {
+		// record.data.field1 == timezone
+		//this.remove("eventgrid");
+		this.timezone = record.data.field1;		
+		//this.insert(this.items.length,this.createGrid(this.parsedresult));
+	},
+	
+	/**
 	 * This is called when a file has been seleceted in the file dialog
 	 * in the {@link Ext.ux.form.FileUploadField} and the dialog is closed
 	 * @param {Ext.ux.form.FileUploadField} uploadField being added a file to
@@ -285,7 +324,13 @@ Zarafa.plugins.calendarimporter.dialogs.ImportPanel = Ext.extend(Ext.Panel, {
 					uploadField.reset();
 					Ext.getCmp('submitButton').enable();
 					Ext.getCmp('submitAllButton').enable();
-					this.timezone = action.result.response.calendar["X-WR-TIMEZONE"];
+					this.parsedresult = action.result.response;
+					
+					if(this.timezone == null) {;
+						this.timezone = action.result.response.calendar["X-WR-TIMEZONE"];
+					} else {
+						this.timezone = this.timezoneselector.value;
+					}
 					this.insert(this.items.length,this.createGrid(action.result.response));
 					this.doLayout();
 				},

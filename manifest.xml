@@ -20,11 +20,13 @@
 										<serverfile type="module" module="calendarexportermodule">php/module.calendarexporter.php</serverfile>
                                 </server>
                                 <client>
+										<clientfile load="release">js/data/timezones.js</clientfile>
                                         <clientfile load="release">js/plugin.calendarimporter.js</clientfile>
 										<clientfile load="release">js/data/ResponseHandler.js</clientfile>
 										<clientfile load="release">js/dialogs/ImportContentPanel.js</clientfile>
 										<clientfile load="release">js/dialogs/ImportPanel.js</clientfile>
 										
+										<clientfile load="debug">js/data/timezones.js</clientfile>
                                         <clientfile load="debug">js/plugin.calendarimporter.js</clientfile>
 										<clientfile load="debug">js/data/ResponseHandler.js</clientfile>
 										<clientfile load="debug">js/dialogs/ImportContentPanel.js</clientfile>
