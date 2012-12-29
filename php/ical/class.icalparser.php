@@ -61,47 +61,46 @@ class ICal {
 			foreach ($lines as $line) {
 				$line = trim($line);
 				$add  = $this->keyValueFromString($line);
-				error_log("line: " . $line);
 				if ($add === false) {
 					$this->addCalendarComponentWithKeyAndValue($type, false, $line);
 					continue;
 				} 
 
-				list($keyword, $value) = $add;
+				list($keyword, $props, $value) = $add;
 
 				switch ($line) {
-				// http://www.kanzaki.com/docs/ical/vtodo.html
-				case "BEGIN:VTODO": 
-					$this->todo_count++;
-					$type = "VTODO"; 
-					break; 
+					// http://www.kanzaki.com/docs/ical/vtodo.html
+					case "BEGIN:VTODO": 
+						$this->todo_count++;
+						$type = "VTODO"; 
+						break; 
 
-				// http://www.kanzaki.com/docs/ical/vevent.html
-				case "BEGIN:VEVENT": 
-					//echo "vevent gematcht";
-					$this->event_count++;
-					$type = "VEVENT"; 
-					break; 
+					// http://www.kanzaki.com/docs/ical/vevent.html
+					case "BEGIN:VEVENT": 
+						//echo "vevent gematcht";
+						$this->event_count++;
+						$type = "VEVENT"; 
+						break; 
 
-				//all other special strings
-				case "BEGIN:VCALENDAR": 
-				case "BEGIN:DAYLIGHT": 
-					// http://www.kanzaki.com/docs/ical/vtimezone.html
-				case "BEGIN:VTIMEZONE": 
-				case "BEGIN:STANDARD": 
-					$type = $value;
-					break; 
-				case "END:VTODO": // end special text - goto VCALENDAR key 
-				case "END:VEVENT": 
-				case "END:VCALENDAR": 
-				case "END:DAYLIGHT": 
-				case "END:VTIMEZONE": 
-				case "END:STANDARD": 
-					$type = "VCALENDAR"; 
-					break; 
-				default:
-					$this->addCalendarComponentWithKeyAndValue($type, $keyword, $value);
-					break; 
+					//all other special strings
+					case "BEGIN:VCALENDAR": 
+					case "BEGIN:DAYLIGHT": 
+						// http://www.kanzaki.com/docs/ical/vtimezone.html
+					case "BEGIN:VTIMEZONE": 
+					case "BEGIN:STANDARD": 
+						$type = $value;
+						break; 
+					case "END:VTODO": // end special text - goto VCALENDAR key 
+					case "END:VEVENT": 
+					case "END:VCALENDAR": 
+					case "END:DAYLIGHT": 
+					case "END:VTIMEZONE": 
+					case "END:STANDARD": 
+						$type = "VCALENDAR"; 
+						break; 
+					default:
+						$this->addCalendarComponentWithKeyAndValue($type, $keyword, $value, $props);
+						break; 
 				} 
 			}
 			return $this->cal; 
@@ -117,14 +116,14 @@ class ICal {
 	 *
 	 * @return {None}
 	 */ 
-	public function addCalendarComponentWithKeyAndValue($component, $keyword, $value) {
-		if ($keyword == false) { 
+	public function addCalendarComponentWithKeyAndValue($component, $keyword, $value, $props = false) {
+		if ($keyword == false) { // multiline value
 			$keyword = $this->last_keyword; 
 			
 			switch ($component) {
 				case 'VEVENT': 
 					if (stristr($keyword, "DTSTART") or stristr($keyword, "DTEND")) {
-						$ts = $this->iCalDateToUnixTimestamp($value);
+						$ts = $this->iCalDateToUnixTimestamp($value, $props);
 						$value = $ts * 1000;
 					}
 					$value = str_replace("\\n", "\n", $value); 
@@ -138,10 +137,11 @@ class ICal {
 			}
 		}
 		
+		/* This should not be neccesary anymore*/
 		//always strip additional content....
 		//if (stristr($keyword, "DTSTART") or stristr($keyword, "DTEND")) {
-		$keyword = explode(";", $keyword);
-		$keyword = $keyword[0];	// remove additional content like VALUE=DATE
+		//$keyword = explode(";", $keyword);
+		//$keyword = $keyword[0];	// remove additional content like VALUE=DATE
 		//}
 		
 		if (stristr($keyword, "TIMEZONE")) {
@@ -155,7 +155,7 @@ class ICal {
 				break; 
 			case "VEVENT": 
 				if (stristr($keyword, "DTSTART") or stristr($keyword, "DTEND")) {
-					$ts = $this->iCalDateToUnixTimestamp($value);
+					$ts = $this->iCalDateToUnixTimestamp($value, $props);
 					$value = $ts * 1000;
 				}
 				$value = str_replace("\\n", "\n", $value); 
@@ -173,17 +173,16 @@ class ICal {
 	 *
 	 * @param {string} $text which is like "VCALENDAR:Begin" or "LOCATION:"
 	 *
-	 * @return {array} array("VCALENDAR", "Begin")
+	 * @return {array} array("VCALENDAR", "Begin", "Optional Props")
 	 */
 	public function keyValueFromString($text) {
-		preg_match("/(^[^a-z:]+[;a-zA-Z=\/\"\']*)[:]([\w\W]*)/", $text, $matches);
+		preg_match("/(^[^a-z:;]+)[;a-zA-Z]*[=]*([a-zA-Z\/\"\'\.\s]*)[:]([\w\W]*)/", $text, $matches);
 		
-		error_log("macthes: " . count($matches). " " . $text);
 		if (count($matches) == 0) {
 			return false;
 		}
 		
-		$matches = array_splice($matches, 1, 2);
+		$matches = array_splice($matches, 1, 3);
 		return $matches;
 	}
 
@@ -195,8 +194,13 @@ class ICal {
 	 *
 	 * @return {int} 
 	 */ 
-	public function iCalDateToUnixTimestamp($icalDate) {
+	public function iCalDateToUnixTimestamp($icalDate, $timezone) {
 	
+		if($timezone) {
+			$timezone = str_replace('"', '', $timezone);
+			$timezone = str_replace('\'', '', $timezone);
+		}
+		
 		/* timestring format */
 		$utc = strpos("zZ",substr($icalDate, -1)) === false ? false : true;
 		
@@ -228,16 +232,21 @@ class ICal {
 							(int)$date[1]);
 							
 		
-		if($utc) {
-			$utcdate = new DateTime();
-			$utcdate->setTimestamp($timestamp);
-			$utcdate->setTimezone(new DateTimeZone($this->default_timezone));
-			$utcoffset = $utcdate->getOffset();
+		if(!$utc) {
+			$tz = $this->default_timezone;
+			if($timezone) {
+				$tz = $timezone;
+			}
+			
+			$this_tz = new DateTimeZone($tz);
+			$tz_now = new DateTime("now", $this_tz);
+			$tz_offset = $this_tz->getOffset($tz_now);
+			$timestamp_utc = $timestamp + $tz_offset;
 		} else {
-			$utcoffset = 0;
+			$timestamp_utc = $timestamp;
 		}
 		
-		return  ($timestamp + $utcoffset);
+		return  ($timestamp_utc);
 	} 
 
 	/**

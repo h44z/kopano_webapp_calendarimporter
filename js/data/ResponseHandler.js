@@ -1,3 +1,12 @@
+/**
+ * ResponseHandler
+ *
+ * This class handles all responses from the php backend
+ *
+ * @author   Christoph Haas <mail@h44z.net>
+ * @modified 29.12.2012
+ * @license  http://www.opensource.org/licenses/mit-license.php  MIT License
+ */
 Ext.namespace('Zarafa.plugins.calendarimporter.data');
 
 /**

@@ -20,19 +20,13 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  *
  */
-
-/**
- * This module integrates Owncloud into attachment part of emails
- * @class OwncloudModule
- * @extends Module
- */
  
 include_once('mapi/class.recurrence.php');
 include_once('plugins/calendarimporter/php/ical/class.icalcreator.php');
  
 class CalendarexporterModule extends Module {
 
-	private $DEBUG = true; 	// enable error_log debugging
+	private $DEBUG = false; 	// enable error_log debugging
 
 	/**
 	 * @constructor

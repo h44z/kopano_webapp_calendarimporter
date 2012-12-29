@@ -1,3 +1,12 @@
+/**
+ * ImportContentPanel
+ *
+ * Container for the importpanel.
+ *
+ * @author   Christoph Haas <mail@h44z.net>
+ * @modified 29.12.2012
+ * @license  http://www.opensource.org/licenses/mit-license.php  MIT License
+ */
 Ext.namespace("Zarafa.plugins.calendarimporter.dialogs"); 
 
 /**

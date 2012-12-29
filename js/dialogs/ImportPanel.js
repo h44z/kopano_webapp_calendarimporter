@@ -1,3 +1,12 @@
+/**
+ * ImportPanel
+ *
+ * The main Panel of the calendarimporter plugin.
+ *
+ * @author   Christoph Haas <mail@h44z.net>
+ * @modified 29.12.2012
+ * @license  http://www.opensource.org/licenses/mit-license.php  MIT License
+ */
 Ext.namespace("Zarafa.plugins.calendarimporter.dialogs"); 
 
 /**
@@ -79,13 +88,26 @@ Zarafa.plugins.calendarimporter.dialogs.ImportPanel = Ext.extend(Ext.Panel, {
 	 * @private
 	 */
 	createGrid : function(eventdata) {
+		
+		/* remove the grid if it already exists because of an old calendar file */
+		this.remove("eventgrid");
+		
 		var parsedData = [];
+		var local_tz_offset = new Date().getTimezoneOffset() * 60000;  // getTimezoneOffset returns minutes... we need milliseconds
+		var tz_offset = local_tz_offset;
+		
+		if(this.timezone != null) {
+			tz_offset = Zarafa.plugins.calendarimporter.data.Timezones.getOffset(this.timezone);
+		}
+		
 		if(eventdata !== null) {
 			var parsedData = new Array(eventdata.events.length);
 			
 			for(var i=0; i < eventdata.events.length; i++) {
-				parsedData[i] = new Array(eventdata.events[i]["SUMMARY"], new Date(parseInt(eventdata.events[i]["DTSTART"])), new Date(parseInt(eventdata.events[i]["DTEND"])), eventdata.events[i]["LOCATION"], eventdata.events[i]["DESCRIPTION"]);
+				parsedData[i] = new Array(eventdata.events[i]["SUMMARY"], new Date(parseInt(eventdata.events[i]["DTSTART"]) + local_tz_offset - tz_offset), new Date(parseInt(eventdata.events[i]["DTEND"]) + local_tz_offset - tz_offset), eventdata.events[i]["LOCATION"], eventdata.events[i]["DESCRIPTION"]);
 			}
+		} else {
+			return null;
 		}
 
 		// create the data store
@@ -117,8 +139,8 @@ Zarafa.plugins.calendarimporter.dialogs.ImportPanel = Ext.extend(Ext.Panel, {
 				},
 				columns: [
 					{id: 'Summary', header: 'Title', width: 300, sortable: true, dataIndex: 'title'},
-					{header: 'Start', width: 150, sortable: true, dataIndex: 'start'},
-					{header: 'End', width: 150, sortable: true, dataIndex: 'end'},
+					{header: 'Start', width: 150, sortable: true, dataIndex: 'start', renderer : Zarafa.common.ui.grid.Renderers.datetime},
+					{header: 'End', width: 150, sortable: true, dataIndex: 'end', renderer : Zarafa.common.ui.grid.Renderers.datetime},
 					{header: 'Location', width: 150, sortable: true, dataIndex: 'location'},
 					{header: 'Description', width: 150, sortable: true, dataIndex: 'description'}
 				]
@@ -292,10 +314,12 @@ Zarafa.plugins.calendarimporter.dialogs.ImportPanel = Ext.extend(Ext.Panel, {
 	 * @param {Number} index
 	 */
 	onTimezoneSelected : function(combo, record, index) {
-		// record.data.field1 == timezone
-		//this.remove("eventgrid");
-		this.timezone = record.data.field1;		
-		//this.insert(this.items.length,this.createGrid(this.parsedresult));
+		this.timezone = record.data.field1;
+			
+		if(this.parsedresult != null) {
+			this.add(this.createGrid(this.parsedresult));
+			this.doLayout();
+		}
 	},
 	
 	/**
@@ -328,10 +352,11 @@ Zarafa.plugins.calendarimporter.dialogs.ImportPanel = Ext.extend(Ext.Panel, {
 					
 					if(this.timezone == null) {;
 						this.timezone = action.result.response.calendar["X-WR-TIMEZONE"];
+						this.timezoneselector.setValue(Zarafa.plugins.calendarimporter.data.Timezones.unMap(this.timezone));
 					} else {
 						this.timezone = this.timezoneselector.value;
 					}
-					this.insert(this.items.length,this.createGrid(action.result.response));
+					this.add(this.createGrid(action.result.response));
 					this.doLayout();
 				},
 				scope : this
@@ -417,7 +442,7 @@ Zarafa.plugins.calendarimporter.dialogs.ImportPanel = Ext.extend(Ext.Panel, {
 				icon    : Ext.MessageBox.ERROR,
 				buttons : Ext.MessageBox.OK
 			});
-		} else {			
+		} else {
 			var calendarFolder =  container.getHierarchyStore().getDefaultFolder('calendar');
 			if(calValue != "calendar") {
 				var subFolders = calendarFolder.getChildren();
@@ -456,7 +481,7 @@ Zarafa.plugins.calendarimporter.dialogs.ImportPanel = Ext.extend(Ext.Panel, {
 			
 			var updateTimer = function() {
 				for(var i = 1; i < 101; i++){
-					setTimeout(updateProgressBar(i), 20*i);					
+					setTimeout(updateProgressBar(i), 20*i);
 				}
 			};
 			
@@ -474,7 +499,7 @@ Zarafa.plugins.calendarimporter.dialogs.ImportPanel = Ext.extend(Ext.Panel, {
 					groupDir: "ASC",
 					restriction: {
 						startdate: 0,
-						duedate: 2145826800	// 2037... highest unix timestamp
+						duedate: 2145826800	// 2037... nearly highest unix timestamp
 					},
 					sort: [{
 							"field": "startdate",
@@ -526,7 +551,7 @@ Zarafa.plugins.calendarimporter.dialogs.ImportPanel = Ext.extend(Ext.Panel, {
 	downLoadICS : function(response)
 	{
 		Zarafa.common.dialogs.MessageBox.hide();
-		if(response.status === true) {			
+		if(response.status === true) {
 			// needs to be window.open, document.location.href kills the extjs response handler...
 			window.open('plugins/calendarimporter/php/download.php?fileid='+response.fileid+'&basedir='+response.basedir+'&secid='+response.secid+'&realname='+response.realname,"Download");
 		} else {
