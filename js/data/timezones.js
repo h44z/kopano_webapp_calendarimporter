@@ -135,7 +135,6 @@ Zarafa.plugins.calendarimporter.data.Timezones = Ext.extend(Object, {
 		/* Atlantic */
 		/* Antarctica */
 		/* Artic */
-		/* 
 		/* Asia */
 		/* Indian */
 		/* Others */

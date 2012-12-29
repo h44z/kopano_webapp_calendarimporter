@@ -241,7 +241,7 @@ class ICal {
 			$this_tz = new DateTimeZone($tz);
 			$tz_now = new DateTime("now", $this_tz);
 			$tz_offset = $this_tz->getOffset($tz_now);
-			$timestamp_utc = $timestamp + $tz_offset;
+			$timestamp_utc = $timestamp - $tz_offset;
 		} else {
 			$timestamp_utc = $timestamp;
 		}

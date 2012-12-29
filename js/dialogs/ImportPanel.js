@@ -104,7 +104,7 @@ Zarafa.plugins.calendarimporter.dialogs.ImportPanel = Ext.extend(Ext.Panel, {
 			var parsedData = new Array(eventdata.events.length);
 			
 			for(var i=0; i < eventdata.events.length; i++) {
-				parsedData[i] = new Array(eventdata.events[i]["SUMMARY"], new Date(parseInt(eventdata.events[i]["DTSTART"]) + local_tz_offset - tz_offset), new Date(parseInt(eventdata.events[i]["DTEND"]) + local_tz_offset - tz_offset), eventdata.events[i]["LOCATION"], eventdata.events[i]["DESCRIPTION"]);
+				parsedData[i] = new Array(eventdata.events[i]["SUMMARY"], new Date(parseInt(eventdata.events[i]["DTSTART"]) + local_tz_offset + tz_offset), new Date(parseInt(eventdata.events[i]["DTEND"]) + local_tz_offset + tz_offset), eventdata.events[i]["LOCATION"], eventdata.events[i]["DESCRIPTION"]);
 			}
 		} else {
 			return null;
