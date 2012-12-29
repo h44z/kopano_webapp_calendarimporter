@@ -66,7 +66,7 @@ class ICal {
 					continue;
 				} 
 
-				list($keyword, $props, $value) = $add;
+				list($keyword, $prop, $propvalue, $value) = $add;
 
 				switch ($line) {
 					// http://www.kanzaki.com/docs/ical/vtodo.html
@@ -99,7 +99,7 @@ class ICal {
 						$type = "VCALENDAR"; 
 						break; 
 					default:
-						$this->addCalendarComponentWithKeyAndValue($type, $keyword, $value, $props);
+						$this->addCalendarComponentWithKeyAndValue($type, $keyword, $value, $prop, $propvalue);
 						break; 
 				} 
 			}
@@ -116,14 +116,14 @@ class ICal {
 	 *
 	 * @return {None}
 	 */ 
-	public function addCalendarComponentWithKeyAndValue($component, $keyword, $value, $props = false) {
+	public function addCalendarComponentWithKeyAndValue($component, $keyword, $value, $prop = false, $propvalue = false) {
 		if ($keyword == false) { // multiline value
 			$keyword = $this->last_keyword; 
 			
 			switch ($component) {
 				case 'VEVENT': 
 					if (stristr($keyword, "DTSTART") or stristr($keyword, "DTEND")) {
-						$ts = $this->iCalDateToUnixTimestamp($value, $props);
+						$ts = $this->iCalDateToUnixTimestamp($value, $prop, $propvalue);
 						$value = $ts * 1000;
 					}
 					$value = str_replace("\\n", "\n", $value); 
@@ -155,7 +155,7 @@ class ICal {
 				break; 
 			case "VEVENT": 
 				if (stristr($keyword, "DTSTART") or stristr($keyword, "DTEND")) {
-					$ts = $this->iCalDateToUnixTimestamp($value, $props);
+					$ts = $this->iCalDateToUnixTimestamp($value, $prop, $propvalue);
 					$value = $ts * 1000;
 				}
 				$value = str_replace("\\n", "\n", $value); 
@@ -176,13 +176,13 @@ class ICal {
 	 * @return {array} array("VCALENDAR", "Begin", "Optional Props")
 	 */
 	public function keyValueFromString($text) {
-		preg_match("/(^[^a-z:;]+)[;a-zA-Z]*[=]*([a-zA-Z\/\"\'\.\s]*)[:]([\w\W]*)/", $text, $matches);
+		preg_match("/(^[^a-z:;]+)([;a-zA-Z]*)[=]*([a-zA-Z\/\"\'\.\s]*)[:]([\w\W]*)/", $text, $matches);
 		
 		if (count($matches) == 0) {
 			return false;
 		}
 		
-		$matches = array_splice($matches, 1, 3);
+		$matches = array_splice($matches, 1, 4);
 		return $matches;
 	}
 
@@ -194,11 +194,16 @@ class ICal {
 	 *
 	 * @return {int} 
 	 */ 
-	public function iCalDateToUnixTimestamp($icalDate, $timezone) {
+	public function iCalDateToUnixTimestamp($icalDate, $prop, $propvalue) {
 	
-		if($timezone) {
-			$timezone = str_replace('"', '', $timezone);
-			$timezone = str_replace('\'', '', $timezone);
+		$timezone = false;
+		
+		if($prop) {
+			$pos = strpos("TZIDtzid", $prop);
+			if($pos !== false && $propvalue) {
+				$timezone = str_replace('"', '', $propvalue);
+				$timezone = str_replace('\'', '', $timezone);
+			}
 		}
 		
 		/* timestring format */
