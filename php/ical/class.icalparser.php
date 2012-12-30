@@ -9,7 +9,7 @@
  * @author   Christoph Haas <mail@h44z.net>
  * @modified 17.11.2012 by Christoph Haas (original at http://code.google.com/p/ics-parser/)
  * @license  http://www.opensource.org/licenses/mit-license.php  MIT License
- * @version  SVN: 16
+ * @version  SVN: 62
  * @example  $ical = new ical('calendar.ics');
  *           print_r( $ical->events() );
  */
@@ -26,6 +26,9 @@ class ICal {
 
 	/* How many events are in this ical? */
 	public  /** @type {int} */ $event_count = 0; 
+	
+	/* Currently editing an alarm? */
+	private  /** @type {int} */ $isalarm = false; 
 
 	/* The parsed calendar */
 	public /** @type {Array} */ $cal;
@@ -74,7 +77,12 @@ class ICal {
 						$this->todo_count++;
 						$type = "VTODO"; 
 						break; 
-
+						
+					case "BEGIN:VALARM":
+						//echo "vevent gematcht";
+						$this->isalarm=true;
+						$type = "VEVENT"; 
+						break;
 					// http://www.kanzaki.com/docs/ical/vevent.html
 					case "BEGIN:VEVENT": 
 						//echo "vevent gematcht";
@@ -91,13 +99,17 @@ class ICal {
 						$type = $value;
 						break; 
 					case "END:VTODO": // end special text - goto VCALENDAR key 
-					case "END:VEVENT": 
+					case "END:VEVENT":
 					case "END:VCALENDAR": 
 					case "END:DAYLIGHT": 
 					case "END:VTIMEZONE": 
 					case "END:STANDARD": 
 						$type = "VCALENDAR"; 
-						break; 
+						break;					 
+					case "END:VALARM":
+						$this->isalarm=false;
+						$type = "VEVENT"; 
+						break;	
 					default:
 						$this->addCalendarComponentWithKeyAndValue($type, $keyword, $value, $prop, $propvalue);
 						break; 
@@ -122,13 +134,16 @@ class ICal {
 			
 			switch ($component) {
 				case 'VEVENT': 
-					if (stristr($keyword, "DTSTART") or stristr($keyword, "DTEND")) {
+					if (stristr($keyword, "DTSTART") or stristr($keyword, "DTEND") or stristr($keyword, "TRIGGER")) {
 						$ts = $this->iCalDateToUnixTimestamp($value, $prop, $propvalue);
 						$value = $ts * 1000;
 					}
 					$value = str_replace("\\n", "\n", $value); 
-					$value = $this->cal[$component][$this->event_count - 1]
-												   [$keyword].$value;
+					if(!$this->isalarm) {
+						$value = $this->cal[$component][$this->event_count - 1][$keyword].$value;
+					} else {
+						$value = $this->cal[$component][$this->event_count - 1]["VALARM"][$keyword].$value;
+					}
 					break;
 				case 'VTODO' : 
 					$value = $this->cal[$component][$this->todo_count - 1]
@@ -154,14 +169,19 @@ class ICal {
 				//$this->cal[$component][$this->todo_count]['Unix'] = $unixtime;
 				break; 
 			case "VEVENT": 
-				if (stristr($keyword, "DTSTART") or stristr($keyword, "DTEND")) {
+				if (stristr($keyword, "DTSTART") or stristr($keyword, "DTEND") or stristr($keyword, "TRIGGER")) {
 					$ts = $this->iCalDateToUnixTimestamp($value, $prop, $propvalue);
 					$value = $ts * 1000;
 				}
 				$value = str_replace("\\n", "\n", $value); 
-				$this->cal[$component][$this->event_count - 1][$keyword] = $value; 
+				
+				if(!$this->isalarm) {
+					$this->cal[$component][$this->event_count - 1][$keyword] = $value;
+				} else {
+					$this->cal[$component][$this->event_count - 1]["VALARM"][$keyword] = $value;
+				}
 				break; 
-			default: 
+			default:
 				$this->cal[$component][$keyword] = $value; 
 				break; 
 		} 
@@ -176,7 +196,7 @@ class ICal {
 	 * @return {array} array("VCALENDAR", "Begin", "Optional Props")
 	 */
 	public function keyValueFromString($text) {
-		preg_match("/(^[^a-z:;]+)([;a-zA-Z]*)[=]*([a-zA-Z\/\"\'\.\s]*)[:]([\w\W]*)/", $text, $matches);
+		preg_match("/(^[^a-z:;]+)[;]*([a-zA-Z]*)[=]*(.*)[:]([\w\W]*)/", $text, $matches);
 		
 		if (count($matches) == 0) {
 			return false;
@@ -200,7 +220,7 @@ class ICal {
 		
 		if($prop) {
 			$pos = strpos("TZIDtzid", $prop);
-			if($pos !== false && $propvalue) {
+			if($pos !== false && $propvalue != false) {
 				$timezone = str_replace('"', '', $propvalue);
 				$timezone = str_replace('\'', '', $timezone);
 			}
@@ -239,14 +259,34 @@ class ICal {
 		
 		if(!$utc) {
 			$tz = $this->default_timezone;
-			if($timezone) {
+			if($timezone != false) {
 				$tz = $timezone;
 			}
 			
-			$this_tz = new DateTimeZone($tz);
-			$tz_now = new DateTime("now", $this_tz);
-			$tz_offset = $this_tz->getOffset($tz_now);
-			$timestamp_utc = $timestamp - $tz_offset;
+			$error = false;
+			$this_tz = false;
+			
+			try {
+				$this_tz = new DateTimeZone($tz);	
+			} catch(Exception $e) {
+				error_log($e->getMessage());
+				$error = true;
+			}
+			
+			if($error) {
+				try {	// Try using the default calendar timezone
+					$this_tz = new DateTimeZone($this->default_timezone);
+				} catch(Exception $e) {
+					error_log($e->getMessage());
+					$timestamp_utc = $timestamp; // if that fails, we cannot do anymore
+				}
+			}
+			
+			if($this_tz != false) {
+				$tz_now = new DateTime("now", $this_tz);
+				$tz_offset = $this_tz->getOffset($tz_now);
+				$timestamp_utc = $timestamp - $tz_offset;
+			}
 		} else {
 			$timestamp_utc = $timestamp;
 		}

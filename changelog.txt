@@ -1,10 +1,14 @@
+calendarimporter 1.2:
+ - New timezone management
+ - more imported fields (Busystatus, importance, label, class, organizer, reminder)
+ - smaller improvements
+ - deploy/build script
+
 calendarimporter 1.1 final:
  - ics exporter
  - improved ics fileparser
  - fixed ExtJS Problem in chrome
 
-KNOWN PROBLEMS: 
- - importer ignores some fields (priority, status...)
+KNOWN PROBLEMS:
  - attechments are ignored
- - timezone handling is not perfect
  - recurrent events are not handled properly (im/export) 

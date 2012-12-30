@@ -736,7 +736,7 @@ Zarafa.plugins.calendarimporter.data.Timezones = Ext.extend(Object, {
 	getOffset: function(timezone) {
 		/* find timezone, this needs to be optimized ;) */
 		timezone = this.unMap(timezone);
-		
+		var i = 0;
 		for(i = 0; i < this.store.length; i++) {
 			if(this.store[i][0] == timezone) {
 				return (this.store[i][2] * 60000);
