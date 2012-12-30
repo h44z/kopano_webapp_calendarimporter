@@ -4,7 +4,7 @@
  * The main Panel of the calendarimporter plugin.
  *
  * @author   Christoph Haas <mail@h44z.net>
- * @modified 29.12.2012
+ * @modified 30.12.2012
  * @license  http://www.opensource.org/licenses/mit-license.php  MIT License
  */
 Ext.namespace("Zarafa.plugins.calendarimporter.dialogs"); 
@@ -168,41 +168,29 @@ Zarafa.plugins.calendarimporter.dialogs.ImportPanel = Ext.extend(Ext.Panel, {
 	},
 	
 	createSelectBox: function() {
-		var ctx = container.getContextByName('calendar');
-		var model = ctx.getModel();
-		var defaultFolder = model.getDefaultFolder(); // @type: Zarafa.hierarchy.data.MAPIFolderRecord
+		var defaultFolder = container.getHierarchyStore().getDefaultFolder('calendar'); // @type: Zarafa.hierarchy.data.MAPIFolderRecord		
 		var subFolders = defaultFolder.getChildren();
-
-		var myStore = new Ext.data.ArrayStore({
-			fields: ['calendar_id', 'calendar_displayname'],
-			idIndex: 0 // id for each record will be the first element
-		});
-
-		/* Calendar Record holds the name and real name of the calender */
-		var CalendarRecord = Ext.data.Record.create([
-			{name: 'realname', type: "string"},
-			{name: 'displayname', type: "string"}
-		]);
-
-		/* Store the default folder */
-		var myNewRecord = new CalendarRecord({
-			realname: defaultFolder.getDefaultFolderKey(),
-			displayname: defaultFolder.getDisplayName()
-		});
-		myStore.add(myNewRecord);
+		var myStore = [];		
+		
+		/* add all local calendar folders */
 		var i = 0;
+		myStore.push(new Array(defaultFolder.getDefaultFolderKey(), defaultFolder.getDisplayName()));
 		for(i = 0; i < subFolders.length; i++) {
 			/* Store all subfolders */
-			myNewRecord = new CalendarRecord({
-				realname: subFolders[i].getDisplayName(), // TODO: get the real path... 
-				displayname: subFolders[i].getDisplayName()
-			});
-			myStore.add(myNewRecord);
+			myStore.push(new Array(subFolders[i].getDisplayName(), subFolders[i].getDisplayName(), false)); // 3rd field = isPublicfolder
 		}
-
-		/* commit the changes to the store */
-		myStore.commitChanges();
-
+		
+		/* add all shared calendar folders */
+		var pubStore = container.getHierarchyStore().getPublicStore();
+		var pubFolder = pubStore.getDefaultFolder("publicfolders");
+		var pubSubFolders = pubFolder.getChildren();
+		
+		for(i = 0; i < pubSubFolders.length; i++) {		
+			if(pubSubFolders[i].isContainerClass("IPF.Appointment")){
+				myStore.push(new Array(pubSubFolders[i].getDisplayName(), pubSubFolders[i].getDisplayName() + " [Shared]", true)); // 3rd field = isPublicfolder
+			}
+		}
+		
 		return {
 			xtype: "selectbox",
 			ref: 'calendarselector',
@@ -213,8 +201,7 @@ Zarafa.plugins.calendarimporter.dialogs.ImportPanel = Ext.extend(Ext.Panel, {
 			width: 100,
 			fieldLabel: "Select a calender",
 			store: myStore,
-			valueField: 'realname',
-			displayField: 'displayname',
+			mode: 'local',
 			labelSeperator: ":",
 			border: false,
 			anchor: "100%",
@@ -435,57 +422,17 @@ Zarafa.plugins.calendarimporter.dialogs.ImportPanel = Ext.extend(Ext.Panel, {
 		
 		return newRecord;
 	},
+	
+	importCheckedEvents: function () {
+		var newRecords = this.eventgrid.selModel.getSelections();
+		this.importEvents(newRecords);
+    },
 
 	importAllEvents: function () {
-		//receive existing calendar store
-		var calValue = this.calendarselector.value;
-
-		if(calValue == undefined) { // no calendar choosen
-			Zarafa.common.dialogs.MessageBox.show({
-				title   : _('Error'),
-				msg     : _('You have to choose a calendar!'),
-				icon    : Zarafa.common.dialogs.MessageBox.ERROR,
-				buttons : Zarafa.common.dialogs.MessageBox.OK
-			});
-		} else {
-			var calexist = true;
-			var calendarStore = new Zarafa.calendar.AppointmentStore();
-			var calendarFolder =  container.getHierarchyStore().getDefaultFolder('calendar');
-			if(calValue != "calendar") {
-				var subFolders = calendarFolder.getChildren();
-				var i = 0;				
-				for(i=0;i<subFolders.length;i++) {
-					// look up right folder 
-					// TODO: improve!!
-					if(subFolders[i].getDisplayName() == calValue) {
-						calendarFolder = subFolders[i];
-						break;
-					}
-				}
-				
-				if(calendarFolder.getDefaultFolderKey() != undefined) {
-					Zarafa.common.dialogs.MessageBox.show({
-						title   : _('Error'),
-						msg     : _('Selected calendar does not exist!'),
-						icon    : Zarafa.common.dialogs.MessageBox.ERROR,
-						buttons : Zarafa.common.dialogs.MessageBox.OK
-					});
-					calexist = false;
-				}
-			}
-
-			if(calexist) {
-				//receive Records from grid rows
-				this.eventgrid.selModel.selectAll();  // select all entries
-				var newRecords = this.eventgrid.selModel.getSelections();
-				Ext.each(newRecords, function(newRecord) {
-					var record = this.convertToAppointmentRecord(calendarFolder,newRecord.data);
-					calendarStore.add(record);
-				}, this);
-				calendarStore.save();
-				this.dialog.close();
-			}
-		}
+		//receive Records from grid rows
+		this.eventgrid.selModel.selectAll();  // select all entries
+		var newRecords = this.eventgrid.selModel.getSelections();
+		this.importEvents(newRecords);
     },
 	
 	exportAllEvents: function () {
@@ -502,9 +449,18 @@ Zarafa.plugins.calendarimporter.dialogs.ImportPanel = Ext.extend(Ext.Panel, {
 		} else {
 			var calexist = true;
 			var calendarFolder =  container.getHierarchyStore().getDefaultFolder('calendar');
+			var pubStore = container.getHierarchyStore().getPublicStore();
+			var pubFolder = pubStore.getDefaultFolder("publicfolders");
+			var pubSubFolders = pubFolder.getChildren();
+			
 			if(calValue != "calendar") {
 				var subFolders = calendarFolder.getChildren();
 				var i = 0;
+				for(i = 0; i < pubSubFolders.length; i++) {		
+					if(pubSubFolders[i].isContainerClass("IPF.Appointment")){
+						subFolders.push(pubSubFolders[i]);
+					}
+				}
 				for(i=0;i<subFolders.length;i++) {
 					// loo up right folder 
 					// TODO: improve!!
@@ -514,7 +470,7 @@ Zarafa.plugins.calendarimporter.dialogs.ImportPanel = Ext.extend(Ext.Panel, {
 					}
 				}
 				
-				if(calendarFolder.getDefaultFolderKey() != undefined) {
+				if(calendarFolder.isDefaultFolder()) {
 					Zarafa.common.dialogs.MessageBox.show({
 						title   : _('Error'),
 						msg     : _('Selected calendar does not exist!'),
@@ -626,8 +582,8 @@ Zarafa.plugins.calendarimporter.dialogs.ImportPanel = Ext.extend(Ext.Panel, {
 			container.getNotifier().notify('error', 'Export Failed', 'ICal File creation failed!');
 		}		
 	},
-
-	importCheckedEvents: function () {
+	
+	importEvents: function (events) {
 		//receive existing calendar store
 		var calValue = this.calendarselector.value;
 
@@ -650,9 +606,18 @@ Zarafa.plugins.calendarimporter.dialogs.ImportPanel = Ext.extend(Ext.Panel, {
 			} else {
 				var calendarStore = new Zarafa.calendar.AppointmentStore();
 				var calendarFolder =  container.getHierarchyStore().getDefaultFolder('calendar');
+				var pubStore = container.getHierarchyStore().getPublicStore();
+				var pubFolder = pubStore.getDefaultFolder("publicfolders");
+				var pubSubFolders = pubFolder.getChildren();
+			
 				if(calValue != "calendar") {
 					var subFolders = calendarFolder.getChildren();
 					var i = 0;
+					for(i = 0; i < pubSubFolders.length; i++) {		
+						if(pubSubFolders[i].isContainerClass("IPF.Appointment")){
+							subFolders.push(pubSubFolders[i]);
+						}
+					}
 					for(i=0;i<subFolders.length;i++) {
 						// look up right folder 
 						// TODO: improve!!
@@ -662,7 +627,7 @@ Zarafa.plugins.calendarimporter.dialogs.ImportPanel = Ext.extend(Ext.Panel, {
 						}
 					}
 					
-					if(calendarFolder.getDefaultFolderKey() != undefined) {
+					if(calendarFolder.isDefaultFolder()) {
 						Zarafa.common.dialogs.MessageBox.show({
 							title   : _('Error'),
 							msg     : _('Selected calendar does not exist!'),
@@ -675,8 +640,7 @@ Zarafa.plugins.calendarimporter.dialogs.ImportPanel = Ext.extend(Ext.Panel, {
 
 				if(calexist) {
 					//receive Records from grid rows
-					var newRecords = this.eventgrid.selModel.getSelections();
-					Ext.each(newRecords, function(newRecord) {
+					Ext.each(events, function(newRecord) {
 						var record = this.convertToAppointmentRecord(calendarFolder,newRecord.data);
 						calendarStore.add(record);
 					}, this);
@@ -685,7 +649,7 @@ Zarafa.plugins.calendarimporter.dialogs.ImportPanel = Ext.extend(Ext.Panel, {
 				}
 			}
 		}
-    }
+	}	
 });
 
 Ext.reg('calendarimporter.importpanel', Zarafa.plugins.calendarimporter.dialogs.ImportPanel);

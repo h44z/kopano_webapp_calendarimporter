@@ -3,6 +3,7 @@ calendarimporter 1.2:
  - more imported fields (Busystatus, importance, label, class, organizer, reminder)
  - smaller improvements
  - deploy/build script
+ - support for shared/public folders
 
 calendarimporter 1.1 final:
  - ics exporter
