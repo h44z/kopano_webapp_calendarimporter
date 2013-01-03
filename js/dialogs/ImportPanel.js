@@ -20,6 +20,14 @@ Zarafa.plugins.calendarimporter.dialogs.ImportPanel = Ext.extend(Ext.Panel, {
 	
 	/* keep the parsed result here, for timezone changes... */
 	parsedresult: null,
+	
+	/**
+	 * The internal 'iframe' which is hidden from the user, which is used for downloading
+	 * attachments. See {@link #doOpen}.
+	 * @property
+	 * @type Ext.Element
+	 */
+	downloadFrame : undefined,	
 
 	/**
 	 * @constructor
@@ -575,9 +583,15 @@ Zarafa.plugins.calendarimporter.dialogs.ImportPanel = Ext.extend(Ext.Panel, {
 	 */
 	downLoadICS : function(response) {
 		Zarafa.common.dialogs.MessageBox.hide();
-		if(response.status === true) {
-			// needs to be window.open, document.location.href kills the extjs response handler...
-			window.open('plugins/calendarimporter/php/download.php?fileid='+response.fileid+'&basedir='+response.basedir+'&secid='+response.secid+'&realname='+response.realname,"Download");
+		if(response.status === true) {			
+			if(!this.downloadFrame){
+				this.downloadFrame = Ext.getBody().createChild({
+					tag: 'iframe',
+					cls: 'x-hidden'
+				});
+			}
+			var url = 'plugins/calendarimporter/php/download.php?fileid='+response.fileid+'&basedir='+response.basedir+'&secid='+response.secid+'&realname='+response.realname;
+			this.downloadFrame.dom.contentWindow.location = url;
 		} else {
 			container.getNotifier().notify('error', 'Export Failed', 'ICal File creation failed!');
 		}		
