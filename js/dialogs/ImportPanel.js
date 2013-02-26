@@ -18,6 +18,9 @@ Zarafa.plugins.calendarimporter.dialogs.ImportPanel = Ext.extend(Ext.Panel, {
 	/* store the imported timezone here... */
 	timezone: null,
 	
+	/* store the imported timezone here... */
+	dst: true,
+	
 	/* keep the parsed result here, for timezone changes... */
 	parsedresult: null,
 	
@@ -52,6 +55,7 @@ Zarafa.plugins.calendarimporter.dialogs.ImportPanel = Ext.extend(Ext.Panel, {
 			items : [
 				this.createSelectBox(),
 				this.createTimezoneBox(),
+				this.createDaylightSavingCheckBox(),
 				this.initForm()
 			],
 			buttons: [
@@ -101,7 +105,9 @@ Zarafa.plugins.calendarimporter.dialogs.ImportPanel = Ext.extend(Ext.Panel, {
 		this.remove("eventgrid");
 		
 		var parsedData = [];
-		var local_tz_offset = new Date().getTimezoneOffset() * 60000;  // getTimezoneOffset returns minutes... we need milliseconds
+		
+		/* this is used to get rid of the local timezone... */
+		var local_tz_offset = new Date().getTimezoneOffset() * 60;  // getTimezoneOffset returns minutes... we need milliseconds
 		var tz_offset = local_tz_offset;
 		
 		if(this.timezone != null) {
@@ -113,12 +119,26 @@ Zarafa.plugins.calendarimporter.dialogs.ImportPanel = Ext.extend(Ext.Panel, {
 			var i = 0;
 			for(i = 0; i < eventdata.events.length; i++) {
 				var trigger = null;
+				var dtrigger = null;
 				
 				if(eventdata.events[i]["VALARM"]) {
 					trigger = eventdata.events[i]["VALARM"]["TRIGGER"];
-					trigger = new Date(parseInt(trigger) + local_tz_offset + tz_offset);
+					dtrigger = new timezoneJS.Date(parseInt(trigger) + local_tz_offset + tz_offset, "Etc/UTC");
+					if(this.timezone !== null) {
+						dtrigger.setTimezone(this.timezone);
+					}
 				}
-				parsedData[i] = new Array(eventdata.events[i]["SUMMARY"], new Date(parseInt(eventdata.events[i]["DTSTART"]) + local_tz_offset + tz_offset), new Date(parseInt(eventdata.events[i]["DTEND"]) + local_tz_offset + tz_offset), eventdata.events[i]["LOCATION"], eventdata.events[i]["DESCRIPTION"],eventdata.events[i]["PRIORITY"],eventdata.events[i]["X-ZARAFA-LABEL"],eventdata.events[i]["X-MICROSOFT-CDO-BUSYSTATUS"],eventdata.events[i]["CLASS"],eventdata.events[i]["ORGANIZER"],trigger);
+				
+				var dstart = new timezoneJS.Date(parseInt(eventdata.events[i]["DTSTART"]) + local_tz_offset + tz_offset, "Etc/UTC");
+				var dend = new timezoneJS.Date(parseInt(eventdata.events[i]["DTEND"]) + local_tz_offset + tz_offset, "Etc/UTC");
+				if(this.timezone !== null) {
+					dstart.setTimezone(this.timezone);
+					dend.setTimezone(this.timezone);
+				}
+				console.log(this.timezone);
+				console.log(dstart);
+				
+				parsedData[i] = new Array(eventdata.events[i]["SUMMARY"], dstart, dend, eventdata.events[i]["LOCATION"], eventdata.events[i]["DESCRIPTION"],eventdata.events[i]["PRIORITY"],eventdata.events[i]["X-ZARAFA-LABEL"],eventdata.events[i]["X-MICROSOFT-CDO-BUSYSTATUS"],eventdata.events[i]["CLASS"],eventdata.events[i]["ORGANIZER"], dtrigger);
 			}
 		} else {
 			return null;
@@ -159,8 +179,30 @@ Zarafa.plugins.calendarimporter.dialogs.ImportPanel = Ext.extend(Ext.Panel, {
 				},
 				columns: [
 					{id: 'Summary', header: 'Title', width: 300, sortable: true, dataIndex: 'title'},
-					{header: 'Start', width: 150, sortable: true, dataIndex: 'start', renderer : Zarafa.common.ui.grid.Renderers.datetime},
-					{header: 'End', width: 150, sortable: true, dataIndex: 'end', renderer : Zarafa.common.ui.grid.Renderers.datetime},
+					{
+						header: 'Start', 
+						width: 150, 
+						sortable: true, 
+						dataIndex: 'start', 
+						renderer : function(value, p, record) {
+							p.css = 'mail_date';
+
+							// # TRANSLATORS: See http://docs.sencha.com/ext-js/3-4/#!/api/Date for the meaning of these formatting instructions
+							return ((value !== null) && ((typeof value) == "object") && ((typeof value.getTime) == "function"))  ? value.toString("yyyy-MM-dd HH:mm:ss Z") :_('None');
+						}
+					},
+					{
+						header: 'End', 
+						width: 150, 
+						sortable: true, 
+						dataIndex: 'end', 
+						renderer : function(value, p, record) {
+							p.css = 'mail_date';
+
+							// # TRANSLATORS: See http://docs.sencha.com/ext-js/3-4/#!/api/Date for the meaning of these formatting instructions
+							return ((value !== null) && ((typeof value) == "object") && ((typeof value.getTime) == "function"))  ? value.toString("yyyy-MM-dd HH:mm:ss Z") :_('None');
+						}
+					},
 					{header: 'Location', width: 150, sortable: true, dataIndex: 'location'},
 					{header: 'Description', width: 150, sortable: true, dataIndex: 'description'},
 					{header: "Priority", dataIndex: 'priority', hidden: true},
@@ -168,7 +210,17 @@ Zarafa.plugins.calendarimporter.dialogs.ImportPanel = Ext.extend(Ext.Panel, {
 					{header: "Busystatus", dataIndex: 'busy', hidden: true},
 					{header: "Privacystatus", dataIndex: 'privatestate', hidden: true},
 					{header: "Organizer", dataIndex: 'organizer', hidden: true},
-					{header: "Alarm", dataIndex: 'trigger', hidden: true, renderer : Zarafa.common.ui.grid.Renderers.datetime}
+					{
+						header: "Alarm", 
+						dataIndex: 'trigger', 
+						hidden: true, 
+						renderer : function(value, p, record) {
+							p.css = 'mail_date';
+
+							// # TRANSLATORS: See http://docs.sencha.com/ext-js/3-4/#!/api/Date for the meaning of these formatting instructions
+							return ((value !== null) && ((typeof value) == "object") && ((typeof value.getTime) == "function"))  ? value.toString("yyyy-MM-dd HH:mm:ss Z") :_('None');
+						}
+					}
 				]
 			}),
 			sm: new Ext.grid.RowSelectionModel({multiSelect:true})
@@ -236,6 +288,26 @@ Zarafa.plugins.calendarimporter.dialogs.ImportPanel = Ext.extend(Ext.Panel, {
 			allowBlank: true,
 			listeners: {
 				'select': this.onTimezoneSelected,
+				scope: this
+			}
+		}
+	},
+	
+	createDaylightSavingCheckBox: function() {
+		return {
+			xtype: "checkbox",
+			ref: 'dstcheck',
+			id: 'dstcheck',
+			name: "dst_check",
+			width: 100,
+			fieldLabel: "Ignore Daylight Saving Time (optional)",
+			labelSeperator: ":",
+			border: false,
+			anchor: "100%",
+			scope: this,
+			allowBlank: true,
+			listeners: {
+				'check': this.onDstChecked,
 				scope: this
 			}
 		}
@@ -329,6 +401,21 @@ Zarafa.plugins.calendarimporter.dialogs.ImportPanel = Ext.extend(Ext.Panel, {
 	 */
 	onTimezoneSelected : function(combo, record, index) {
 		this.timezone = record.data.field1;
+			
+		if(this.parsedresult != null) {
+			this.add(this.createGrid(this.parsedresult));
+			this.doLayout();
+		}
+	},
+	
+	/**
+	 * This is called when the dst checkbox has been selected
+	 * @param {Ext.form.ComboBox} combo
+	 * @param {Ext.data.Record} record
+	 * @param {Number} index
+	 */
+	onDstChecked : function(checkbox, checked) {
+		this.dst = !checked;
 			
 		if(this.parsedresult != null) {
 			this.add(this.createGrid(this.parsedresult));
@@ -667,3 +754,4 @@ Zarafa.plugins.calendarimporter.dialogs.ImportPanel = Ext.extend(Ext.Panel, {
 });
 
 Ext.reg('calendarimporter.importpanel', Zarafa.plugins.calendarimporter.dialogs.ImportPanel);
+;

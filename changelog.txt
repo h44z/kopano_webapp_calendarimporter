@@ -1,3 +1,7 @@
+calendarimporter 1.1, 26.02.2013:
+ - daylight saving time
+ - webapp 1.3 about text added
+
 calendarimporter 1.2:
  - New timezone management
  - more imported fields (Busystatus, importance, label, class, organizer, reminder)

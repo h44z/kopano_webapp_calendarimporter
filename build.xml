@@ -1,4 +1,9 @@
 <project default="all">
+	<!--############# CONFIGURE ALL PROPERTIES FOR THE REPLACER HERE ################-->
+	<property name="plugin_version" value="1.1"/>
+	<property name="plugin_timezones" value="['asia', 'backward', 'northamerica', 'southamerica', 'europe']"/>
+	<!-- EOC -->
+	
 	<property name="root-folder" value="${basedir}/../"/>
 	<property name="tools-folder" value="${root-folder}/TOOLS/"/>
 	<property name="target-folder" value="${root-folder}/DEPLOY/plugins"/>
@@ -64,6 +69,12 @@
 				<include name="${plugin-file}"/>
 				<include name="${plugin-debugfile}"/>
 			</fileset>
+			<fileset dir="${target-folder}/${plugin-folder}/php">
+				<include name="**/*.php"/>
+			</fileset>
+			<fileset dir="${target-folder}/${plugin-folder}/resources">
+				<include name="**/*"/>
+			</fileset>
 			<fileset dir="${target-folder}/${plugin-folder}/${plugin-css-folder}">
 				<include name="${plugin-css-debug-file}"/>
 				<include name="${plugin-css-file}"/>
@@ -76,7 +87,7 @@
 		<!-- Concatenate plugin JS file -->
 		<if>
 			<available file="js" type="dir" />
-			<then>
+			<then>				
 				<mkdir dir="${target-folder}/${plugin-folder}/js"/>
 				<echo message="Concatenating: ${plugin-debugfile}"/>
 				<!-- TODO: fix JS files for zConcat -->
@@ -86,12 +97,14 @@
 					</concatfiles>
 				</zConcat-->
 				<concat destfile="${target-folder}/${plugin-folder}/js/${plugin-debugfile}">
+					<fileset file="js/ABOUT.js" />					
 					<fileset file="js/data/timezones.js" />
 					<fileset file="js/plugin.calendarimporter.js" />
 					<fileset file="js/data/ResponseHandler.js" />
 					<fileset file="js/dialogs/ImportContentPanel.js" />
 					<fileset file="js/dialogs/ImportPanel.js" />
 				</concat>
+				<replace file="${target-folder}/${plugin-folder}/js/${plugin-debugfile}" token="@_@PLUGIN_TIMEZONES@_@" value="${plugin_timezones}" />
 			</then>
 		</if>
 
@@ -135,6 +148,7 @@
 					<externs>
 						var Ext = {};
 						var Zarafa = {};
+						var timezoneJS = {};
 						var container = {};
 						var _ = function(key, domain) {};
 						var dgettext = function(domain, msgid) {};
@@ -226,8 +240,10 @@
 		<!-- copy files -->
 		<copy todir="${target-folder}/${plugin-folder}">
 			<fileset dir=".">
-				<include name="resources/**/*.*"/>
+				<include name="resources/**/*"/>
 				<include name="php/**/*.php"/>
+				<include name="js/timezone-js/fleegix.js" />
+				<include name="js/timezone-js/src/date.js" />
 				<include name="config.php"/>
 				<include name="changelog.txt"/>
 				<!-- exclude the ant script -->
@@ -236,6 +252,9 @@
 				<exclude name="resources/css/*.*"/>
 			</fileset>
 		</copy>
+		
+		<!-- replace all variables... -->
+		<replace file="${target-folder}/${plugin-folder}/manifest.xml" token="@_@PLUGIN_VERSION@_@" value="${plugin_version}" />		
 	</target>
 	
 	<!-- compresses each CSS file -->

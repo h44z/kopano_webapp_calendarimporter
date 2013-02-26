@@ -4,7 +4,7 @@
  * Main entry point for the plugin
  *
  * @author   Christoph Haas <mail@h44z.net>
- * @modified 29.12.2012
+ * @modified 26.02.2013
  * @license  http://www.opensource.org/licenses/mit-license.php  MIT License
  */
  
@@ -20,6 +20,12 @@ Zarafa.plugins.calendarimporter.ImportPlugin = Ext.extend(Zarafa.core.Plugin, {	
 	constructor: function (config) {
 		config = config || {};
 		
+		Ext.applyIf(config, {
+			name : 'calendarimporter',
+			displayName : _('Calendarimporter Plugin'),
+			about : Zarafa.plugins.calendarimporter.ABOUT
+		});
+		
 		Zarafa.plugins.calendarimporter.ImportPlugin.superclass.constructor.call(this, config);		
 	},
 	
@@ -28,6 +34,12 @@ Zarafa.plugins.calendarimporter.ImportPlugin = Ext.extend(Zarafa.core.Plugin, {	
 	 * @protected
 	 */
 	initPlugin : function()	{
+	
+		// First of all initialize timezone-js....
+		timezoneJS.timezone.zoneFileBasePath = 'plugins/calendarimporter/resources/tz';
+		timezoneJS.timezone.defaultZoneFile = @_@PLUGIN_TIMEZONES@_@;  // replaced by buildscript -> https://github.com/mde/timezone-js
+		timezoneJS.timezone.init({async: false});
+	
 		Zarafa.plugins.calendarimporter.ImportPlugin.superclass.initPlugin.apply(this, arguments);	
 		Zarafa.core.data.SharedComponentType.addProperty('plugins.calendarimporter.dialogs.importevents');
 		

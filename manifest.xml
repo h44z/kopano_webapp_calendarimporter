@@ -2,7 +2,7 @@
 <!DOCTYPE plugin SYSTEM "manifest.dtd">
 <plugin version="2">
 	<info>
-		<version>1.2</version>
+		<version>@_@PLUGIN_VERSION@_@</version>
 		<name>calendarimporter</name>
 		<title>ICS Calendar Importer/Exporter</title>
 		<author>Christoph Haas</author>
@@ -20,9 +20,17 @@
 					<serverfile type="module" module="calendarexportermodule">php/module.calendarexporter.php</serverfile>
 				</server>
 				<client>
+					<clientfile load="release">js/timezone-js/fleegix.js</clientfile>
+					<clientfile load="release">js/timezone-js/src/date.js</clientfile>
 					<clientfile load="release">js/calendarimporter.js</clientfile>
-					<clientfile load="debug">js/calendarimporter-debug.js</clientfile>
 					
+					<clientfile load="debug">js/timezone-js/fleegix.js</clientfile>
+					<clientfile load="debug">js/timezone-js/src/date.js</clientfile>
+					<clientfile load="debug">js/calendarimporter-debug.js</clientfile>					
+					
+					<clientfile load="source">js/ABOUT.js</clientfile>
+					<clientfile load="source">js/timezone-js/fleegix.js</clientfile>
+					<clientfile load="source">js/timezone-js/src/date.js</clientfile>
 					<clientfile load="source">js/data/timezones.js</clientfile>
 					<clientfile load="source">js/plugin.calendarimporter.js</clientfile>
 					<clientfile load="source">js/data/ResponseHandler.js</clientfile>

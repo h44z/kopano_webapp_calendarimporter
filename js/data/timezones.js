@@ -744,6 +744,10 @@ Zarafa.plugins.calendarimporter.data.Timezones = Ext.extend(Object, {
 		}
 	
 		return 0;	// no offset found...
+	},
+	
+	getDstOffset: function(time, timezone) {
+		return 0; // no offset
 	}
 });
 
