@@ -124,16 +124,23 @@ Zarafa.plugins.calendarimporter.dialogs.ImportPanel = Ext.extend(Ext.Panel, {
 				if(eventdata.events[i]["VALARM"]) {
 					trigger = eventdata.events[i]["VALARM"]["TRIGGER"];
 					dtrigger = new timezoneJS.Date(parseInt(trigger) + local_tz_offset + tz_offset, "Etc/UTC");
-					if(this.timezone !== null) {
+					if(typeof this.timezone !== "undefined" && this.timezone !== null) {
 						dtrigger.setTimezone(this.timezone);
+						var realtzoffset = dtrigger.getTimezoneOffset() * 60; 
+						dtrigger = new timezoneJS.Date(parseInt(trigger) + local_tz_offset + realtzoffset, this.timezone);
 					}
 				}
 				
 				var dstart = new timezoneJS.Date(parseInt(eventdata.events[i]["DTSTART"]) + local_tz_offset + tz_offset, "Etc/UTC");
 				var dend = new timezoneJS.Date(parseInt(eventdata.events[i]["DTEND"]) + local_tz_offset + tz_offset, "Etc/UTC");
-				if(this.timezone !== null) {
+				
+				
+				if(typeof this.timezone !== "undefined" && this.timezone !== null) {
 					dstart.setTimezone(this.timezone);
 					dend.setTimezone(this.timezone);
+					
+					dstart = new Date(dstart.getUTCTime() + local_tz_offset + tz_offset);
+					dend = new Date(dend.getUTCTime() + local_tz_offset + tz_offset);
 				}
 				console.log(this.timezone);
 				console.log(dstart);
