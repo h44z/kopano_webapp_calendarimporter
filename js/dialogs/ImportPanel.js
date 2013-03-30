@@ -1,11 +1,29 @@
 /**
+ * ImportPanel.js zarafa calender to ics im/exporter
+ *
+ * Author: Christoph Haas <christoph.h@sprinternet.at>
+ * Copyright (C) 2012-2013 Christoph Haas
+ *
+ * This library is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public
+ * License as published by the Free Software Foundation; either
+ * version 2.1 of the License, or (at your option) any later version.
+ *
+ * This library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Lesser General Public License for more details.
+ *	
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this library; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ *
+ */
+
+/**
  * ImportPanel
  *
  * The main Panel of the calendarimporter plugin.
- *
- * @author   Christoph Haas <mail@h44z.net>
- * @modified 30.12.2012
- * @license  http://www.opensource.org/licenses/mit-license.php  MIT License
  */
 Ext.namespace("Zarafa.plugins.calendarimporter.dialogs"); 
 
@@ -18,11 +36,23 @@ Zarafa.plugins.calendarimporter.dialogs.ImportPanel = Ext.extend(Ext.Panel, {
 	/* store the imported timezone here... */
 	timezone: null,
 	
-	/* store the imported timezone here... */
-	dst: true,
+	/* ignore daylight saving time... */
+	ignoredst: null,
 	
-	/* keep the parsed result here, for timezone changes... */
-	parsedresult: null,
+	/* path to ics file on server... */
+	icsfile: null,
+	
+	/* loadmask for timezone/dst changes... */
+	loadMask: null,
+	
+	/* export event buffer */
+	exportResponse: new Array(),
+	
+	/* how many requests are still running? */
+	runningRequests: null,
+	
+	/* The store for the selection grid */
+	store: null,
 	
 	/**
 	 * The internal 'iframe' which is hidden from the user, which is used for downloading
@@ -30,23 +60,47 @@ Zarafa.plugins.calendarimporter.dialogs.ImportPanel = Ext.extend(Ext.Panel, {
 	 * @property
 	 * @type Ext.Element
 	 */
-	downloadFrame : undefined,	
+	downloadFrame : undefined,
 
 	/**
 	 * @constructor
 	 * @param {object} config
 	 */
-	constructor : function (config) 
-	{
+	constructor : function (config) {
 		config = config || {};
 		var self = this;
+		this.timezone = container.getSettingsModel().get("zarafa/v1/plugins/calendarimporter/default_timezone");
+		
+		if(typeof config.filename !== "undefined") {
+			this.icsfile = config.filename;
+		}
+		
+		// create the data store
+		this.store = new Ext.data.ArrayStore({
+			fields: [
+				{name: 'title'},
+				{name: 'start'},
+				{name: 'end'},
+				{name: 'location'},
+				{name: 'description'},
+				{name: 'priority'},
+				{name: 'label'},
+				{name: 'busy'},
+				{name: 'privatestate'},
+				{name: 'organizer'},
+				{name: 'trigger'}
+			]
+		});
+		
 		Ext.apply(config, {
 			xtype     : 'calendarimporter.importpanel',
+			ref		  : "importpanel",
+			id		  : "importpanel",
 			layout    : {
 				type  : 'form',
 				align : 'stretch'
 			},
-			anchor      : '100%',
+			anchor	  : '100%',
 			bodyStyle : 'background-color: inherit;',
 			defaults  : {
 				border      : true,
@@ -56,16 +110,36 @@ Zarafa.plugins.calendarimporter.dialogs.ImportPanel = Ext.extend(Ext.Panel, {
 				this.createSelectBox(),
 				this.createTimezoneBox(),
 				this.createDaylightSavingCheckBox(),
-				this.initForm()
+				this.initForm(),
+				this.createGrid()
 			],
 			buttons: [
 				this.createExportAllButton(),
 				this.createSubmitAllButton(),
 				this.createSubmitButton(),
 				this.createCancelButton()
-			]
+			], 
+			listeners: {
+				afterrender: function (cmp) {
+					Ext.getCmp('importbutton').disable();
+					this.loadMask = new Ext.LoadMask(Ext.getCmp("importpanel").getEl(), {msg:'Loading...'});
+					
+					if(this.icsfile != null) { // if we have got the filename from an attachment
+						this.parseCalendar(this.icsfile, this.timezone, this.ignoredst);
+					}
+				},
+				close: function (cmp) {
+					Ext.getCmp('importbutton').enable();
+				},
+				hide: function (cmp) {
+					Ext.getCmp('importbutton').enable();
+				},
+				destroy: function (cmp) {
+					Ext.getCmp('importbutton').enable();
+				}
+			}
 		});
-
+		
 		Zarafa.plugins.calendarimporter.dialogs.ImportPanel.superclass.constructor.call(this, config);
 	},
 
@@ -74,8 +148,7 @@ Zarafa.plugins.calendarimporter.dialogs.ImportPanel = Ext.extend(Ext.Panel, {
 	 * posted and contains the attachments
 	 * @private
 	 */
-	initForm : function ()
-	{
+	initForm : function () {
 		return {
 			xtype: 'form',
 			ref: 'addFormPanel',
@@ -95,139 +168,72 @@ Zarafa.plugins.calendarimporter.dialogs.ImportPanel = Ext.extend(Ext.Panel, {
 	},
 
 	/**
-	 * Init embedded form, this is the form that is
-	 * posted and contains the attachments
+	 * Reloads the data of the grid
 	 * @private
 	 */
-	createGrid : function(eventdata) {
-		
-		/* remove the grid if it already exists because of an old calendar file */
-		this.remove("eventgrid");
-		
+	reloadGridStore: function(eventdata) {
 		var parsedData = [];
 		
-		/* this is used to get rid of the local timezone... */
-		var local_tz_offset = new Date().getTimezoneOffset() * 60;  // getTimezoneOffset returns minutes... we need milliseconds
-		var tz_offset = local_tz_offset;
+		// this is done to get rid of the local browser timezone....
+		// because all timezone specific stuff is done via php
+		var local_tz_offset = new Date().getTimezoneOffset() * 60000;  // getTimezoneOffset returns minutes... we need milliseconds
 		
-		if(this.timezone != null) {
-			tz_offset = Zarafa.plugins.calendarimporter.data.Timezones.getOffset(this.timezone);
-		}
 		
 		if(eventdata !== null) {
 			parsedData = new Array(eventdata.events.length);
 			var i = 0;
 			for(i = 0; i < eventdata.events.length; i++) {
 				var trigger = null;
-				var dtrigger = null;
 				
 				if(eventdata.events[i]["VALARM"]) {
 					trigger = eventdata.events[i]["VALARM"]["TRIGGER"];
-					dtrigger = new timezoneJS.Date(parseInt(trigger) + local_tz_offset + tz_offset, "Etc/UTC");
-					if(typeof this.timezone !== "undefined" && this.timezone !== null) {
-						dtrigger.setTimezone(this.timezone);
-						var realtzoffset = dtrigger.getTimezoneOffset() * 60; 
-						dtrigger = new timezoneJS.Date(parseInt(trigger) + local_tz_offset + realtzoffset, this.timezone);
-					}
+					trigger = new Date(parseInt(trigger) + local_tz_offset);
 				}
-				
-				var dstart = new timezoneJS.Date(parseInt(eventdata.events[i]["DTSTART"]) + local_tz_offset + tz_offset, "Etc/UTC");
-				var dend = new timezoneJS.Date(parseInt(eventdata.events[i]["DTEND"]) + local_tz_offset + tz_offset, "Etc/UTC");
-				
-				
-				if(typeof this.timezone !== "undefined" && this.timezone !== null) {
-					dstart.setTimezone(this.timezone);
-					dend.setTimezone(this.timezone);
-					
-					dstart = new Date(dstart.getUTCTime() + local_tz_offset + tz_offset);
-					dend = new Date(dend.getUTCTime() + local_tz_offset + tz_offset);
-				}
-				console.log(this.timezone);
-				console.log(dstart);
-				
-				parsedData[i] = new Array(eventdata.events[i]["SUMMARY"], dstart, dend, eventdata.events[i]["LOCATION"], eventdata.events[i]["DESCRIPTION"],eventdata.events[i]["PRIORITY"],eventdata.events[i]["X-ZARAFA-LABEL"],eventdata.events[i]["X-MICROSOFT-CDO-BUSYSTATUS"],eventdata.events[i]["CLASS"],eventdata.events[i]["ORGANIZER"], dtrigger);
+				parsedData[i] = new Array(eventdata.events[i]["SUMMARY"], new Date(parseInt(eventdata.events[i]["DTSTART"]) + local_tz_offset), new Date(parseInt(eventdata.events[i]["DTEND"]) + local_tz_offset), eventdata.events[i]["LOCATION"], eventdata.events[i]["DESCRIPTION"],eventdata.events[i]["PRIORITY"],eventdata.events[i]["X-ZARAFA-LABEL"],eventdata.events[i]["X-MICROSOFT-CDO-BUSYSTATUS"],eventdata.events[i]["CLASS"],eventdata.events[i]["ORGANIZER"],trigger);
 			}
 		} else {
 			return null;
 		}
 
-		// create the data store
-		var store = new Ext.data.ArrayStore({
-			fields: [
-				{name: 'title'},
-				{name: 'start'},
-				{name: 'end'},
-				{name: 'location'},
-				{name: 'description'},
-				{name: 'priority'},
-				{name: 'label'},
-				{name: 'busy'},
-				{name: 'privatestate'},
-				{name: 'organizer'},
-				{name: 'trigger'}
-			],
-			data: parsedData
-		});
-
+		this.store.loadData(parsedData, false);
+	},
+	
+	/**
+	 * Init embedded form, this is the form that is
+	 * posted and contains the attachments
+	 * @private
+	 */
+	createGrid : function() {
 		return {
 			xtype: 'grid',
 			ref: 'eventgrid',
 			id: 'eventgrid',
 			columnWidth: 1.0,
-			store: store,
+			store: this.store,
 			width: '100%',
 			height: 300,
 			title: 'Select events to import',
-			frame: true,
+			frame: false,
+			viewConfig:{
+				forceFit:true
+			},
 			colModel: new Ext.grid.ColumnModel({
 				defaults: {
 					width: 300,
 					sortable: true
 				},
 				columns: [
-					{id: 'Summary', header: 'Title', width: 300, sortable: true, dataIndex: 'title'},
-					{
-						header: 'Start', 
-						width: 150, 
-						sortable: true, 
-						dataIndex: 'start', 
-						renderer : function(value, p, record) {
-							p.css = 'mail_date';
-
-							// # TRANSLATORS: See http://docs.sencha.com/ext-js/3-4/#!/api/Date for the meaning of these formatting instructions
-							return ((value !== null) && ((typeof value) == "object") && ((typeof value.getTime) == "function"))  ? value.toString("yyyy-MM-dd HH:mm:ss Z") :_('None');
-						}
-					},
-					{
-						header: 'End', 
-						width: 150, 
-						sortable: true, 
-						dataIndex: 'end', 
-						renderer : function(value, p, record) {
-							p.css = 'mail_date';
-
-							// # TRANSLATORS: See http://docs.sencha.com/ext-js/3-4/#!/api/Date for the meaning of these formatting instructions
-							return ((value !== null) && ((typeof value) == "object") && ((typeof value.getTime) == "function"))  ? value.toString("yyyy-MM-dd HH:mm:ss Z") :_('None');
-						}
-					},
+					{id: 'Summary', header: 'Title', width: 200, sortable: true, dataIndex: 'title'},
+					{header: 'Start', width: 200, sortable: true, dataIndex: 'start', renderer : Zarafa.common.ui.grid.Renderers.datetime},
+					{header: 'End', width: 200, sortable: true, dataIndex: 'end', renderer : Zarafa.common.ui.grid.Renderers.datetime},
 					{header: 'Location', width: 150, sortable: true, dataIndex: 'location'},
-					{header: 'Description', width: 150, sortable: true, dataIndex: 'description'},
+					{header: 'Description', sortable: true, dataIndex: 'description'},
 					{header: "Priority", dataIndex: 'priority', hidden: true},
 					{header: "Label", dataIndex: 'label', hidden: true},
 					{header: "Busystatus", dataIndex: 'busy', hidden: true},
 					{header: "Privacystatus", dataIndex: 'privatestate', hidden: true},
 					{header: "Organizer", dataIndex: 'organizer', hidden: true},
-					{
-						header: "Alarm", 
-						dataIndex: 'trigger', 
-						hidden: true, 
-						renderer : function(value, p, record) {
-							p.css = 'mail_date';
-
-							// # TRANSLATORS: See http://docs.sencha.com/ext-js/3-4/#!/api/Date for the meaning of these formatting instructions
-							return ((value !== null) && ((typeof value) == "object") && ((typeof value.getTime) == "function"))  ? value.toString("yyyy-MM-dd HH:mm:ss Z") :_('None');
-						}
-					}
+					{header: "Alarm", dataIndex: 'trigger', hidden: true, renderer : Zarafa.common.ui.grid.Renderers.datetime}
 				]
 			}),
 			sm: new Ext.grid.RowSelectionModel({multiSelect:true})
@@ -237,7 +243,7 @@ Zarafa.plugins.calendarimporter.dialogs.ImportPanel = Ext.extend(Ext.Panel, {
 	createSelectBox: function() {
 		var defaultFolder = container.getHierarchyStore().getDefaultFolder('calendar'); // @type: Zarafa.hierarchy.data.MAPIFolderRecord		
 		var subFolders = defaultFolder.getChildren();
-		var myStore = [];		
+		var myStore = [];
 		
 		/* add all local calendar folders */
 		var i = 0;
@@ -249,12 +255,20 @@ Zarafa.plugins.calendarimporter.dialogs.ImportPanel = Ext.extend(Ext.Panel, {
 		
 		/* add all shared calendar folders */
 		var pubStore = container.getHierarchyStore().getPublicStore();
-		var pubFolder = pubStore.getDefaultFolder("publicfolders");
-		var pubSubFolders = pubFolder.getChildren();
 		
-		for(i = 0; i < pubSubFolders.length; i++) {		
-			if(pubSubFolders[i].isContainerClass("IPF.Appointment")){
-				myStore.push(new Array(pubSubFolders[i].getDisplayName(), pubSubFolders[i].getDisplayName() + " [Shared]", true)); // 3rd field = isPublicfolder
+		if(typeof pubStore !== "undefined") {
+			try {
+				var pubFolder = pubStore.getDefaultFolder("publicfolders");
+				var pubSubFolders = pubFolder.getChildren();
+				
+				for(i = 0; i < pubSubFolders.length; i++) {
+					if(pubSubFolders[i].isContainerClass("IPF.Appointment")){
+						myStore.push(new Array(pubSubFolders[i].getDisplayName(), pubSubFolders[i].getDisplayName() + " [Shared]", true)); // 3rd field = isPublicfolder
+					}
+				}
+			} catch (e) {
+				console.log("Error opening the shared folder...");
+				console.log(e);
 			}
 		}
 		
@@ -284,6 +298,7 @@ Zarafa.plugins.calendarimporter.dialogs.ImportPanel = Ext.extend(Ext.Panel, {
 			id: 'timezoneselector',  
 			editable: false,
 			name: "choosen_timezone",
+			value: Zarafa.plugins.calendarimporter.data.Timezones.unMap(container.getSettingsModel().get("zarafa/v1/plugins/calendarimporter/default_timezone")),
 			width: 100,
 			fieldLabel: "Select a timezone (optional)",
 			store: Zarafa.plugins.calendarimporter.data.Timezones.store,
@@ -307,7 +322,8 @@ Zarafa.plugins.calendarimporter.dialogs.ImportPanel = Ext.extend(Ext.Panel, {
 			id: 'dstcheck',
 			name: "dst_check",
 			width: 100,
-			fieldLabel: "Ignore Daylight Saving Time (optional)",
+			fieldLabel: "Ignore DST (optional)",
+			boxLabel: 'This will ignore "Daylight saving time" offsets.',
 			labelSeperator: ":",
 			border: false,
 			anchor: "100%",
@@ -408,25 +424,22 @@ Zarafa.plugins.calendarimporter.dialogs.ImportPanel = Ext.extend(Ext.Panel, {
 	 */
 	onTimezoneSelected : function(combo, record, index) {
 		this.timezone = record.data.field1;
-			
-		if(this.parsedresult != null) {
-			this.add(this.createGrid(this.parsedresult));
-			this.doLayout();
+		
+		if(this.icsfile != null) {
+			this.parseCalendar(this.icsfile, this.timezone, this.ignoredst);
 		}
 	},
 	
 	/**
 	 * This is called when the dst checkbox has been selected
-	 * @param {Ext.form.ComboBox} combo
-	 * @param {Ext.data.Record} record
-	 * @param {Number} index
+	 * @param {Ext.form.CheckBox} combo
+	 * @param {boolean} checked
 	 */
 	onDstChecked : function(checkbox, checked) {
-		this.dst = !checked;
-			
-		if(this.parsedresult != null) {
-			this.add(this.createGrid(this.parsedresult));
-			this.doLayout();
+		this.ignoredst = checked;
+		
+		if(this.icsfile != null) {
+			this.parseCalendar(this.icsfile, this.timezone, this.ignoredst);
 		}
 	},
 	
@@ -435,7 +448,7 @@ Zarafa.plugins.calendarimporter.dialogs.ImportPanel = Ext.extend(Ext.Panel, {
 	 * in the {@link Ext.ux.form.FileUploadField} and the dialog is closed
 	 * @param {Ext.ux.form.FileUploadField} uploadField being added a file to
 	 */
-	onFileSelected	: function(uploadField) {
+	onFileSelected : function(uploadField) {
 		var form = this.addFormPanel.getForm();
 
 		if (form.isValid()) {
@@ -447,27 +460,61 @@ Zarafa.plugins.calendarimporter.dialogs.ImportPanel = Ext.extend(Ext.Panel, {
 					Ext.getCmp('submitAllButton').disable();
 					Zarafa.common.dialogs.MessageBox.show({
 						title   : _('Error'),
-						msg     : _(action.result.errors[action.result.errors.type]),
+						msg     : _(action.result.error),
 						icon    : Zarafa.common.dialogs.MessageBox.ERROR,
 						buttons : Zarafa.common.dialogs.MessageBox.OK
 					});
 				},
 				success: function(file, action){
 					uploadField.reset();
-					Ext.getCmp('submitButton').enable();
-					Ext.getCmp('submitAllButton').enable();
-					this.parsedresult = action.result.response;
+					this.icsfile = action.result.ics_file;
 					
-					if(this.timezone == null) {;
-						this.timezone = action.result.response.calendar["X-WR-TIMEZONE"];
-						this.timezoneselector.setValue(Zarafa.plugins.calendarimporter.data.Timezones.unMap(this.timezone));
-					} else {
-						this.timezone = this.timezoneselector.value;
-					}
-					this.add(this.createGrid(action.result.response));
-					this.doLayout();
+					this.parseCalendar(this.icsfile, this.timezone, this.ignoredst);
 				},
 				scope : this
+			});
+		}
+	},
+	
+	parseCalendar: function (icsPath, timezone, ignoredst) {
+		this.loadMask.show();
+		// call export function here!
+		var responseHandler = new Zarafa.plugins.calendarimporter.data.ResponseHandler({
+			successCallback: this.handleParsingResult.createDelegate(this)
+		});
+		
+		container.getRequest().singleRequest(
+			'calendarmodule',
+			'import',
+			{
+				ics_filepath: icsPath,
+				timezone: timezone,
+				ignore_dst: ignoredst
+			},
+			responseHandler
+		);
+	},
+	
+	handleParsingResult: function(response) {
+		this.loadMask.hide();
+		
+		if(response["status"] == true) {
+			Ext.getCmp('submitButton').enable();
+			Ext.getCmp('submitAllButton').enable();
+		
+			if(typeof response.parsed.calendar["X-WR-TIMEZONE"] !== "undefined") {;
+				this.timezone = response.parsed.calendar["X-WR-TIMEZONE"];
+				this.timezoneselector.setValue(Zarafa.plugins.calendarimporter.data.Timezones.unMap(this.timezone));
+			} 
+			this.reloadGridStore(response.parsed);
+		} else {
+			Ext.getCmp('submitButton').disable();
+			Ext.getCmp('submitAllButton').disable();
+			Zarafa.common.dialogs.MessageBox.show({
+				title   : _('Parser Error'),
+				msg     : _(response["message"]),
+				icon    : Zarafa.common.dialogs.MessageBox.ERROR,
+				buttons : Zarafa.common.dialogs.MessageBox.OK
 			});
 		}
 	},
@@ -497,11 +544,11 @@ Zarafa.plugins.calendarimporter.dialogs.ImportPanel = Ext.extend(Ext.Panel, {
 		
 		var busystate = new Array("FREE", "TENTATIVE", "BUSY", "OOF");
 		var zlabel = new Array("NONE", "IMPORTANT", "WORK", "PERSONAL", "HOLIDAY", "REQUIRED", "TRAVEL REQUIRED", "PREPARATION REQUIERED", "BIRTHDAY", "SPECIAL DATE", "PHONE INTERVIEW");
-				
+		
 		/* optional fields */
 		if(entry.priority !== "") {
 			newRecord.data.importance = entry.priority;
-		}		
+		}
 		if(entry.label !== "") {
 			newRecord.data.label = zlabel.indexOf(entry.label);
 		}
@@ -540,7 +587,7 @@ Zarafa.plugins.calendarimporter.dialogs.ImportPanel = Ext.extend(Ext.Panel, {
 	exportAllEvents: function () {
 		//receive existing calendar store
 		var calValue = this.calendarselector.value;
-
+		
 		if(calValue == undefined) { // no calendar choosen
 			Zarafa.common.dialogs.MessageBox.show({
 				title   : _('Error'),
@@ -616,7 +663,7 @@ Zarafa.plugins.calendarimporter.dialogs.ImportPanel = Ext.extend(Ext.Panel, {
 			
 				// call export function here!
 				var responseHandler = new Zarafa.plugins.calendarimporter.data.ResponseHandler({
-					successCallback: this.exportDone.createDelegate(this)
+					successCallback: this.exportPagedEvents.createDelegate(this)
 				});
 				
 				container.getRequest().singleRequest(
@@ -625,8 +672,10 @@ Zarafa.plugins.calendarimporter.dialogs.ImportPanel = Ext.extend(Ext.Panel, {
 					{
 						groupDir: "ASC",
 						restriction: {
-							startdate: 0,
-							duedate: 2145826800	// 2037... nearly highest unix timestamp
+							//start: 0,
+							//limit: 500,	// limit to 500 events.... not working because of hardcoded limit in listmodule
+							//startdate: 0,
+							//duedate: 2145826800	// 2037... nearly highest unix timestamp
 						},
 						sort: [{
 								"field": "startdate",
@@ -642,33 +691,97 @@ Zarafa.plugins.calendarimporter.dialogs.ImportPanel = Ext.extend(Ext.Panel, {
     },
 	
 	/**
-	 * Export done =)
+	 * Calculate needed Requests for all events
+	 * Needed because the listmodule has hardcoded pageing setting -.-
 	 * @param {Object} response
-	 * @private
 	 */
-	exportDone : function(response)	{
-		if(response.item.length > 0) {
-			// call export function here!
-			var responseHandler = new Zarafa.plugins.calendarimporter.data.ResponseHandler({
-				successCallback: this.downLoadICS.createDelegate(this)
-			});
-			
-			container.getRequest().singleRequest(
-				'calendarexportermodule',
-				'export',
-				{
-					data: response,
-					calendar: this.calendarselector.value
-				},
-				responseHandler
-			);
-			container.getNotifier().notify('info', 'Exported', 'Found ' + response.item.length + ' entries to export.');
-		} else {
+	exportPagedEvents:function(response) {
+	
+		if(response.page.start = 0 && response.item.length <= 0) {
 			container.getNotifier().notify('info', 'Export Failed', 'There were no items to export!');
 			Zarafa.common.dialogs.MessageBox.hide();
+		} else {
+			this.exportResponse = response.item;
 		}
-		this.dialog.close();
-	},	
+		
+		if(this.totalExportCount == null) {
+			this.totalExportCount = response.page.totalrowcount;
+		}
+		
+		var requests = Math.ceil(response.page.totalrowcount / response.page.rowcount);
+		this.runningRequests = requests;
+		
+		var i = 0;
+		
+		for(i = 0; i < requests; i++) {
+			var responseHandler = new Zarafa.plugins.calendarimporter.data.ResponseHandler({
+				successCallback: this.storeResult.createDelegate(this)
+			});
+			this.requestNext(responseHandler, response.page.rowcount *(i+1), response.page.rowcount);
+		}
+	},
+
+	/**
+	 * Responsehandler for the single requests... will merge all events into one array
+	 * @param {Object} response
+	 */
+	storeResult: function(response) {
+			var tmp = this.exportResponse;
+			
+			this.exportResponse = tmp.concat(response.item);
+			
+			if(this.runningRequests <= 1) {
+				// final request =)
+				var responseHandler = new Zarafa.plugins.calendarimporter.data.ResponseHandler({
+					successCallback: this.downLoadICS.createDelegate(this)
+				});
+				
+				container.getRequest().singleRequest(
+					'calendarmodule',
+					'export',
+					{
+						data: this.exportResponse,
+						calendar: this.calendarselector.value
+					},
+					responseHandler
+				);
+				container.getNotifier().notify('info', 'Exported', 'Found ' + this.exportResponse.length + ' entries to export. Preparing download...');
+				this.dialog.close();
+			}
+			
+			this.runningRequests--;
+	},
+	
+	/**
+	 * build a new event request for the listmodule
+	 * @param {Object} responseHandler (should be storeResult)
+	 * @param {int} start
+	 * @param {int} limit
+	 */
+	requestNext: function(responseHandler, start, limit) {
+		var calendarFolder =  container.getHierarchyStore().getDefaultFolder('calendar');
+		
+		container.getRequest().singleRequest(
+			'appointmentlistmodule',
+			'list',
+			{
+				groupDir: "ASC",
+				restriction: {
+					start: start,
+					limit: limit
+					//startdate: 0,
+					//duedate: 2145826800	// 2037... nearly highest unix timestamp
+				},
+				sort: [{
+						"field": "startdate",
+						"direction": "DESC"
+				}],
+				store_entryid : calendarFolder.data.store_entryid,
+				entryid : calendarFolder.data.entryid
+			},
+			responseHandler
+		);
+	},
 	
 	/**
 	 * download ics file =)
@@ -677,7 +790,7 @@ Zarafa.plugins.calendarimporter.dialogs.ImportPanel = Ext.extend(Ext.Panel, {
 	 */
 	downLoadICS : function(response) {
 		Zarafa.common.dialogs.MessageBox.hide();
-		if(response.status === true) {			
+		if(response.status === true) {
 			if(!this.downloadFrame){
 				this.downloadFrame = Ext.getBody().createChild({
 					tag: 'iframe',
@@ -688,9 +801,13 @@ Zarafa.plugins.calendarimporter.dialogs.ImportPanel = Ext.extend(Ext.Panel, {
 			this.downloadFrame.dom.contentWindow.location = url;
 		} else {
 			container.getNotifier().notify('error', 'Export Failed', 'ICal File creation failed!');
-		}		
+		}
 	},
 	
+	/** 
+	 * This function stores all given events to the appointmentstore 
+	 * @param events
+	 */
 	importEvents: function (events) {
 		//receive existing calendar store
 		var calValue = this.calendarselector.value;
@@ -721,7 +838,7 @@ Zarafa.plugins.calendarimporter.dialogs.ImportPanel = Ext.extend(Ext.Panel, {
 				if(calValue != "calendar") {
 					var subFolders = calendarFolder.getChildren();
 					var i = 0;
-					for(i = 0; i < pubSubFolders.length; i++) {		
+					for(i = 0; i < pubSubFolders.length; i++) {
 						if(pubSubFolders[i].isContainerClass("IPF.Appointment")){
 							subFolders.push(pubSubFolders[i]);
 						}
@@ -747,13 +864,16 @@ Zarafa.plugins.calendarimporter.dialogs.ImportPanel = Ext.extend(Ext.Panel, {
 				}
 
 				if(calexist) {
+					this.loadMask.show();
 					//receive Records from grid rows
 					Ext.each(events, function(newRecord) {
 						var record = this.convertToAppointmentRecord(calendarFolder,newRecord.data);
 						calendarStore.add(record);
 					}, this);
 					calendarStore.save();
+					this.loadMask.hide();
 					this.dialog.close();
+					container.getNotifier().notify('info', 'Imported', 'Imported ' + events.length + ' events. Please reload your calendar!');
 				}
 			}
 		}
@@ -761,4 +881,3 @@ Zarafa.plugins.calendarimporter.dialogs.ImportPanel = Ext.extend(Ext.Panel, {
 });
 
 Ext.reg('calendarimporter.importpanel', Zarafa.plugins.calendarimporter.dialogs.ImportPanel);
-;

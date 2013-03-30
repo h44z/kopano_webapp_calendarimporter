@@ -17,20 +17,12 @@
 			<files>
 				<server>
 					<serverfile>php/plugin.calendarimporter.php</serverfile>
-					<serverfile type="module" module="calendarexportermodule">php/module.calendarexporter.php</serverfile>
+					<serverfile type="module" module="calendarmodule">php/module.calendar.php</serverfile>
 				</server>
 				<client>
-					<clientfile load="release">js/timezone-js/fleegix.js</clientfile>
-					<clientfile load="release">js/timezone-js/src/date.js</clientfile>
 					<clientfile load="release">js/calendarimporter.js</clientfile>
+					<clientfile load="debug">js/calendarimporter-debug.js</clientfile>
 					
-					<clientfile load="debug">js/timezone-js/fleegix.js</clientfile>
-					<clientfile load="debug">js/timezone-js/src/date.js</clientfile>
-					<clientfile load="debug">js/calendarimporter-debug.js</clientfile>					
-					
-					<clientfile load="source">js/ABOUT.js</clientfile>
-					<clientfile load="source">js/timezone-js/fleegix.js</clientfile>
-					<clientfile load="source">js/timezone-js/src/date.js</clientfile>
 					<clientfile load="source">js/data/timezones.js</clientfile>
 					<clientfile load="source">js/plugin.calendarimporter.js</clientfile>
 					<clientfile load="source">js/data/ResponseHandler.js</clientfile>

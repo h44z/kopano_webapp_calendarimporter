@@ -1,9 +1,9 @@
 <?php	
 /**
- * class.calendarexporter.php, zarafa calender to ics exporter
+ * class.calendar.php, zarafa calender to ics im/exporter
  *
  * Author: Christoph Haas <christoph.h@sprinternet.at>
- * Copyright (C) 2012 Christoph Haas
+ * Copyright (C) 2012-2013 Christoph Haas
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -23,8 +23,9 @@
  
 include_once('mapi/class.recurrence.php');
 include_once('plugins/calendarimporter/php/ical/class.icalcreator.php');
+include_once('plugins/calendarimporter/php/ical/class.icalparser.php');
  
-class CalendarexporterModule extends Module {
+class CalendarModule extends Module {
 
 	private $DEBUG = false; 	// enable error_log debugging
 
@@ -44,8 +45,13 @@ class CalendarexporterModule extends Module {
 	 */
 	public function execute() {
 		$result = false;
-
-		foreach($this->data as $actionType => $actionData) {	
+		
+		if(!$this->DEBUG) {
+			/* disable error printing - otherwise json communication might break... */
+			ini_set('display_errors', '0');
+		}
+		
+		foreach($this->data as $actionType => $actionData) {
 			if(isset($actionType)) {
 				try {
 					if($this->DEBUG) {
@@ -54,7 +60,13 @@ class CalendarexporterModule extends Module {
 					switch($actionType) {
 						case "export":
 							$result = $this->exportCalendar($actionType, $actionData);
-							break;									
+							break;
+						case "import":
+							$result = $this->importCalendar($actionType, $actionData);
+							break;
+						case "attachmentpath":
+							$result = $this->getAttachmentPath($actionType, $actionData);
+							break;
 						default:
 							$this->handleUnknownActionType($actionType);
 					}
@@ -74,12 +86,18 @@ class CalendarexporterModule extends Module {
 		return $result;
 	}
 	
+	/**
+	 * Generates a random string with variable length.
+	 * @param $length the lenght of the generated string
+	 * @return string a random string
+	 */
 	private function randomstring($length = 6) {
 		// $chars - all allowed charakters
 		$chars = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890";
 
 		srand((double)microtime()*1000000);
 		$i = 0;
+		$pass = "";
 		while ($i < $length) {
 			$num = rand() % strlen($chars);
 			$tmp = substr($chars, $num, 1);
@@ -89,6 +107,10 @@ class CalendarexporterModule extends Module {
 		return $pass;
 	}
 	
+	/**
+	 * Generates the secid file (used to verify the download path)
+	 * @param $secid the secid, a random security token
+	 */
 	private function createSecIDFile($secid) {
 		$lockFile = TMP_PATH . "/secid." . $secid;
 		$fh = fopen($lockFile, 'w') or die("can't open secid file");
@@ -97,10 +119,21 @@ class CalendarexporterModule extends Module {
 		fclose($fh);
 	}
 	
+	/**
+	 * Generates the secid file (used to verify the download path)
+	 * @param $time a timestamp
+	 * @param $incl_time true if date should include time
+	 * @ return date object
+	 */
 	private function getIcalDate($time, $incl_time = true) {
 		return $incl_time ? date('Ymd\THis', $time) : date('Ymd', $time);
 	}
 	
+	/**
+	 * adds an event to the exported calendar)
+	 * @param $vevent pointer to the eventstore
+	 * @param $event the event to add
+	 */
 	private function addEvent(&$vevent, $event) {
 		
 		$busystate = array("FREE", "TENTATIVE", "BUSY", "OOF");
@@ -135,10 +168,13 @@ class CalendarexporterModule extends Module {
 			$valarm->setProperty("description", $vevent->getProperty("SUMMARY"));	// reuse the event summary
 			$valarm->setProperty("trigger", $this->getIcalDate($event["reminder_time"]) . "Z");	// create alarm trigger (in UTC datetime)
 		}
-		
-		
 	}
 	
+	/**
+	 * Loads the descriptiontext of an event
+	 * @param $event
+	 * @return array with event description/body
+	 */
 	private function loadEventDescription($event) {
 		$entryid = $this->getActionEntryID($event);
 		$store = $this->getActionStore($event);
@@ -264,6 +300,11 @@ class CalendarexporterModule extends Module {
 		return $data['item']['props']['body'];
 	}
 	
+	/**
+	 * Loads the attendees of an event
+	 * @param $event
+	 * @return array with event attendees
+	 */
 	private function loadAttendees($event) {
 		$entryid = $this->getActionEntryID($event);
 		$store = $this->getActionStore($event);
@@ -275,7 +316,7 @@ class CalendarexporterModule extends Module {
 		
 		$data = array();
 		
-		if($store && $entryid) {			
+		if($store && $entryid) {
 			$message = $GLOBALS['operations']->openMessage($store, $entryid);
 			
 			
@@ -287,11 +328,20 @@ class CalendarexporterModule extends Module {
 		return $data['item']['recipients']['item'];
 	}
 	
+	/**
+	 * The main export function, creates the ics file for download
+	 * @param $actionType
+	 * @param $actionData
+	 */
 	private function exportCalendar($actionType, $actionData) {
 		$secid = $this->randomstring();	
 		$this->createSecIDFile($secid);
 		$tmpname = stripslashes($actionData["calendar"] . ".ics." . $this->randomstring(8));
 		$filename = TMP_PATH . "/" . $tmpname . "." . $secid;
+		
+		if(!is_writable(TMP_PATH . "/")) {
+			error_log("could not write to export tmp directory!");
+		}
 		
 		$tz = date("e");	// use php timezone (maybe set up in php.ini, date.timezone)
 		
@@ -308,37 +358,215 @@ class CalendarexporterModule extends Module {
 						);
 		
 		$v = new vcalendar($config); 
-		$v->setProperty("method", "PUBLISH");                    		// required of some calendar software
-		$v->setProperty("x-wr-calname", $actionData["calendar"]);      	// required of some calendar software
-		$v->setProperty("X-WR-CALDESC", "Exported Zarafa Calendar"); 	// required of some calendar software
+		$v->setProperty("method", "PUBLISH");							// required of some calendar software
+		$v->setProperty("x-wr-calname", $actionData["calendar"]);		// required of some calendar software
+		$v->setProperty("X-WR-CALDESC", "Exported Zarafa Calendar");	// required of some calendar software
 		$v->setProperty("X-WR-TIMEZONE", $tz); 
 
-		$xprops = array("X-LIC-LOCATION" => $tz);                	// required of some calendar software
+		$xprops = array("X-LIC-LOCATION" => $tz);					// required of some calendar software
 		iCalUtilityFunctions::createTimezone($v, $tz, $xprops);		// create timezone object in calendar
 				
 		
-		foreach($actionData["data"]["item"] as $event) {
+		foreach($actionData["data"] as $event) {
 			$event["props"]["description"] = $this->loadEventDescription($event);
 			$event["props"]["attendees"] = $this->loadAttendees($event);
 			
-			$vevent = & $v->newComponent("vevent");  // create a new event object
+			$vevent = & $v->newComponent("vevent");	// create a new event object
 			$this->addEvent($vevent, $event["props"]);
 		}
 		
 		$v->saveCalendar();
 		
-		$response['status']	=	true;
-		$response['fileid'] =	$tmpname;	// number of entries that will be exported
-		$response['basedir'] = TMP_PATH;
-		$response['secid']  =   $secid;
-		$response['realname'] = $actionData["calendar"];
+		$response['status']		= true;
+		$response['fileid']		= $tmpname;	// number of entries that will be exported
+		$response['basedir']	= TMP_PATH;
+		$response['secid']		= $secid;
+		$response['realname']	= $actionData["calendar"];
 		$this->addActionData($actionType, $response);
 		$GLOBALS["bus"]->addData($this->getResponseData());
 		
 		if($this->DEBUG) {
 			error_log("export done, bus data written!");
 		}
+	}
+	
+	/**
+	 * The main import function, parses the uploaded ics file
+	 * @param $actionType
+	 * @param $actionData
+	 */
+	private function importCalendar($actionType, $actionData) {
+		if($this->DEBUG) {
+			error_log("PHP Timezone: " . $tz);
+		}
 		
+		if(is_readable ($actionData["ics_filepath"])) {
+			$ical = new ICal($actionData["ics_filepath"], $GLOBALS["settings"]->get("zarafa/v1/plugins/calendarimporter/default_timezone"), $actionData["timezone"], $actionData["ignore_dst"]); // Parse it!
+			
+			if(isset($ical->errors)) {
+				$response['status']	= false;
+				$response['message']= $ical->errors;
+			} else if(!$ical->hasEvents()) {
+				$response['status']	= false;
+				$response['message']= "No events in ics file";
+			} else {
+				$response['status']		= true;
+				$response['parsed_file']= $actionData["ics_filepath"];
+				$response['parsed']		= array (
+					'calendar'	=>	$ical->calendar(),
+					'events'	=>	$ical->events()
+				);
+			}
+		} else {
+			$response['status']	= false;
+			$response['message']= "File could not be read by server";
+		}
+		
+		$this->addActionData($actionType, $response);
+		$GLOBALS["bus"]->addData($this->getResponseData());
+		
+		if($this->DEBUG) {
+			error_log("parsing done, bus data written!");
+		}
+	}
+	
+	/**
+	 * Store the file to a temporary directory, prepare it for oc upload
+	 * @param $actionType
+	 * @param $actionData
+	 * @private
+	 */
+	private function getAttachmentPath($actionType, $actionData) {
+		// Get store id
+		$storeid = false;
+		if(isset($actionData["store"])) {
+			$storeid = $actionData["store"];
+		}
+
+		// Get message entryid
+		$entryid = false;
+		if(isset($actionData["entryid"])) {
+			$entryid = $actionData["entryid"];
+		}
+
+		// Check which type isset
+		$openType = "attachment";
+
+		// Get number of attachment which should be opened.
+		$attachNum = false;
+		if(isset($actionData["attachNum"])) {
+			$attachNum = $actionData["attachNum"];
+		}
+
+		// Check if storeid and entryid isset
+		if($storeid && $entryid) {
+			// Open the store
+			$store = $GLOBALS["mapisession"]->openMessageStore(hex2bin($storeid));
+			
+			if($store) {
+				// Open the message
+				$message = mapi_msgstore_openentry($store, hex2bin($entryid));
+				
+				if($message) {
+					$attachment = false;
+
+					// Check if attachNum isset
+					if($attachNum) {
+						// Loop through the attachNums, message in message in message ...
+						for($i = 0; $i < (count($attachNum) - 1); $i++)
+						{
+							// Open the attachment
+							$tempattach = mapi_message_openattach($message, (int) $attachNum[$i]);
+							if($tempattach) {
+								// Open the object in the attachment
+								$message = mapi_attach_openobj($tempattach);
+							}
+						}
+
+						// Open the attachment
+						$attachment = mapi_message_openattach($message, (int) $attachNum[(count($attachNum) - 1)]);
+					}
+
+					// Check if the attachment is opened
+					if($attachment) {
+						
+						// Get the props of the attachment
+						$props = mapi_attach_getprops($attachment, array(PR_ATTACH_LONG_FILENAME, PR_ATTACH_MIME_TAG, PR_DISPLAY_NAME, PR_ATTACH_METHOD));
+						// Content Type
+						$contentType = "application/octet-stream";
+						// Filename
+						$filename = "ERROR";
+
+						// Set filename
+						if(isset($props[PR_ATTACH_LONG_FILENAME])) {
+							$filename = $props[PR_ATTACH_LONG_FILENAME];
+						} else if(isset($props[PR_ATTACH_FILENAME])) {
+							$filename = $props[PR_ATTACH_FILENAME];
+						} else if(isset($props[PR_DISPLAY_NAME])) {
+							$filename = $props[PR_DISPLAY_NAME];
+						} 
+				
+						// Set content type
+						if(isset($props[PR_ATTACH_MIME_TAG])) {
+							$contentType = $props[PR_ATTACH_MIME_TAG];
+						} else {
+							// Parse the extension of the filename to get the content type
+							if(strrpos($filename, ".") !== false) {
+								$extension = strtolower(substr($filename, strrpos($filename, ".")));
+								$contentType = "application/octet-stream";
+								if (is_readable("mimetypes.dat")){
+									$fh = fopen("mimetypes.dat","r");
+									$ext_found = false;
+									while (!feof($fh) && !$ext_found){
+										$line = fgets($fh);
+										preg_match("/(\.[a-z0-9]+)[ \t]+([^ \t\n\r]*)/i", $line, $result);
+										if ($extension == $result[1]){
+											$ext_found = true;
+											$contentType = $result[2];
+										}
+									}
+									fclose($fh);
+								}
+							}
+						}
+						
+						
+						$tmpname = tempnam(TMP_PATH, stripslashes($filename));
+
+						// Open a stream to get the attachment data
+						$stream = mapi_openpropertytostream($attachment, PR_ATTACH_DATA_BIN);
+						$stat = mapi_stream_stat($stream);
+						// File length =  $stat["cb"]
+						
+						$fhandle = fopen($tmpname,'w');
+						$buffer = null;
+						for($i = 0; $i < $stat["cb"]; $i += BLOCK_SIZE) {
+							// Write stream
+							$buffer = mapi_stream_read($stream, BLOCK_SIZE);
+							fwrite($fhandle,$buffer,strlen($buffer));
+						}
+						fclose($fhandle);
+						
+						$response = array();
+						$response['tmpname'] = $tmpname;
+						$response['filename'] = $filename;
+						$response['status'] = true;
+						$this->addActionData($actionType, $response);
+						$GLOBALS["bus"]->addData($this->getResponseData());
+					}
+				}
+			} else {
+				$response['status'] = false;
+				$response['message'] = "Store could not be opened!";
+				$this->addActionData($actionType, $response);
+				$GLOBALS["bus"]->addData($this->getResponseData());
+			}
+		} else {
+			$response['status'] = false;
+			$response['message'] = "Wrong call, store and entryid have to be set!";
+			$this->addActionData($actionType, $response);
+			$GLOBALS["bus"]->addData($this->getResponseData());
+		}
 	}
 };
 

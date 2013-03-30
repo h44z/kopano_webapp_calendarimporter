@@ -1,13 +1,30 @@
 /**
+ * timezones.js zarafa calender to ics im/exporter
+ *
+ * Author: Christoph Haas <christoph.h@sprinternet.at>
+ * Copyright (C) 2012-2013 Christoph Haas
+ *
+ * This library is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public
+ * License as published by the Free Software Foundation; either
+ * version 2.1 of the License, or (at your option) any later version.
+ *
+ * This library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this library; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ *
+ */
+
+/**
  * Timezone class
  *
  * This class can handle all our timezone operations and conversions.
- *
- * @author   Christoph Haas <mail@h44z.net>
- * @modified 29.12.2012
- * @license  http://www.opensource.org/licenses/mit-license.php  MIT License
- */
- 
+ */ 
 Ext.namespace("Zarafa.plugins.calendarimporter.data"); 
 
 Zarafa.plugins.calendarimporter.data.Timezones = Ext.extend(Object, {
@@ -81,7 +98,7 @@ Zarafa.plugins.calendarimporter.data.Timezones = Ext.extend(Object, {
 		['Pacific/Chatham','(UTC +12:45) Chatham', 765],
 		['Pacific/Enderbury','(UTC +13:00) Enderbury, Tongatapu', 780],
 		['Pacific/Apia','(UTC +13:00) Apia', 780],
-		['Pacific/Kiritimati','(UTC +14:00) Kiritimati', 840]		
+		['Pacific/Kiritimati','(UTC +14:00) Kiritimati', 840]
 	],
 	
 	/* map all citys to the above timezones */
@@ -725,7 +742,7 @@ Zarafa.plugins.calendarimporter.data.Timezones = Ext.extend(Object, {
 		/*+14:00*/
 		'Etc/GMT-14' : 'Pacific/Kiritimati',
 		'Pacific/Fakaofo' : 'Pacific/Kiritimati',
-		'Pacific/Kiritimati' : 'Pacific/Kiritimati'		
+		'Pacific/Kiritimati' : 'Pacific/Kiritimati'
 	},
 	
 	/* return unmapped timezone... */
@@ -744,10 +761,6 @@ Zarafa.plugins.calendarimporter.data.Timezones = Ext.extend(Object, {
 		}
 	
 		return 0;	// no offset found...
-	},
-	
-	getDstOffset: function(time, timezone) {
-		return 0; // no offset
 	}
 });
 

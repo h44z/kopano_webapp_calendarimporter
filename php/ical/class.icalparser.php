@@ -1,21 +1,30 @@
 <?php
 /**
- * Parse ics file content to array.
+ * class.icalparser.php zarafa calender to ics im/exporter
+ * http://code.google.com/p/ics-parser/
  *
- * PHP Version 5
+ * Author: Martin Thoma , Christoph Haas <christoph.h@sprinternet.at>
+ * Copyright (C) 2012-2013 Christoph Haas
  *
- * @category Parser
- * @author	 Martin Thoma 
- * @author   Christoph Haas <mail@h44z.net>
- * @modified 17.11.2012 by Christoph Haas (original at http://code.google.com/p/ics-parser/)
- * @license  http://www.opensource.org/licenses/mit-license.php  MIT License
- * @version  SVN: 62
- * @example  $ical = new ical('calendar.ics');
- *           print_r( $ical->events() );
+ * This library is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public
+ * License as published by the Free Software Foundation; either
+ * version 2.1 of the License, or (at your option) any later version.
+ *
+ * This library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this library; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ *
  */
 
 /**
  * This is the iCal-class
+ * Parse ics file content to array.
  *
  * @param {string} filename The name of the file which should be parsed
  * @constructor
@@ -28,7 +37,7 @@ class ICal {
 	public  /** @type {int} */ $event_count = 0; 
 	
 	/* Currently editing an alarm? */
-	private  /** @type {int} */ $isalarm = false; 
+	private  /** @type {boolean} */ $isalarm = false; 
 
 	/* The parsed calendar */
 	public /** @type {Array} */ $cal;
@@ -41,7 +50,13 @@ class ICal {
 
 	/* The default timezone, used to convert UTC Time */
 	private /** @type {string} */ $default_timezone = "Europe/Vienna";
-
+	
+	/* The default timezone, used to convert UTC Time */
+	private /** @type {boolean} */ $timezone_set = false;
+	
+	/* Ignore Daylight Saving Time */
+	private /** @type {boolean} */ $ignore_dst = false;
+	
 	/** 
 	 * Creates the iCal-Object
 	 * 
@@ -49,10 +64,21 @@ class ICal {
 	 *
 	 * @return Object The iCal-Object
 	 */ 
-	public function __construct($filename) {
+	public function __construct($filename, $default_timezone, $timezone = false, $igndst = false) {
 		if (!$filename) {
 			$this->errors = "No filename specified";
 			return false;
+		}
+		
+		$this->default_timezone = $default_timezone;
+		
+		if(isset($timezone) && $timezone != false) {
+			$this->default_timezone = $timezone;
+			$this->timezone_set = true;
+		}
+		
+		if(isset($igndst) && $igndst != false) {
+			$this->ignore_dst = true;
 		}
 		
 		$lines = file($filename, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES);
@@ -69,7 +95,7 @@ class ICal {
 					continue;
 				} 
 
-				list($keyword, $prop, $propvalue, $value) = $add;
+				list($keyword, $dummy, $prop, $propvalue, $value) = $add;
 
 				switch ($line) {
 					// http://www.kanzaki.com/docs/ical/vtodo.html
@@ -137,8 +163,11 @@ class ICal {
 					if (stristr($keyword, "DTSTART") or stristr($keyword, "DTEND") or stristr($keyword, "TRIGGER")) {
 						$ts = $this->iCalDateToUnixTimestamp($value, $prop, $propvalue);
 						$value = $ts * 1000;
-					}
-					$value = str_replace("\\n", "\n", $value); 
+					}					
+					$value = str_replace("\\n", "\n", $value);				
+					
+					$value = $this->customFilters($keyword, $value);
+					
 					if(!$this->isalarm) {
 						$value = $this->cal[$component][$this->event_count - 1][$keyword].$value;
 					} else {
@@ -159,7 +188,7 @@ class ICal {
 		//$keyword = $keyword[0];	// remove additional content like VALUE=DATE
 		//}
 		
-		if (stristr($keyword, "TIMEZONE")) {
+		if (stristr($keyword, "TIMEZONE") && !$this->timezone_set) { // check if timezone already set...
 			$this->default_timezone = $value;	// store the calendertimezone
 		}
 
@@ -175,6 +204,8 @@ class ICal {
 				}
 				$value = str_replace("\\n", "\n", $value); 
 				
+				$value = $this->customFilters($keyword, $value);
+				
 				if(!$this->isalarm) {
 					$this->cal[$component][$this->event_count - 1][$keyword] = $value;
 				} else {
@@ -189,32 +220,55 @@ class ICal {
 	}
 
 	/**
+	 * Filter some chars out of the value.
+	 *
+	 * @param {string} $keyword keyword to which the filter is applied
+	 * @param {string} $value to filter
+	 * @return {string} filtered value
+	 */
+	private function customFilters($keyword, $value) {
+		if (stristr($keyword, "SUMMARY")) {
+			$value = str_replace("\n", " ", $value); // we don't need linebreaks in the summary...
+		}
+		
+		if (stristr($keyword, "SUMMARY")) {
+			$value = str_replace("\,", ",", $value); // strange escaped comma
+		}
+		
+		return $value;
+	}
+	
+	/**
 	 * Get a key-value pair of a string.
 	 *
 	 * @param {string} $text which is like "VCALENDAR:Begin" or "LOCATION:"
 	 *
-	 * @return {array} array("VCALENDAR", "Begin", "Optional Props")
+	 * @return {array} array("Argument", "Optional Arg/Val", "Optional Arg", "Optional Value", "Value")
 	 */
 	public function keyValueFromString($text) {
-		preg_match("/(^[^a-z:;]+)[;]*([a-zA-Z]*)[=]*(.*)[:]([\w\W]*)/", $text, $matches);
+		
+		preg_match('/(^[^a-z:;]+)([;]+([a-zA-Z]*)[=]*([^:"]*|"[\w\W]*"))?[:]([\w\W]*)/', $text, $matches);
+		
+		// this regex has problems with multiple attributes... ATTENDEE;RSVP=TRUE;ROLE=REQ-PARTICIPANT:mailto:jsmith@example.com
+		// TODO: fix this
 		
 		if (count($matches) == 0) {
 			return false;
 		}
 		
-		$matches = array_splice($matches, 1, 4);
+		$matches = array_splice($matches, 1, 5); // 0 = Arg, 1 = Complete Optional Arg/Val, 2 = Optional Arg, 3 = Optional Val, 4 = Value
 		return $matches;
 	}
 
 	/** 
-	 * Return Unix timestamp from ical date time format 
+	 * Return UTC Unix timestamp from ical date time format 
 	 * 
 	 * @param {string} $icalDate A Date in the format YYYYMMDD[T]HHMMSS[Z] or
 	 *                           YYYYMMDD[T]HHMMSS
 	 *
 	 * @return {int} 
 	 */ 
-	public function iCalDateToUnixTimestamp($icalDate, $prop, $propvalue) {
+	private function iCalDateToUTCUnixTimestamp($icalDate, $prop, $propvalue) {
 	
 		$timezone = false;
 		
@@ -256,7 +310,6 @@ class ICal {
 							(int)$date[3], 
 							(int)$date[1]);
 							
-		
 		if(!$utc) {
 			$tz = $this->default_timezone;
 			if($timezone != false) {
@@ -294,6 +347,53 @@ class ICal {
 		return  ($timestamp_utc);
 	} 
 
+	/**
+	 * Return a timezone specific timestamp
+	 * @param {int} $timestamp_utc UTC Timestamp to convert
+	 * @param {string} $timezone Timezone
+	 * @return {int}
+	 */
+	private function UTCTimestampToTZTimestamp($timestamp_utc, $timezone, $ignore_dst = false) {
+		$this_tz = false;
+		try {	// Try using the default calendar timezone
+			$this_tz = new DateTimeZone($this->default_timezone);
+		} catch(Exception $e) {
+			error_log($e->getMessage());
+			$timestamp_utc = $timestamp; // if that fails, we cannot do anymore
+		}
+		if($this_tz != false) {
+			$transition = $this_tz->getTransitions($timestamp_utc,$timestamp_utc);
+			$trans_offset = $transition[0]['offset']; 
+			$isdst = $transition[0]['isdst'];	
+			
+			$tz_now = new DateTime("now", $this_tz);
+			$tz_offset = $this_tz->getOffset($tz_now);
+			
+			if(!$ignore_dst) {
+				$tz_offset = $trans_offset;	// normaly use dst
+			}
+			
+			return $timestamp_utc + $tz_offset;
+		}
+		return $timestamp_utc;	// maybe timezone conversion will fail...
+	}
+	
+	/** 
+	 * Return Timezone specific Unix timestamp from ical date time format 
+	 * 
+	 * @param {string} $icalDate A Date in the format YYYYMMDD[T]HHMMSS[Z] or
+	 *                           YYYYMMDD[T]HHMMSS
+	 *
+	 * @return {int} 
+	 */ 
+	public function iCalDateToUnixTimestamp($icalDate, $prop, $propvalue) {
+		$timestamp = $this->iCalDateToUTCUnixTimestamp($icalDate, $prop, $propvalue);
+		
+		$timestamp = $this->UTCTimestampToTZTimestamp($timestamp, $this->default_timezone, $this->ignore_dst);
+		
+		return $timestamp;
+	}
+	
 	/**
 	 * Returns an array of arrays with all events. Every event is an associative
 	 * array and each property is an element it.
@@ -387,13 +487,11 @@ class ICal {
 		// loop through all events by adding two new elements
 		foreach ($events as $anEvent) {
 			if (!array_key_exists('UNIX_TIMESTAMP', $anEvent)) {
-				$anEvent['UNIX_TIMESTAMP'] = 
-							$this->iCalDateToUnixTimestamp($anEvent['DTSTART']);
+				$anEvent['UNIX_TIMESTAMP'] = $this->iCalDateToUnixTimestamp($anEvent['DTSTART']);
 			}
 
 			if (!array_key_exists('REAL_DATETIME', $anEvent)) {
-				$anEvent['REAL_DATETIME'] = 
-							date("d.m.Y", $anEvent['UNIX_TIMESTAMP']);
+				$anEvent['REAL_DATETIME'] = date("d.m.Y", $anEvent['UNIX_TIMESTAMP']);
 			}
 			
 			$extendedEvents[] = $anEvent;

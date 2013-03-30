@@ -1,11 +1,29 @@
 /**
+ * ResponseHandler.js zarafa calender to ics im/exporter
+ *
+ * Author: Christoph Haas <christoph.h@sprinternet.at>
+ * Copyright (C) 2012-2013 Christoph Haas
+ *
+ * This library is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public
+ * License as published by the Free Software Foundation; either
+ * version 2.1 of the License, or (at your option) any later version.
+ *
+ * This library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this library; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ *
+ */
+ 
+/**
  * ResponseHandler
  *
  * This class handles all responses from the php backend
- *
- * @author   Christoph Haas <mail@h44z.net>
- * @modified 29.12.2012
- * @license  http://www.opensource.org/licenses/mit-license.php  MIT License
  */
 Ext.namespace('Zarafa.plugins.calendarimporter.data');
 
@@ -13,7 +31,7 @@ Ext.namespace('Zarafa.plugins.calendarimporter.data');
  * @class Zarafa.plugins.calendarimporter.data.ResponseHandler
  * @extends Zarafa.plugins.calendarimporter.data.AbstractResponseHandler
  *
- * Export specific response handler.
+ * Calendar specific response handler.
  */
 Zarafa.plugins.calendarimporter.data.ResponseHandler = Ext.extend(Zarafa.core.data.AbstractResponseHandler, {
 	/**
@@ -21,13 +39,12 @@ Zarafa.plugins.calendarimporter.data.ResponseHandler = Ext.extend(Zarafa.core.da
 	 * will be called after success request.
 	 */
 	successCallback : null,
-
+	
 	/**
 	 * Call the successCallback callback function.
 	 * @param {Object} response Object contained the response data.
 	 */
-	doExport : function(response)
-	{
+	doExport : function(response) {
 		this.successCallback(response);
 	},
 	
@@ -35,8 +52,23 @@ Zarafa.plugins.calendarimporter.data.ResponseHandler = Ext.extend(Zarafa.core.da
 	 * Call the successCallback callback function.
 	 * @param {Object} response Object contained the response data.
 	 */
-	doList : function(response)
-	{
+	doList : function(response) {
+		this.successCallback(response);
+	},
+	
+	/**
+	 * Call the successCallback callback function.
+	 * @param {Object} response Object contained the response data.
+	 */
+	doImport : function(response) {
+		this.successCallback(response);
+	},
+	
+	/**
+	 * Call the successCallback callback function.
+	 * @param {Object} response Object contained the response data.
+	 */
+	doAttachmentpath : function(response) {
 		this.successCallback(response);
 	},
 	
@@ -45,10 +77,9 @@ Zarafa.plugins.calendarimporter.data.ResponseHandler = Ext.extend(Zarafa.core.da
 	 * exception response with the code of exception.
 	 * @param {Object} response Object contained the response data.
 	 */
-	doError: function(response)
-	{
+	doError: function(response)	{
 		alert("error response code: " + response.error.info.code);
 	}
 });
 
-Ext.reg('calendarimporter.calendarexporterresponsehandler', Zarafa.plugins.calendarimporter.data.ResponseHandler);
+Ext.reg('calendarimporter.calendarresponsehandler', Zarafa.plugins.calendarimporter.data.ResponseHandler);

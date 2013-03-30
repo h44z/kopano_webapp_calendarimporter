@@ -48,7 +48,8 @@ class Plugincalendarimporter extends Plugin {
 						'calendarimporter' => Array(
 							'enable'        => PLUGIN_CALENDARIMPORTER_USER_DEFAULT_ENABLE,
 							'enable_export' => PLUGIN_CALENDARIMPORTER_USER_DEFAULT_ENABLE_EXPORT,
-							'default_calendar'	=> PLUGIN_CALENDARIMPORTER_DEFAULT
+							'default_calendar'	=> PLUGIN_CALENDARIMPORTER_DEFAULT,
+							'default_timezone' 	=> PLUGIN_CALENDARIMPORTER_DEFAULT_TIMEZONE
 						)
 					)
 				)

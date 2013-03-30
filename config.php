@@ -6,4 +6,8 @@
 	
 	/** The default calendar to import to*/
 	define('PLUGIN_CALENDARIMPORTER_DEFAULT', "calendar");
+	define('PLUGIN_CALENDARIMPORTER_DEFAULT_TIMEZONE', "Europe/Vienna");
+	
+	/** Tempory path for uploaded files... */
+	define('PLUGIN_CALENDARIMPORTER_TMP_UPLOAD', "/var/lib/zarafa-webapp/tmp/");
 ?>
