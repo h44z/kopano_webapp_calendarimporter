@@ -505,7 +505,7 @@ Zarafa.plugins.calendarimporter.dialogs.ImportPanel = Ext.extend(Ext.Panel, {
 			if(typeof response.parsed.calendar["X-WR-TIMEZONE"] !== "undefined") {;
 				this.timezone = response.parsed.calendar["X-WR-TIMEZONE"];
 				this.timezoneselector.setValue(Zarafa.plugins.calendarimporter.data.Timezones.unMap(this.timezone));
-			} 
+			}
 			this.reloadGridStore(response.parsed);
 		} else {
 			Ext.getCmp('submitButton').disable();
@@ -599,17 +599,28 @@ Zarafa.plugins.calendarimporter.dialogs.ImportPanel = Ext.extend(Ext.Panel, {
 			var calexist = true;
 			var calendarFolder =  container.getHierarchyStore().getDefaultFolder('calendar');
 			var pubStore = container.getHierarchyStore().getPublicStore();
-			var pubFolder = pubStore.getDefaultFolder("publicfolders");
-			var pubSubFolders = pubFolder.getChildren();
+			var pubSubFolders = [];
+			if(typeof pubStore !== "undefined") {
+				try {
+					var pubFolder = pubStore.getDefaultFolder("publicfolders");
+					var pubSubFolders = pubFolder.getChildren();
+				} catch (e) {
+					console.log("Error opening the shared folder...");
+					console.log(e);
+				}
+			}
 			
 			if(calValue != "calendar") {
 				var subFolders = calendarFolder.getChildren();
 				var i = 0;
+				
+				/* add public folders if any exist */
 				for(i = 0; i < pubSubFolders.length; i++) {		
 					if(pubSubFolders[i].isContainerClass("IPF.Appointment")){
 						subFolders.push(pubSubFolders[i]);
 					}
 				}
+				
 				for(i=0;i<subFolders.length;i++) {
 					// loo up right folder 
 					// TODO: improve!!
@@ -713,11 +724,56 @@ Zarafa.plugins.calendarimporter.dialogs.ImportPanel = Ext.extend(Ext.Panel, {
 		
 		var i = 0;
 		
+		//receive existing calendar store
+		var calValue = this.calendarselector.value;		
+		var calendarFolder =  container.getHierarchyStore().getDefaultFolder('calendar');
+		var pubStore = container.getHierarchyStore().getPublicStore();
+		var pubSubFolders = [];
+		if(typeof pubStore !== "undefined") {
+			try {
+				var pubFolder = pubStore.getDefaultFolder("publicfolders");
+				var pubSubFolders = pubFolder.getChildren();
+			} catch (e) {
+				console.log("Error opening the shared folder...");
+				console.log(e);
+			}
+		}
+		
+		if(calValue != "calendar") {
+			var subFolders = calendarFolder.getChildren();
+			var i = 0;
+			
+			/* add public folders if any exist */
+			for(i = 0; i < pubSubFolders.length; i++) {		
+				if(pubSubFolders[i].isContainerClass("IPF.Appointment")){
+					subFolders.push(pubSubFolders[i]);
+				}
+			}
+			
+			for(i=0;i<subFolders.length;i++) {
+				// loo up right folder 
+				// TODO: improve!!
+				if(subFolders[i].getDisplayName() == calValue) {
+					calendarFolder = subFolders[i];
+					break;
+				}
+			}
+			
+			if(calendarFolder.isDefaultFolder()) {
+				Zarafa.common.dialogs.MessageBox.show({
+					title   : _('Error'),
+					msg     : _('Selected calendar does not exist!'),
+					icon    : Zarafa.common.dialogs.MessageBox.ERROR,
+					buttons : Zarafa.common.dialogs.MessageBox.OK
+				});
+			}
+		}
+		
 		for(i = 0; i < requests; i++) {
 			var responseHandler = new Zarafa.plugins.calendarimporter.data.ResponseHandler({
 				successCallback: this.storeResult.createDelegate(this)
 			});
-			this.requestNext(responseHandler, response.page.rowcount *(i+1), response.page.rowcount);
+			this.requestNext(calendarFolder, responseHandler, response.page.rowcount *(i+1), response.page.rowcount);
 		}
 	},
 
@@ -754,12 +810,12 @@ Zarafa.plugins.calendarimporter.dialogs.ImportPanel = Ext.extend(Ext.Panel, {
 	
 	/**
 	 * build a new event request for the listmodule
+	 * @param {Object} calendarFolder the calendarFolder to export
 	 * @param {Object} responseHandler (should be storeResult)
 	 * @param {int} start
 	 * @param {int} limit
 	 */
-	requestNext: function(responseHandler, start, limit) {
-		var calendarFolder =  container.getHierarchyStore().getDefaultFolder('calendar');
+	requestNext: function(calendarFolder, responseHandler, start, limit) {
 		
 		container.getRequest().singleRequest(
 			'appointmentlistmodule',

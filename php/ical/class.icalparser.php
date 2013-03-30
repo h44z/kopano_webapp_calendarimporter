@@ -188,8 +188,8 @@ class ICal {
 		//$keyword = $keyword[0];	// remove additional content like VALUE=DATE
 		//}
 		
-		if (stristr($keyword, "TIMEZONE") && !$this->timezone_set) { // check if timezone already set...
-			$this->default_timezone = $value;	// store the calendertimezone
+		if ((stristr($keyword, "TIMEZONE") || stristr($keyword, "TZID")) && !$this->timezone_set) { // check if timezone already set...
+			$this->default_timezone = $this->trimTimeZone($value);	// store the calendertimezone
 		}
 
 		switch ($component) { 
@@ -239,6 +239,24 @@ class ICal {
 	}
 	
 	/**
+	 * Trim a Timezone String
+	 *
+	 * @param {string} $timezone timezone string which should be trimmed
+	 * @return {string} trimmed value
+	 */
+	private function trimTimeZone($timezone) {
+		if(preg_match('~([?<=/]*)([^/]*[/|-][^/]*$)~', $timezone, $matches)) { // detects tzurls in tzids			
+			if ($matches[2] != "") {
+				return $matches[2]; // 2 = extracted timezone
+			} else {
+				return $timezone;
+			}
+		}
+		
+		return $timezone;
+	}
+	
+	/**
 	 * Get a key-value pair of a string.
 	 *
 	 * @param {string} $text which is like "VCALENDAR:Begin" or "LOCATION:"
@@ -277,6 +295,7 @@ class ICal {
 			if($pos !== false && $propvalue != false) {
 				$timezone = str_replace('"', '', $propvalue);
 				$timezone = str_replace('\'', '', $timezone);
+				$timezone = $this->trimTimeZone($timezone);
 			}
 		}
 		
@@ -413,6 +432,15 @@ class ICal {
 	public function calendar() {
 		$array = $this->cal;
 		return $array['VCALENDAR'];
+	}
+	
+	/**
+	 * Returns the default or set timezone
+	 *
+	 * @return {string}
+	 */
+	public function timezone() {
+		return $this->default_timezone;
 	}
 
 	/**

@@ -413,6 +413,7 @@ class CalendarModule extends Module {
 				$response['status']		= true;
 				$response['parsed_file']= $actionData["ics_filepath"];
 				$response['parsed']		= array (
+					'timezone'  =>  $ical->timezone(),
 					'calendar'	=>	$ical->calendar(),
 					'events'	=>	$ical->events()
 				);
