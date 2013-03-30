@@ -33,5 +33,5 @@ calendarimporter 1.1 final:
  - fixed ExtJS Problem in chrome
 
 KNOWN PROBLEMS:
- - attechments are ignored
+ - attachments in events are ignored
  - recurrent events are not handled properly (im/export) 
