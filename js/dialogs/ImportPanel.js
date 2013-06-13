@@ -600,10 +600,12 @@ Zarafa.plugins.calendarimporter.dialogs.ImportPanel = Ext.extend(Ext.Panel, {
 			var calendarFolder =  container.getHierarchyStore().getDefaultFolder('calendar');
 			var pubStore = container.getHierarchyStore().getPublicStore();
 			var pubSubFolders = [];
+			var pubFolder;
+			
 			if(typeof pubStore !== "undefined") {
 				try {
-					var pubFolder = pubStore.getDefaultFolder("publicfolders");
-					var pubSubFolders = pubFolder.getChildren();
+					pubFolder = pubStore.getDefaultFolder("publicfolders");
+					pubSubFolders = pubFolder.getChildren();
 				} catch (e) {
 					console.log("Error opening the shared folder...");
 					console.log(e);
@@ -729,10 +731,12 @@ Zarafa.plugins.calendarimporter.dialogs.ImportPanel = Ext.extend(Ext.Panel, {
 		var calendarFolder =  container.getHierarchyStore().getDefaultFolder('calendar');
 		var pubStore = container.getHierarchyStore().getPublicStore();
 		var pubSubFolders = [];
+		var pubFolder;
+		
 		if(typeof pubStore !== "undefined") {
 			try {
-				var pubFolder = pubStore.getDefaultFolder("publicfolders");
-				var pubSubFolders = pubFolder.getChildren();
+				pubFolder = pubStore.getDefaultFolder("publicfolders");
+				pubSubFolders = pubFolder.getChildren();
 			} catch (e) {
 				console.log("Error opening the shared folder...");
 				console.log(e);
@@ -741,7 +745,7 @@ Zarafa.plugins.calendarimporter.dialogs.ImportPanel = Ext.extend(Ext.Panel, {
 		
 		if(calValue != "calendar") {
 			var subFolders = calendarFolder.getChildren();
-			var i = 0;
+			i = 0;
 			
 			/* add public folders if any exist */
 			for(i = 0; i < pubSubFolders.length; i++) {		

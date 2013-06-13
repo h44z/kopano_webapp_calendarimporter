@@ -289,6 +289,7 @@ class ICal {
 	private function iCalDateToUTCUnixTimestamp($icalDate, $prop, $propvalue) {
 	
 		$timezone = false;
+		$allday = false;
 		
 		if($prop) {
 			$pos = strpos("TZIDtzid", $prop);
@@ -311,15 +312,24 @@ class ICal {
 		$pattern .= '([0-9]{0,2})';  // 4: HH
 		$pattern .= '([0-9]{0,2})';  // 5: MM
 		$pattern .= '([0-9]{0,2})/'; // 6: SS
-		preg_match($pattern, $icalDate, $date); 
-		
-		
-		
+		preg_match($pattern, $icalDate, $date);
 
 		// Unix timestamp can't represent dates before 1970
 		if ($date[1] <= 1970) {
 			return false;
-		} 
+		}
+		
+		// check if we have a allday event
+		if((!$date[6] || $date[6] === "") || (!$date[5] || $date[5] === "") || (!$date[4] || $date[4] === "")) {
+			$date[6] = 0;
+			$date[5] = 0;
+			$date[4] = 0;
+			$allday = true;
+			
+			$dtz = date_default_timezone_get();
+			date_default_timezone_set('UTC');
+		}
+		
 		// Unix timestamps after 03:14:07 UTC 2038-01-19 might cause an overflow
 		// if 32 bit integers are used.
 		$timestamp = mktime((int)$date[4], 
@@ -329,7 +339,11 @@ class ICal {
 							(int)$date[3], 
 							(int)$date[1]);
 							
-		if(!$utc) {
+		if($allday) {
+			date_default_timezone_set($dtz);
+		}
+		
+		if(!$utc && !$allday) {
 			$tz = $this->default_timezone;
 			if($timezone != false) {
 				$tz = $timezone;
@@ -339,7 +353,7 @@ class ICal {
 			$this_tz = false;
 			
 			try {
-				$this_tz = new DateTimeZone($tz);	
+				$this_tz = new DateTimeZone($tz);
 			} catch(Exception $e) {
 				error_log($e->getMessage());
 				$error = true;
@@ -363,7 +377,7 @@ class ICal {
 			$timestamp_utc = $timestamp;
 		}
 		
-		return  ($timestamp_utc);
+		return  array($timestamp_utc,$allday);
 	} 
 
 	/**
@@ -406,9 +420,11 @@ class ICal {
 	 * @return {int} 
 	 */ 
 	public function iCalDateToUnixTimestamp($icalDate, $prop, $propvalue) {
-		$timestamp = $this->iCalDateToUTCUnixTimestamp($icalDate, $prop, $propvalue);
-		
-		$timestamp = $this->UTCTimestampToTZTimestamp($timestamp, $this->default_timezone, $this->ignore_dst);
+		list($timestamp, $allday) = $this->iCalDateToUTCUnixTimestamp($icalDate, $prop, $propvalue);
+				
+		if(!$allday) {
+			$timestamp = $this->UTCTimestampToTZTimestamp($timestamp, $this->default_timezone, $this->ignore_dst, $allday);
+		}
 		
 		return $timestamp;
 	}
