@@ -1,13 +1,13 @@
-Ext.namespace('Zarafa.common.sendas.dialogs');
+Ext.namespace('Zarafa.plugins.calendarimporter.settings.dialogs');
 
 /**
- * @class Zarafa.common.sendas.dialogs.SendAsEditPanel
+ * @class Zarafa.plugins.calendarimporter.settings.dialogs.CalSyncEditPanel
  * @extends Ext.form.FormPanel
- * @xtype zarafa.sendaseditpanel
+ * @xtype calendarimporter.calsynceditpanel
  *
- * Will generate UI for {@link Zarafa.common.sendas.dialogs.SendAsEditContentPanel SendAsEditContentPanel}.
+ * Will generate UI for {@link Zarafa.plugins.calendarimporter.settings.dialogs.CalSyncEditPanel CalSyncEditPanel}.
  */
-Zarafa.common.sendas.dialogs.SendAsEditPanel = Ext.extend(Ext.form.FormPanel, {
+Zarafa.plugins.calendarimporter.settings.dialogs.CalSyncEditPanel = Ext.extend(Ext.form.FormPanel, {
 	
 	/**
 	 * the id of the currently edited item
@@ -27,7 +27,7 @@ Zarafa.common.sendas.dialogs.SendAsEditPanel = Ext.extend(Ext.form.FormPanel, {
 
 		Ext.applyIf(config, {
 			// Override from Ext.Component
-			xtype : 'zarafa.sendaseditpanel',
+			xtype : 'calendarimporter.calsynceditpanel',
 			labelAlign : 'left',
 			defaultType: 'textfield',
 			items : this.createPanelItems(config),
@@ -43,7 +43,7 @@ Zarafa.common.sendas.dialogs.SendAsEditPanel = Ext.extend(Ext.form.FormPanel, {
 			}]
 		});
 
-		Zarafa.common.sendas.dialogs.SendAsEditPanel.superclass.constructor.call(this, config);
+		Zarafa.plugins.calendarimporter.settings.dialogs.CalSyncEditPanel.superclass.constructor.call(this, config);
 	},
 	
 	/**
@@ -63,18 +63,18 @@ Zarafa.common.sendas.dialogs.SendAsEditPanel = Ext.extend(Ext.form.FormPanel, {
 		
 		if(!this.currentItem) {
 			record = new store.recordType({
-				id: this.hashCode(this.email_address.getValue()),
+				id: this.hashCode(this.icsurl.getValue()),
 				display_name: this.display_name.getValue(),
-				email_address: this.email_address.getValue()
+				icsurl: this.icsurl.getValue()
 			});
 		}
 		
-		if(this.email_address.isValid()) {
+		if(this.icsurl.isValid()) {
 			if(record) {
 				store.add(record);
 			} else {
 				this.currentItem.set('display_name', this.display_name.getValue());
-				this.currentItem.set('email_address', this.email_address.getValue());
+				this.currentItem.set('icsurl', this.icsurl.getValue());
 			}
 			this.dialog.close();
 		}
@@ -88,11 +88,11 @@ Zarafa.common.sendas.dialogs.SendAsEditPanel = Ext.extend(Ext.form.FormPanel, {
 	createPanelItems : function(config)
 	{
 		var displayName = "";
-		var emailAddress = "";
+		var icsUrl = "";
 		
 		if(config.item){
 			displayName = config.item.get('display_name');
-			emailAddress = config.item.get('email_address');
+			icsUrl = config.item.get('icsurl');
 		}
 				
 		return [{
@@ -103,11 +103,11 @@ Zarafa.common.sendas.dialogs.SendAsEditPanel = Ext.extend(Ext.form.FormPanel, {
 			anchor: '100%'
 		},
 		{
-			fieldLabel: _('Email Address'),
-			name: 'email_address',
-			ref: 'email_address',
+			fieldLabel: _('ICS Url'),
+			name: 'icsurl',
+			ref: 'icsurl',
 			allowBlank: false,
-			value: emailAddress,
+			value: icsUrl,
 			vtype:'email',
 			anchor: '100%'
 		}];
@@ -132,4 +132,4 @@ Zarafa.common.sendas.dialogs.SendAsEditPanel = Ext.extend(Ext.form.FormPanel, {
 	}
 });
 
-Ext.reg('zarafa.sendaseditpanel', Zarafa.common.sendas.dialogs.SendAsEditPanel);
+Ext.reg('calendarimporter.calsynceditpanel', Zarafa.plugins.calendarimporter.settings.dialogs.CalSyncEditPanel);

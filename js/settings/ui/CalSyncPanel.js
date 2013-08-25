@@ -1,12 +1,12 @@
-Ext.namespace('Zarafa.common.sendas.ui');
+Ext.namespace('Zarafa.plugins.calendarimporter.settings.ui');
 
 /**
- * @class Zarafa.common.sendas.ui.SendAsPanel
+ * @class Zarafa.plugins.calendarimporter.settings.ui.CalSyncPanel
  * @extends Ext.Panel
- * @xtype zarafa.sendaspanel
+ * @xtype calendarimporter.calsyncpanel
  * Will generate UI for the {@link Zarafa.common.settings.SettingsSendAsWidget SettingsSendAsWidget}.
  */
-Zarafa.common.sendas.ui.SendAsPanel = Ext.extend(Ext.Panel, {
+Zarafa.plugins.calendarimporter.settings.ui.CalSyncPanel = Ext.extend(Ext.Panel, {
 
 	// store
 	store : undefined,
@@ -23,7 +23,7 @@ Zarafa.common.sendas.ui.SendAsPanel = Ext.extend(Ext.Panel, {
 
 		Ext.applyIf(config, {
 			// Override from Ext.Component
-			xtype : 'zarafa.sendaspanel',
+			xtype : 'calendarimporter.calsyncpanel',
 			border : false,
 			layout : {
 				type : 'vbox',
@@ -33,11 +33,11 @@ Zarafa.common.sendas.ui.SendAsPanel = Ext.extend(Ext.Panel, {
 			items : this.createPanelItems(this.store)
 		});
 
-		Zarafa.common.sendas.ui.SendAsPanel.superclass.constructor.call(this, config);
+		Zarafa.plugins.calendarimporter.settings.ui.CalSyncPanel.superclass.constructor.call(this, config);
 	},
 	
 	/**
-	 * Function will create panel items for {@link Zarafa.common.sendas.ui.SendAsPanel SendAsPanel}
+	 * Function will create panel items for {@link Zarafa.plugins.calendarimporter.settings.ui.CalSyncPanel CalSyncPanel}
 	 * @return {Array} array of items that should be added to panel.
 	 * @private
 	 */
@@ -45,8 +45,8 @@ Zarafa.common.sendas.ui.SendAsPanel = Ext.extend(Ext.Panel, {
 	{
 		return [{
 			xtype : 'displayfield',
-			value : _('Here you can setup your alias email addresses.'),
-			fieldClass : 'x-form-display-field zarafa-delegates-extrainfo'
+			value : _('Here you can .ics files that will be synchronised.'),
+			fieldClass : 'x-form-display-field'
 		}, {
 			xtype : 'container',
 			flex : 1,
@@ -56,8 +56,8 @@ Zarafa.common.sendas.ui.SendAsPanel = Ext.extend(Ext.Panel, {
 				pack  : 'start'
 			},
 			items : [{
-				xtype : 'zarafa.sendasgrid',
-				ref : '../sendasGrid',
+				xtype : 'calendarimporter.calsyncgrid',
+				ref : '../calsyncGrid',
 				store : store,
 				flex : 1
 			}, {
@@ -98,20 +98,19 @@ Zarafa.common.sendas.ui.SendAsPanel = Ext.extend(Ext.Panel, {
 	 */
 	initEvents : function()
 	{
-		Zarafa.common.sendas.ui.SendAsPanel.superclass.initEvents.call(this);
+		Zarafa.plugins.calendarimporter.settings.ui.CalSyncPanel.superclass.initEvents.call(this);
 
 		// register event to enable/disable buttons
-		this.mon(this.sendasGrid.getSelectionModel(), 'selectionchange', this.onGridSelectionChange, this);
+		this.mon(this.calsyncGrid.getSelectionModel(), 'selectionchange', this.onGridSelectionChange, this);
 	},
 
 	/**
-	 * Handler function will be called when user clicks on 'Add' button,
-	 * this will show addressbook dialog to select sendas user.
+	 * Handler function will be called when user clicks on 'Add' button.
 	 * @private
 	 */
 	onSendAsAdd : function()
 	{
-		Zarafa.core.data.UIFactory.openLayerComponent(Zarafa.core.data.SharedComponentType['common.sendas.dialog.sendasedit'], undefined, {
+		Zarafa.core.data.UIFactory.openLayerComponent(Zarafa.core.data.SharedComponentType['plugins.calendarimporter.settings.dialogs.calsyncedit'], undefined, {
 			store : this.store,
 			item : undefined,
 			manager : Ext.WindowMgr
@@ -119,7 +118,7 @@ Zarafa.common.sendas.ui.SendAsPanel = Ext.extend(Ext.Panel, {
 	},
 
 	/**
-	 * Event handler will be called when selection in {@link Zarafa.common.ui.SendAsGrid SendAsGrid}
+	 * Event handler will be called when selection in {@link Zarafa.plugins.calendarimporter.settings.ui.CalSyncGrid CalSyncGrid}
 	 * has been changed
 	 * @param {Ext.grid.RowSelectionModel} selectionModel selection model that fired the event
 	 */
@@ -131,8 +130,7 @@ Zarafa.common.sendas.ui.SendAsPanel = Ext.extend(Ext.Panel, {
 	},
 
 	/**
-	 * Handler function will be called when user clicks on 'Remove' button,
-	 * this will remove currently selected sendas from sendass list.
+	 * Handler function will be called when user clicks on 'Remove' button.
 	 * @private
 	 */
 	onSendAsRemove : function()
@@ -157,4 +155,4 @@ Zarafa.common.sendas.ui.SendAsPanel = Ext.extend(Ext.Panel, {
 	}
 });
 
-Ext.reg('zarafa.sendaspanel', Zarafa.common.sendas.ui.SendAsPanel);
+Ext.reg('calendarimporter.calsyncpanel', Zarafa.plugins.calendarimporter.settings.ui.CalSyncPanel);

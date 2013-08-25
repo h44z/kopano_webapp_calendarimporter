@@ -1,14 +1,14 @@
-Ext.namespace('Zarafa.common.sendas.ui');
+Ext.namespace('Zarafa.plugins.calendarimporter.settings.ui');
 
 /**
- * @class Zarafa.common.sendas.ui.SendAsGrid
+ * @class Zarafa.plugins.calendarimporter.settings.ui.CalSyncGrid
  * @extends Ext.grid.GridPanel
- * @xtype zarafa.sendasgrid
+ * @xtype calendarimporter.calsyncgrid
  *
  * {@link Zarafa.common.sendas.ui.SendAsGrid SendAsGrid} will be used to display
  * sendas of the current user.
  */
-Zarafa.common.sendas.ui.SendAsGrid = Ext.extend(Ext.grid.GridPanel, {
+Zarafa.plugins.calendarimporter.settings.ui.CalSyncGrid = Ext.extend(Ext.grid.GridPanel, {
 	/**
 	 * @constructor
 	 * @param {Object} config Configuration structure
@@ -18,12 +18,12 @@ Zarafa.common.sendas.ui.SendAsGrid = Ext.extend(Ext.grid.GridPanel, {
 		config = config || {};
 	
 		Ext.applyIf(config, {
-			xtype : 'zarafa.sendasgrid',
+			xtype : 'calendarimporter.calsyncpanel',
 			border : true,
 			store : config.store,
 			viewConfig : {
 				forceFit : true,
-				emptyText : '<div class=\'emptytext\'>' + _('No sendas address exists') + '</div>'
+				emptyText : '<div class=\'emptytext\'>' + _('No ICAL sync entry exists') + '</div>'
 			},
 			loadMask : this.initLoadMask(),
 			columns : this.initColumnModel(),
@@ -35,7 +35,7 @@ Zarafa.common.sendas.ui.SendAsGrid = Ext.extend(Ext.grid.GridPanel, {
 			}
 		});
 
-		Zarafa.common.sendas.ui.SendAsGrid.superclass.constructor.call(this, config);
+		Zarafa.plugins.calendarimporter.settings.ui.CalSyncGrid.superclass.constructor.call(this, config);
 	},
 
 	/**
@@ -44,10 +44,20 @@ Zarafa.common.sendas.ui.SendAsGrid = Ext.extend(Ext.grid.GridPanel, {
 	 */
 	initEvents : function()
 	{
-		Zarafa.common.sendas.ui.SendAsGrid.superclass.initEvents.call(this);
+		Zarafa.plugins.calendarimporter.settings.ui.CalSyncGrid.superclass.initEvents.call(this);
 
 		// select first sendas when store has finished loading
 		this.mon(this.store, 'load', this.onViewReady, this, {single : true});
+	},
+	
+	/**
+	 * Render function
+	 * @return {String}
+	 * @private
+	 */
+	renderAuthColumn : function(value, p, record)
+	{
+		return value ? "true" : "false";
 	},
 
 	/**
@@ -58,13 +68,22 @@ Zarafa.common.sendas.ui.SendAsGrid = Ext.extend(Ext.grid.GridPanel, {
 	initColumnModel : function()
 	{
 		return [{
-			dataIndex : 'display_name',
-			header : _('Name'),
+			dataIndex : 'icsurl',
+			header : _('ICS File'),
 			renderer : Zarafa.common.ui.grid.Renderers.text
 		},
 		{
-			dataIndex : 'email_address',
-			header : _('Email Address'),
+			dataIndex : 'user',
+			header : _('Authentication'),
+			renderer : this.renderAuthColumn
+		},
+		{
+			dataIndex : 'intervall',
+			header : _('Sync Intervall')
+		},
+		{
+			dataIndex : 'lastsync',
+			header : _('Last Synchronisation'),
 			renderer : Zarafa.common.ui.grid.Renderers.text
 		}]
 	},
@@ -90,7 +109,7 @@ Zarafa.common.sendas.ui.SendAsGrid = Ext.extend(Ext.grid.GridPanel, {
 	initLoadMask : function()
 	{
 		return {
-			msg : _('Loading sendas addresses') + '...'
+			msg : _('Loading ics sync entries') + '...'
 		};
 	},
 
@@ -105,27 +124,27 @@ Zarafa.common.sendas.ui.SendAsGrid = Ext.extend(Ext.grid.GridPanel, {
 	},
 
 	/**
-	 * Function will be called to remove a sendas address.
+	 * Function will be called to remove a ics sync entry.
 	 */
 	removeSendAs : function()
 	{
-		var sendasRecord = this.getSelectionModel().getSelected();
-		if(!sendasRecord) {
-			Ext.Msg.alert(_('Alert'), _('Please select a sendas address.'));
+		var icsRecord = this.getSelectionModel().getSelected();
+		if(!icsRecord) {
+			Ext.Msg.alert(_('Alert'), _('Please select a ics sync entry.'));
 			return;
 		}
 
-		this.store.remove(sendasRecord);
+		this.store.remove(icsRecord);
 	},
 	
 	/**
-	 * Event handler which is fired when the {@link Zarafa.common.sendas.ui.SendAsGrid SendAsGrid} is double clicked.
+	 * Event handler which is fired when the {@link Zarafa.plugins.calendarimporter.settings.ui.CalSyncGrid CalSyncGrid} is double clicked.
 	 * it will call generic function to handle the functionality.
 	 * @private
 	 */
 	onRowDblClick : function(grid, rowIndex)
 	{
-		Zarafa.core.data.UIFactory.openLayerComponent(Zarafa.core.data.SharedComponentType['common.sendas.dialog.sendasedit'], undefined, {
+		Zarafa.core.data.UIFactory.openLayerComponent(Zarafa.core.data.SharedComponentType['plugins.calendarimporter.settings.dialogs.calsyncedit'], undefined, {
 			store : grid.getStore(),
 			item : grid.getStore().getAt(rowIndex),
 			manager : Ext.WindowMgr
@@ -133,4 +152,4 @@ Zarafa.common.sendas.ui.SendAsGrid = Ext.extend(Ext.grid.GridPanel, {
 	}
 });
 
-Ext.reg('zarafa.sendasgrid', Zarafa.common.sendas.ui.SendAsGrid);
+Ext.reg('calendarimporter.calsyncpanel', Zarafa.plugins.calendarimporter.settings.ui.CalSyncGrid);
