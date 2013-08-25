@@ -69,6 +69,7 @@ Zarafa.plugins.calendarimporter.settings.dialogs.CalSyncEditPanel = Ext.extend(E
 				intervall: this.intervall.getValue(),
 				user: this.user.getValue(),
 				pass: this.pass.getValue(),
+				calendar: this.calendar.getValue(),
 				lastsync: 0
 			});
 		}
@@ -81,6 +82,7 @@ Zarafa.plugins.calendarimporter.settings.dialogs.CalSyncEditPanel = Ext.extend(E
 				this.currentItem.set('intervall', this.intervall.getValue());
 				this.currentItem.set('user', this.user.getValue());
 				this.currentItem.set('pass', this.pass.getValue());
+				this.currentItem.set('calendar', this.calendar.getValue());
 			}
 			this.dialog.close();
 		}
@@ -97,28 +99,79 @@ Zarafa.plugins.calendarimporter.settings.dialogs.CalSyncEditPanel = Ext.extend(E
 		var intervall = "";
 		var user = "";
 		var pass = "";
+		var calendar = "";
+		
+		var defaultFolder = container.getHierarchyStore().getDefaultFolder('calendar'); // @type: Zarafa.hierarchy.data.MAPIFolderRecord		
+		var subFolders = defaultFolder.getChildren();
+		var myStore = [];
 		
 		if(config.item){
 			icsurl = config.item.get('icsurl');
 			intervall = config.item.get('intervall');
 			user = config.item.get('user');
 			pass = config.item.get('pass');
+			calendar = config.item.get('calendar');
 		}
+		
+		/* add all local calendar folders */
+		var i = 0;
+		myStore.push(new Array(defaultFolder.getDefaultFolderKey(), defaultFolder.getDisplayName()));
+		for(i = 0; i < subFolders.length; i++) {
+			/* Store all subfolders */
+			myStore.push(new Array(subFolders[i].getDisplayName(), subFolders[i].getDisplayName(), false)); // 3rd field = isPublicfolder
+		}
+		
+		/* add all shared calendar folders */
+		var pubStore = container.getHierarchyStore().getPublicStore();
+		
+		if(typeof pubStore !== "undefined") {
+			try {
+				var pubFolder = pubStore.getDefaultFolder("publicfolders");
+				var pubSubFolders = pubFolder.getChildren();
+				
+				for(i = 0; i < pubSubFolders.length; i++) {
+					if(pubSubFolders[i].isContainerClass("IPF.Appointment")){
+						myStore.push(new Array(pubSubFolders[i].getDisplayName(), pubSubFolders[i].getDisplayName() + " [Shared]", true)); // 3rd field = isPublicfolder
+					}
+				}
+			} catch (e) {
+				console.log("Error opening the shared folder...");
+				console.log(e);
+			}
+		}
+		
 				
 		return [{
 			xtype: 'fieldset',
 			title: _('ICAL Information'),
-			defaultType: 'textfield',
-			labelWidth: 120,
+			defaultType: 'textfield',			
 			layout: 'anchor',
+			flex: 1,
 			defaults: {
-				anchor: '100%'
+				anchor: '100%',
+				flex: 1,
+				labelWidth: 120
 			},
 			items: [{
 				fieldLabel: _('ICS Url'),
 				name: 'icsurl',
 				ref: '../icsurl',
 				value: icsurl,
+				allowBlank: false
+			},
+			{
+				xtype:'selectbox',
+				fieldLabel: _('Destination Calendar'),
+				name: 'calendar',
+				ref: '../calendar',
+				value: calendar,
+				editable: false,
+				store: myStore,
+				mode: 'local',
+				labelSeperator: ":",
+				border: false,
+				anchor: "100%",
+				scope: this,
 				allowBlank: false
 			},
 			{

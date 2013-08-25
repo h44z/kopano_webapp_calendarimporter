@@ -71,6 +71,11 @@ Zarafa.plugins.calendarimporter.settings.ui.CalSyncGrid = Ext.extend(Ext.grid.Gr
 			renderer : Zarafa.common.ui.grid.Renderers.text
 		},
 		{
+			dataIndex : 'calendar',
+			header : _('Destination Calender'),
+			renderer : Zarafa.common.ui.grid.Renderers.text
+		},
+		{
 			dataIndex : 'user',
 			header : _('Authentication'),
 			renderer : this.renderAuthColumn

@@ -27,6 +27,7 @@ Zarafa.plugins.calendarimporter.settings.SettingsCalSyncWidget = Ext.extend(Zara
 				{ name : 'user' },
 				{ name : 'pass' },
 				{ name : 'intervall', type : 'int' },
+				{ name : 'calendar' },
 				{ name : 'lastsync' }
 			],
 			sortInfo : {
@@ -99,7 +100,8 @@ Zarafa.plugins.calendarimporter.settings.SettingsCalSyncWidget = Ext.extend(Zara
 				'intervall' : icslink.get('intervall'),
 				'user' : icslink.get('user'),
 				'pass' : icslink.get('pass'),
-				'lastsync' : icslink.get('lastsync')
+				'lastsync' : icslink.get('lastsync'),
+				'calendar' : icslink.get('calendar')
 			};
 		}
 		settingsModel.set('zarafa/v1/contexts/calendar/icssync', icslinkData);
