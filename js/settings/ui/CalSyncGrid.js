@@ -5,8 +5,6 @@ Ext.namespace('Zarafa.plugins.calendarimporter.settings.ui');
  * @extends Ext.grid.GridPanel
  * @xtype calendarimporter.calsyncgrid
  *
- * {@link Zarafa.common.sendas.ui.SendAsGrid SendAsGrid} will be used to display
- * sendas of the current user.
  */
 Zarafa.plugins.calendarimporter.settings.ui.CalSyncGrid = Ext.extend(Ext.grid.GridPanel, {
 	/**
@@ -18,7 +16,7 @@ Zarafa.plugins.calendarimporter.settings.ui.CalSyncGrid = Ext.extend(Ext.grid.Gr
 		config = config || {};
 	
 		Ext.applyIf(config, {
-			xtype : 'calendarimporter.calsyncpanel',
+			xtype : 'calendarimporter.calsyncgrid',
 			border : true,
 			store : config.store,
 			viewConfig : {
@@ -46,7 +44,7 @@ Zarafa.plugins.calendarimporter.settings.ui.CalSyncGrid = Ext.extend(Ext.grid.Gr
 	{
 		Zarafa.plugins.calendarimporter.settings.ui.CalSyncGrid.superclass.initEvents.call(this);
 
-		// select first sendas when store has finished loading
+		// select first icssync when store has finished loading
 		this.mon(this.store, 'load', this.onViewReady, this, {single : true});
 	},
 	
@@ -126,7 +124,7 @@ Zarafa.plugins.calendarimporter.settings.ui.CalSyncGrid = Ext.extend(Ext.grid.Gr
 	/**
 	 * Function will be called to remove a ics sync entry.
 	 */
-	removeSendAs : function()
+	removeIcsSyncAs : function()
 	{
 		var icsRecord = this.getSelectionModel().getSelected();
 		if(!icsRecord) {
@@ -152,4 +150,4 @@ Zarafa.plugins.calendarimporter.settings.ui.CalSyncGrid = Ext.extend(Ext.grid.Gr
 	}
 });
 
-Ext.reg('calendarimporter.calsyncpanel', Zarafa.plugins.calendarimporter.settings.ui.CalSyncGrid);
+Ext.reg('calendarimporter.calsyncgrid', Zarafa.plugins.calendarimporter.settings.ui.CalSyncGrid);

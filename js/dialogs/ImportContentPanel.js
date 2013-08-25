@@ -50,8 +50,8 @@ Zarafa.plugins.calendarimporter.dialogs.ImportContentPanel = Ext.extend(Zarafa.c
 			layout		: 'fit',
 			title		: title,
 			closeOnSave	: true,
-			width		: 620,
-			height		: 465,
+			width		: 800,
+			height		: 700,
 			//Add panel
 			items : [
 				{

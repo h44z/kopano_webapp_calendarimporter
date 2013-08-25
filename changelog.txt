@@ -1,6 +1,9 @@
 calendarimporter 2.0.3:
- - fixed all day events
+ - added sync support for ics files
  
+calendarimporter 2.0.3:
+ - fixed all day events
+
 calendarimporter 2.0.2:
  - fixed crash when public store does not exist
  - check if temporary directory is writeable

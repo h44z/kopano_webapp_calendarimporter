@@ -1,6 +1,6 @@
 <project default="all">
 	<!--############# CONFIGURE ALL PROPERTIES FOR THE REPLACER HERE ################-->
-	<property name="plugin_version" value="2.0.3"/>
+	<property name="plugin_version" value="2.0.4"/>
 	<!-- EOC -->
 	
 	<property name="root-folder" value="${basedir}/../"/>
@@ -102,6 +102,11 @@
 					<fileset file="js/data/ResponseHandler.js" />
 					<fileset file="js/dialogs/ImportContentPanel.js" />
 					<fileset file="js/dialogs/ImportPanel.js" />
+					<fileset file="js/settings/SettingsCalSyncWidget.js" />
+					<fileset file="js/settings/ui/CalSyncPanel.js" />
+					<fileset file="js/settings/ui/CalSyncGrid.js" />
+					<fileset file="js/settings/dialogs/CalSyncEditContentPanel.js" />
+					<fileset file="js/settings/dialogs/CalSyncEditPanel.js" />
 				</concat>
 			</then>
 		</if>

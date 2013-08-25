@@ -5,10 +5,8 @@ Ext.namespace('Zarafa.plugins.calendarimporter.settings');
  * @extends Zarafa.settings.ui.SettingsWidget
  * @xtype calendarimporter.settingscalsyncwidget
  *
- * The {@link Zarafa.settings.ui.SettingsWidget widget} for configuring
- * delegation options in the {@link Zarafa.common.settings.SettingsSendAsCategory sendas category}.
  */
-Zarafa.common.settings.SettingsSendAsWidget = Ext.extend(Zarafa.settings.ui.SettingsWidget, {
+Zarafa.plugins.calendarimporter.settings.SettingsCalSyncWidget = Ext.extend(Zarafa.settings.ui.SettingsWidget, {
 	/**
 	 * @cfg {Zarafa.settings.SettingsContext} settingsContext
 	 */
@@ -91,17 +89,20 @@ Zarafa.common.settings.SettingsSendAsWidget = Ext.extend(Zarafa.settings.ui.Sett
 
 		// Start reading the Grid store and convert the contents back into
 		// an object which can be pushed to the settings.
-		var icslinks = this.sendasPanel.sendasGrid.getStore().getRange();
+		var icslinks = this.calsyncPanel.calsyncGrid.getStore().getRange();
 		var icslinkData = {};
 		for (var i = 0, len = icslinks.length; i < len; i++) {
 			var icslink = icslinks[i];
 
 			icslinkData[icslink.get('id')] = {
-				'display_name' : icslink.get('display_name'),
-				'email_address' : icslink.get('email_address')
+				'icsurl' : icslink.get('icsurl'),
+				'intervall' : icslink.get('intervall'),
+				'user' : icslink.get('user'),
+				'pass' : icslink.get('pass'),
+				'lastsync' : icslink.get('lastsync')
 			};
 		}
-		settingsModel.set('zarafa/v1/contexts/mail/sendas', icslinkData);
+		settingsModel.set('zarafa/v1/contexts/calendar/icssync', icslinkData);
 
 		settingsModel.endEdit();
 	}

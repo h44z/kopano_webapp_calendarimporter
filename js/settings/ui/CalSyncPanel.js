@@ -45,7 +45,7 @@ Zarafa.plugins.calendarimporter.settings.ui.CalSyncPanel = Ext.extend(Ext.Panel,
 	{
 		return [{
 			xtype : 'displayfield',
-			value : _('Here you can .ics files that will be synchronised.'),
+			value : _('Here you can enter .ics files that will be synchronised.'),
 			fieldClass : 'x-form-display-field'
 		}, {
 			xtype : 'container',
@@ -74,7 +74,7 @@ Zarafa.plugins.calendarimporter.settings.ui.CalSyncPanel = Ext.extend(Ext.Panel,
 				items : [{
 					xtype : 'button',
 					text : _('Add') + '...',
-					handler : this.onSendAsAdd,
+					handler : this.onCalSyncAdd,
 					ref : '../../addButton',
 					scope : this
 				}, {
@@ -85,7 +85,7 @@ Zarafa.plugins.calendarimporter.settings.ui.CalSyncPanel = Ext.extend(Ext.Panel,
 					text : _('Remove') + '...',
 					disabled : true,
 					ref : '../../removeButton',
-					handler : this.onSendAsRemove,
+					handler : this.onCalSyncRemove,
 					scope : this
 				}]
 			}]
@@ -108,7 +108,7 @@ Zarafa.plugins.calendarimporter.settings.ui.CalSyncPanel = Ext.extend(Ext.Panel,
 	 * Handler function will be called when user clicks on 'Add' button.
 	 * @private
 	 */
-	onSendAsAdd : function()
+	onCalSyncAdd : function()
 	{
 		Zarafa.core.data.UIFactory.openLayerComponent(Zarafa.core.data.SharedComponentType['plugins.calendarimporter.settings.dialogs.calsyncedit'], undefined, {
 			store : this.store,
@@ -133,9 +133,9 @@ Zarafa.plugins.calendarimporter.settings.ui.CalSyncPanel = Ext.extend(Ext.Panel,
 	 * Handler function will be called when user clicks on 'Remove' button.
 	 * @private
 	 */
-	onSendAsRemove : function()
+	onCalSyncRemove : function()
 	{
-		this.sendasGrid.removeSendAs();
+		this.calsyncGrid.removeIcsSyncAs();
 	},
 
 	/**

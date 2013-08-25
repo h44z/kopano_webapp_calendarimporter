@@ -55,6 +55,14 @@ Zarafa.plugins.calendarimporter.ImportPlugin = Ext.extend(Zarafa.core.Plugin, {	
 		this.registerInsertionPoint('common.contextmenu.attachment.actions', this.createAttachmentImportButton);
 		/* add import button to south navigation */
 		this.registerInsertionPoint("navigation.south", this.createImportButton, this);
+		
+		/* ical sync stuff */
+		if(container.getSettingsModel().get("zarafa/v1/plugins/calendarimporter/enable_sync") === true) {
+			/* edit panel */
+			Zarafa.core.data.SharedComponentType.addProperty('plugins.calendarimporter.settings.dialogs.calsyncedit');
+			/* enable the settings widget */
+			this.registerInsertionPoint('context.settings.category.calendar', this.createSettingsWidget);
+		}
 	},
 	
     /**
@@ -80,6 +88,18 @@ Zarafa.plugins.calendarimporter.ImportPlugin = Ext.extend(Zarafa.core.Plugin, {	
 		}
 		
 		return  button;
+	},
+	
+	/**
+     * Creates the button
+     *
+     * @return {Object} Configuration object for a {@link Ext.Button button}
+     * 
+     */
+	createSettingsWidget: function () {
+		return [{
+			xtype : 'calendarimporter.settingscalsyncwidget'
+		}];
 	},
 	
 	/**
@@ -208,6 +228,9 @@ Zarafa.plugins.calendarimporter.ImportPlugin = Ext.extend(Zarafa.core.Plugin, {	
 			case Zarafa.core.data.SharedComponentType['plugins.calendarimporter.dialogs.importevents']:
 				bid = 2;
 				break;
+			case Zarafa.core.data.SharedComponentType['plugins.calendarimporter.settings.dialogs.calsyncedit']:
+				bid = 2;
+				break;
 		}
 		return bid;
 	},
@@ -225,6 +248,9 @@ Zarafa.plugins.calendarimporter.ImportPlugin = Ext.extend(Zarafa.core.Plugin, {	
 			case Zarafa.core.data.SharedComponentType['plugins.calendarimporter.dialogs.importevents']:
 				component = Zarafa.plugins.calendarimporter.dialogs.ImportContentPanel;
 				break;
+			case Zarafa.core.data.SharedComponentType['plugins.calendarimporter.settings.dialogs.calsyncedit']:
+				component = Zarafa.plugins.calendarimporter.settings.dialogs.CalSyncEditContentPanel;
+				break;
 		}
 
 		return component;
@@ -232,7 +258,7 @@ Zarafa.plugins.calendarimporter.ImportPlugin = Ext.extend(Zarafa.core.Plugin, {	
 });
 
 
-/*############################################################################################################################
+/*############################################################################################################################*
  * STARTUP 
  *############################################################################################################################*/
 Zarafa.onReady(function() {

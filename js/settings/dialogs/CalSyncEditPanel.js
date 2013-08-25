@@ -61,11 +61,15 @@ Zarafa.plugins.calendarimporter.settings.dialogs.CalSyncEditPanel = Ext.extend(E
 		var id = 0;
 		var record = undefined;
 		
+		console.log(this);
 		if(!this.currentItem) {
 			record = new store.recordType({
 				id: this.hashCode(this.icsurl.getValue()),
-				display_name: this.display_name.getValue(),
-				icsurl: this.icsurl.getValue()
+				icsurl: this.icsurl.getValue(),
+				intervall: this.intervall.getValue(),
+				user: this.user.getValue(),
+				pass: this.pass.getValue(),
+				lastsync: 0
 			});
 		}
 		
@@ -73,43 +77,83 @@ Zarafa.plugins.calendarimporter.settings.dialogs.CalSyncEditPanel = Ext.extend(E
 			if(record) {
 				store.add(record);
 			} else {
-				this.currentItem.set('display_name', this.display_name.getValue());
 				this.currentItem.set('icsurl', this.icsurl.getValue());
+				this.currentItem.set('intervall', this.intervall.getValue());
+				this.currentItem.set('user', this.user.getValue());
+				this.currentItem.set('pass', this.pass.getValue());
 			}
 			this.dialog.close();
 		}
 	},
 
 	/**
-	 * Function will create panel items for {@link Zarafa.common.sendas.dialogs.SendAsEditPanel SendAsEditPanel}
+	 * Function will create panel items for {@link Zarafa.plugins.calendarimporter.settings.dialogs.CalSyncEditPanel CalSyncEditPanel}
 	 * @return {Array} array of items that should be added to panel.
 	 * @private
 	 */
 	createPanelItems : function(config)
 	{
-		var displayName = "";
-		var icsUrl = "";
+		var icsurl = "";
+		var intervall = "";
+		var user = "";
+		var pass = "";
 		
 		if(config.item){
-			displayName = config.item.get('display_name');
-			icsUrl = config.item.get('icsurl');
+			icsurl = config.item.get('icsurl');
+			intervall = config.item.get('intervall');
+			user = config.item.get('user');
+			pass = config.item.get('pass');
 		}
 				
 		return [{
-			fieldLabel: _('Display Name'),
-			name: 'display_name',
-			ref: 'display_name',
-			value: displayName,
-			anchor: '100%'
+			xtype: 'fieldset',
+			title: _('ICAL Information'),
+			defaultType: 'textfield',
+			labelWidth: 120,
+			layout: 'anchor',
+			defaults: {
+				anchor: '100%'
+			},
+			items: [{
+				fieldLabel: _('ICS Url'),
+				name: 'icsurl',
+				ref: '../icsurl',
+				value: icsurl,
+				allowBlank: false
+			},
+			{
+				xtype:'numberfield',
+				fieldLabel: _('Sync Intervall'),
+				name: 'intervall',
+				ref: '../intervall',
+				value: intervall,
+				allowBlank: false
+			}]
 		},
 		{
-			fieldLabel: _('ICS Url'),
-			name: 'icsurl',
-			ref: 'icsurl',
-			allowBlank: false,
-			value: icsUrl,
-			vtype:'email',
-			anchor: '100%'
+			xtype: 'fieldset',
+			title: _('Authentication (optional)'),
+			defaultType: 'textfield',
+			labelWidth: 120,
+			layout: 'anchor',
+			defaults: {
+				anchor: '100%'
+			},
+			items: [{
+				fieldLabel: _('Username'),
+				name: 'user',
+				ref: '../user',
+				value: user,
+				allowBlank: true
+			},
+			{
+				fieldLabel: _('Password'),
+				name: 'pass',
+				ref: '../pass',
+				value: pass,
+				inputType: 'password',
+				allowBlank: true
+			}]
 		}];
 	},
 	
