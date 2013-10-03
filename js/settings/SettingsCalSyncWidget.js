@@ -39,8 +39,9 @@ Zarafa.plugins.calendarimporter.settings.SettingsCalSyncWidget = Ext.extend(Zara
 
 		Ext.applyIf(config, {
 			height : 400,
-			title : _('Calendar Sync settings'),
+			title : _('Calendar Sync settings - Comming soon'),
 			xtype : 'calendarimporter.settingscalsyncwidget',
+			disabled : true,
 			layout : {
 				// override from SettingsWidget
 				type : 'fit'

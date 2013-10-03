@@ -1,5 +1,6 @@
-calendarimporter 2.0.3:
- - added sync support for ics files
+calendarimporter 2.0.4:
+ - added compatible with webapp 1.4
+ - added gui for sync - sync algorithms not jet implemented
  
 calendarimporter 2.0.3:
  - fixed all day events
