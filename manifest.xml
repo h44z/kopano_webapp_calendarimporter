@@ -27,7 +27,8 @@
 					<clientfile load="source">js/plugin.calendarimporter.js</clientfile>
 					<clientfile load="source">js/data/ResponseHandler.js</clientfile>
 					<clientfile load="source">js/dialogs/ImportContentPanel.js</clientfile>
-					<clientfile load="source">js/dialogs/ImportPanel.js</clientfile>					
+					<clientfile load="source">js/dialogs/ImportPanel.js</clientfile>
+					<clientfile load="source">js/dialogs/settings/SettingsWidget.js</clientfile>					
 					<clientfile load="source">js/dialogs/settings/SettingsCalSyncWidget.js</clientfile>
 					<clientfile load="source">js/dialogs/settings/ui/CalSyncGrid.js</clientfile>
 					<clientfile load="source">js/dialogs/settings/ui/CalSyncPanel.js</clientfile>

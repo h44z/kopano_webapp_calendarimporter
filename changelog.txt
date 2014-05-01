@@ -1,3 +1,7 @@
+calendarimporter 2.0.5:
+ - added settings widget
+ - compatible with webapp 1.5 and 1.6
+ 
 calendarimporter 2.0.4:
  - added compatible with webapp 1.4
  - added gui for sync - sync algorithms not jet implemented

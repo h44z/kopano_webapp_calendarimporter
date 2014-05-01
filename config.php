@@ -4,7 +4,7 @@
 	/** Disable the export feature for all clients */
 	define('PLUGIN_CALENDARIMPORTER_USER_DEFAULT_ENABLE_EXPORT', false);
 	/** Disable the sync feature for all clients */
-	define('PLUGIN_CALENDARIMPORTER_USER_DEFAULT_ENABLE_SYNC', true);
+	define('PLUGIN_CALENDARIMPORTER_USER_DEFAULT_ENABLE_SYNC', true); // not yet implemented
 	
 	/** The default calendar to import to*/
 	define('PLUGIN_CALENDARIMPORTER_DEFAULT', "calendar");

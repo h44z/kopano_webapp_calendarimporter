@@ -49,14 +49,17 @@ Zarafa.plugins.calendarimporter.ImportPlugin = Ext.extend(Zarafa.core.Plugin, {	
 		this.registerInsertionPoint('common.contextmenu.attachment.actions', this.createAttachmentImportButton);
 		/* add import button to south navigation */
 		this.registerInsertionPoint("navigation.south", this.createImportButton, this);
+		/* add settings widget */
+		this.registerInsertionPoint('context.settings.category.calendar', this.createSettingsWidget);
 		
 		/* ical sync stuff */
 		if(container.getSettingsModel().get("zarafa/v1/plugins/calendarimporter/enable_sync") === true) {
 			/* edit panel */
 			Zarafa.core.data.SharedComponentType.addProperty('plugins.calendarimporter.settings.dialogs.calsyncedit');
 			/* enable the settings widget */
-			this.registerInsertionPoint('context.settings.category.calendar', this.createSettingsWidget);
+			this.registerInsertionPoint('context.settings.category.calendar', this.createSettingsCalSyncWidget);
 		}
+		
 	},
 	
     /**
@@ -91,6 +94,18 @@ Zarafa.plugins.calendarimporter.ImportPlugin = Ext.extend(Zarafa.core.Plugin, {	
      * 
      */
 	createSettingsWidget: function () {
+		return [{
+			xtype : 'calendarimporter.settingswidget'
+		}];
+	},
+	
+	/**
+     * Creates the button
+     *
+     * @return {Object} Configuration object for a {@link Ext.Button button}
+     * 
+     */
+	createSettingsCalSyncWidget: function () {
 		return [{
 			xtype : 'calendarimporter.settingscalsyncwidget'
 		}];
@@ -256,13 +271,10 @@ Zarafa.plugins.calendarimporter.ImportPlugin = Ext.extend(Zarafa.core.Plugin, {	
  * STARTUP 
  *############################################################################################################################*/
 Zarafa.onReady(function() {
-	if(container.getSettingsModel().get("zarafa/v1/plugins/calendarimporter/enable") === true) {
-		container.registerPlugin(new Zarafa.core.PluginMetaData({
-			name : 'calendarimporter',
-			displayName : _('Calendarimporter Plugin'),
-			about : Zarafa.plugins.calendarimporter.ABOUT,
-			allowUserDisable : true,
-			pluginConstructor : Zarafa.plugins.calendarimporter.ImportPlugin
-		}));
-	}
+	container.registerPlugin(new Zarafa.core.PluginMetaData({
+		name : 'calendarimporter',
+		displayName : _('Calendarimporter Plugin'),
+		about : Zarafa.plugins.calendarimporter.ABOUT,
+		pluginConstructor : Zarafa.plugins.calendarimporter.ImportPlugin
+	}));
 });
