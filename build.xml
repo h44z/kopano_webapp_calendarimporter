@@ -1,6 +1,6 @@
 <project default="all">
 	<!--############# CONFIGURE ALL PROPERTIES FOR THE REPLACER HERE ################-->
-	<property name="plugin_version" value="2.0.5"/>
+	<property name="plugin_version" value="2.1.0"/>
 	<!-- EOC -->
 	
 	<property name="root-folder" value="${basedir}/../"/>
@@ -97,6 +97,7 @@
 				</zConcat-->
 				<concat destfile="${target-folder}/${plugin-folder}/js/${plugin-debugfile}">
 					<fileset file="js/ABOUT.js" />
+					<fileset file="js/external/Ext.util.base64.js" />
 					<fileset file="js/data/timezones.js" />
 					<fileset file="js/plugin.calendarimporter.js" />
 					<fileset file="js/data/ResponseHandler.js" />

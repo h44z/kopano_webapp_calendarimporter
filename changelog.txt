@@ -1,3 +1,6 @@
+calendarimporter 2.1.0:
+ - ics sync is now implemented
+
 calendarimporter 2.0.5:
  - added settings widget
  - compatible with webapp 1.5 and 1.6

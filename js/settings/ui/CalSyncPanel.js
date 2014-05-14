@@ -45,7 +45,7 @@ Zarafa.plugins.calendarimporter.settings.ui.CalSyncPanel = Ext.extend(Ext.Panel,
 	{
 		return [{
 			xtype : 'displayfield',
-			value : _('Here you can enter .ics files that will be synchronised.'),
+			value : _('Setup calendars you want to subscribe to.'),
 			fieldClass : 'x-form-display-field'
 		}, {
 			xtype : 'container',

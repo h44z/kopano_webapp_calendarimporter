@@ -16,8 +16,7 @@ Zarafa.plugins.calendarimporter.settings.SettingsCalSyncWidget = Ext.extend(Zara
 	 * @constructor
 	 * @param {Object} config Configuration object
 	 */
-	constructor : function(config)
-	{
+	constructor : function(config) {
 		config = config || {};
 		
 		var store = new Ext.data.JsonStore({
@@ -39,9 +38,8 @@ Zarafa.plugins.calendarimporter.settings.SettingsCalSyncWidget = Ext.extend(Zara
 
 		Ext.applyIf(config, {
 			height : 400,
-			title : _('Calendar Sync settings - Comming soon'),
+			title : _('Calendar Sync settings'),
 			xtype : 'calendarimporter.settingscalsyncwidget',
-			disabled : true,
 			layout : {
 				// override from SettingsWidget
 				type : 'fit'
@@ -63,8 +61,7 @@ Zarafa.plugins.calendarimporter.settings.SettingsCalSyncWidget = Ext.extend(Zara
 	 * {@link Zarafa.settings.SettingsModel} into the UI of this category.
 	 * @param {Zarafa.settings.SettingsModel} settingsModel The settings to load
 	 */
-	update : function(settingsModel)
-	{
+	update : function(settingsModel) {
 		this.model = settingsModel;
 
 		// Convert the signatures into Store data
@@ -85,8 +82,7 @@ Zarafa.plugins.calendarimporter.settings.SettingsCalSyncWidget = Ext.extend(Zara
 	 * This is used to update the settings from the UI into the {@link Zarafa.settings.SettingsModel settings model}.
 	 * @param {Zarafa.settings.SettingsModel} settingsModel The settings to update
 	 */
-	updateSettings : function(settingsModel)
-	{
+	updateSettings : function(settingsModel) {
 		settingsModel.beginEdit();
 
 		// Start reading the Grid store and convert the contents back into

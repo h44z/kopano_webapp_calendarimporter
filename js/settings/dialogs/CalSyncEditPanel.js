@@ -18,8 +18,7 @@ Zarafa.plugins.calendarimporter.settings.dialogs.CalSyncEditPanel = Ext.extend(E
 	 * @constructor
 	 * @param config Configuration structure
 	 */
-	constructor : function(config)
-	{
+	constructor : function(config) {
 		config = config || {};
 
 		if(config.item)
@@ -28,7 +27,7 @@ Zarafa.plugins.calendarimporter.settings.dialogs.CalSyncEditPanel = Ext.extend(E
 		Ext.applyIf(config, {
 			// Override from Ext.Component
 			xtype : 'calendarimporter.calsynceditpanel',
-			labelAlign : 'left',
+			labelAlign : 'top',
 			defaultType: 'textfield',
 			items : this.createPanelItems(config),
 			buttons: [{
@@ -68,9 +67,9 @@ Zarafa.plugins.calendarimporter.settings.dialogs.CalSyncEditPanel = Ext.extend(E
 				icsurl: this.icsurl.getValue(),
 				intervall: this.intervall.getValue(),
 				user: this.user.getValue(),
-				pass: this.pass.getValue(),
+				pass: Ext.util.base64.encode(this.pass.getValue()),
 				calendar: this.calendar.getValue(),
-				lastsync: 0
+				lastsync: "never"
 			});
 		}
 		
@@ -81,7 +80,7 @@ Zarafa.plugins.calendarimporter.settings.dialogs.CalSyncEditPanel = Ext.extend(E
 				this.currentItem.set('icsurl', this.icsurl.getValue());
 				this.currentItem.set('intervall', this.intervall.getValue());
 				this.currentItem.set('user', this.user.getValue());
-				this.currentItem.set('pass', this.pass.getValue());
+				this.currentItem.set('pass', Ext.util.base64.encode(this.pass.getValue()));
 				this.currentItem.set('calendar', this.calendar.getValue());
 			}
 			this.dialog.close();
@@ -109,7 +108,7 @@ Zarafa.plugins.calendarimporter.settings.dialogs.CalSyncEditPanel = Ext.extend(E
 			icsurl = config.item.get('icsurl');
 			intervall = config.item.get('intervall');
 			user = config.item.get('user');
-			pass = config.item.get('pass');
+			pass = Ext.util.base64.decode(config.item.get('pass'));
 			calendar = config.item.get('calendar');
 		}
 		
@@ -144,16 +143,15 @@ Zarafa.plugins.calendarimporter.settings.dialogs.CalSyncEditPanel = Ext.extend(E
 		return [{
 			xtype: 'fieldset',
 			title: _('ICAL Information'),
-			defaultType: 'textfield',			
-			layout: 'anchor',
+			defaultType: 'textfield',
+			layout: 'form',
 			flex: 1,
 			defaults: {
 				anchor: '100%',
-				flex: 1,
-				labelWidth: 120
+				flex: 1
 			},
 			items: [{
-				fieldLabel: _('ICS Url'),
+				fieldLabel: 'ICS Url',
 				name: 'icsurl',
 				ref: '../icsurl',
 				value: icsurl,
@@ -176,7 +174,7 @@ Zarafa.plugins.calendarimporter.settings.dialogs.CalSyncEditPanel = Ext.extend(E
 			},
 			{
 				xtype:'numberfield',
-				fieldLabel: _('Sync Intervall'),
+				fieldLabel: _('Sync Intervall (minutes)'),
 				name: 'intervall',
 				ref: '../intervall',
 				value: intervall,
@@ -187,8 +185,7 @@ Zarafa.plugins.calendarimporter.settings.dialogs.CalSyncEditPanel = Ext.extend(E
 			xtype: 'fieldset',
 			title: _('Authentication (optional)'),
 			defaultType: 'textfield',
-			labelWidth: 120,
-			layout: 'anchor',
+			layout: 'form',
 			defaults: {
 				anchor: '100%'
 			},

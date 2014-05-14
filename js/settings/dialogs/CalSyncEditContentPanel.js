@@ -12,20 +12,18 @@ Zarafa.plugins.calendarimporter.settings.dialogs.CalSyncEditContentPanel = Ext.e
 	 * @constructor
 	 * @param config Configuration structure
 	 */
-	constructor : function(config)
-	{
+	constructor : function(config) {
 		config = config || {};
 
 		// Add in some standard configuration data.
 		Ext.applyIf(config, {
 			// Override from Ext.Component
 			xtype : 'calendarimporter.calsynceditcontentpanel',
-			// Override from Ext.Component
 			layout : 'fit',
 			model : true,
 			autoSave : false,
 			width : 400,
-			height : 100,
+			height : 350,
 			title : _('ICAL Sync'),
 			items : [{
 				xtype : 'calendarimporter.calsynceditpanel',
