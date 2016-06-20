@@ -278,19 +278,14 @@ Zarafa.plugins.calendarimporter.dialogs.ImportPanel = Ext.extend(Ext.Panel, {
 	reloadGridStore: function(eventdata) {
 		var parsedData = [];
 		
-		// this is done to get rid of the local browser timezone....
-		// because all timezone specific stuff is done via php
-		var local_tz_offset = new Date().getTimezoneOffset() * 60000;  // getTimezoneOffset returns minutes... we need milliseconds
-		
-		
 		if(eventdata !== null) {
 			parsedData = new Array(eventdata.events.length);
 			var i = 0;
 			for(i = 0; i < eventdata.events.length; i++) {
 				parsedData[i] = [
 					eventdata.events[i]["subject"],
-					new Date(parseInt(eventdata.events[i]["startdate"]) * 1000 + local_tz_offset),
-					new Date(parseInt(eventdata.events[i]["enddate"]) * 1000 + local_tz_offset),
+					new Date(parseInt(eventdata.events[i]["startdate"]) * 1000),
+					new Date(parseInt(eventdata.events[i]["enddate"]) * 1000),
 					eventdata.events[i]["location"],
 					eventdata.events[i]["body"],
 					eventdata.events[i]["priority"],

@@ -607,8 +607,8 @@ class CalendarModule extends Module
 					$response['parsed_file'] = $actionData["ics_filepath"];
 					$response['parsed'] = array(
 						'events' => $this->parseCalendarToArray($parser),
-						'timezone' => $parser->VTIMEZONE->TZID,
-						'calendar' => $parser
+						'timezone' => isset($parser->VTIMEZONE->TZID) ? (string)$parser->VTIMEZONE->TZID : (string)$parser->{'X-WR-TIMEZONE'},
+						'calendar' => (string)$parser->PRODID
 					);
 				}
 			}
@@ -656,9 +656,35 @@ class CalendarModule extends Module
 			//$properties["trigger"] = (string)$vEvent->COMMENT;
 			$properties["priority"] = (string)$vEvent->PRIORITY;
 			$properties["class"] = (string)$vEvent->CLASS;
-			$properties["label"] = (string)$vEvent->COMMENT;
+			//$properties["label"] = (string)$vEvent->COMMENT;
 			$properties["lastmodified"] = (string)$vEvent->{'LAST-MODIFIED'};
 			$properties["created"] = (string)$vEvent->CREATED;
+			$properties["rrule"] = (string)$vEvent->RRULE;
+
+			// Attendees
+			$properties["attendees"] = array();
+			if(isset($vEvent->ATTENDEE) && count($vEvent->ATTENDEE) > 0) {
+				foreach($vEvent->ATTENDEE as $attendee) {
+					$properties["attendees"][] = array(
+						"name" => (string)$attendee["CN"],
+						"mail" => (string)$attendee,
+						"status" => (string)$attendee["PARTSTAT"],
+						"role" => (string)$attendee["ROLE"]
+					);
+				}
+			}
+
+			// Alarms
+			$properties["alarms"] = array();
+			if(isset($vEvent->VALARM) && count($vEvent->VALARM) > 0) {
+				foreach($vEvent->VALARM as $alarm) {
+					$properties["alarms"][] = array(
+						"description" => (string)$alarm->DESCRIPTION,
+						"trigger" => (string)$alarm->TRIGGER,
+						"type" => (string)$alarm->TRIGGER["VALUE"]
+					);
+				}
+			}
 
 			array_push($events, $properties);
 		}
