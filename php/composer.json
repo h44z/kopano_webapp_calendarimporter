@@ -1,0 +1,5 @@
+{
+  "require": {
+    "kigkonsult/icalcreator": "dev-master"
+  }
+}
