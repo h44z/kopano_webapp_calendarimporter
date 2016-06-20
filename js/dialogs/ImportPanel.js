@@ -77,17 +77,19 @@ Zarafa.plugins.calendarimporter.dialogs.ImportPanel = Ext.extend(Ext.Panel, {
 		// create the data store
 		this.store = new Ext.data.ArrayStore({
 			fields: [
-				{name: 'title'},
-				{name: 'start'},
-				{name: 'end'},
+				{name: 'subject'},
+				{name: 'startdate'},
+				{name: 'enddate'},
 				{name: 'location'},
-				{name: 'description'},
+				{name: 'body'},
 				{name: 'priority'},
 				{name: 'label'},
 				{name: 'busy'},
-				{name: 'privatestate'},
+				{name: 'class'},
 				{name: 'organizer'},
-				{name: 'trigger'}
+				{name: 'alarms'},
+				{name: 'timezone'},
+				{name: 'record'}
 			]
 		});
 		
@@ -285,13 +287,21 @@ Zarafa.plugins.calendarimporter.dialogs.ImportPanel = Ext.extend(Ext.Panel, {
 			parsedData = new Array(eventdata.events.length);
 			var i = 0;
 			for(i = 0; i < eventdata.events.length; i++) {
-				var trigger = null;
-				
-				if(eventdata.events[i]["VALARM"]) {
-					trigger = eventdata.events[i]["VALARM"]["TRIGGER"];
-					trigger = new Date(parseInt(trigger) + local_tz_offset);
-				}
-				parsedData[i] = new Array(eventdata.events[i]["SUMMARY"], new Date(parseInt(eventdata.events[i]["DTSTART"]) + local_tz_offset), new Date(parseInt(eventdata.events[i]["DTEND"]) + local_tz_offset), eventdata.events[i]["LOCATION"], eventdata.events[i]["DESCRIPTION"],eventdata.events[i]["PRIORITY"],eventdata.events[i]["X-ZARAFA-LABEL"],eventdata.events[i]["X-MICROSOFT-CDO-BUSYSTATUS"],eventdata.events[i]["CLASS"],eventdata.events[i]["ORGANIZER"],trigger);
+				parsedData[i] = [
+					eventdata.events[i]["subject"],
+					new Date(parseInt(eventdata.events[i]["startdate"]) * 1000 + local_tz_offset),
+					new Date(parseInt(eventdata.events[i]["enddate"]) * 1000 + local_tz_offset),
+					eventdata.events[i]["location"],
+					eventdata.events[i]["body"],
+					eventdata.events[i]["priority"],
+					eventdata.events[i]["label"],
+					eventdata.events[i]["busy"],
+					eventdata.events[i]["class"],
+					eventdata.events[i]["organizer"],
+					eventdata.events[i]["alarms"],
+					eventdata.events[i]["timezone"],
+					eventdata.events[i]
+				];
 			}
 		} else {
 			return null;
@@ -325,17 +335,18 @@ Zarafa.plugins.calendarimporter.dialogs.ImportPanel = Ext.extend(Ext.Panel, {
 					sortable: true
 				},
 				columns: [
-					{id: 'Summary', header: 'Title', width: 200, sortable: true, dataIndex: 'title'},
-					{header: 'Start', width: 200, sortable: true, dataIndex: 'start', renderer : Zarafa.common.ui.grid.Renderers.datetime},
-					{header: 'End', width: 200, sortable: true, dataIndex: 'end', renderer : Zarafa.common.ui.grid.Renderers.datetime},
+					{id: 'Summary', header: 'Title', width: 200, sortable: true, dataIndex: 'subject'},
+					{header: 'Start', width: 200, sortable: true, dataIndex: 'startdate', renderer : Zarafa.common.ui.grid.Renderers.datetime},
+					{header: 'End', width: 200, sortable: true, dataIndex: 'enddate', renderer : Zarafa.common.ui.grid.Renderers.datetime},
 					{header: 'Location', width: 150, sortable: true, dataIndex: 'location'},
-					{header: 'Description', sortable: true, dataIndex: 'description'},
+					{header: 'Description', sortable: true, dataIndex: 'body'},
 					{header: "Priority", dataIndex: 'priority', hidden: true},
 					{header: "Label", dataIndex: 'label', hidden: true},
 					{header: "Busystatus", dataIndex: 'busy', hidden: true},
-					{header: "Privacystatus", dataIndex: 'privatestate', hidden: true},
+					{header: "Privacystatus", dataIndex: 'class', hidden: true},
 					{header: "Organizer", dataIndex: 'organizer', hidden: true},
-					{header: "Alarm", dataIndex: 'trigger', hidden: true, renderer : Zarafa.common.ui.grid.Renderers.datetime}
+					{header: "Alarm", dataIndex: 'alarms', hidden: true, renderer : Zarafa.common.ui.grid.Renderers.datetime},
+					{header: "Timezone", dataIndex: 'timezone', hidden: true}
 				]
 			}),
 			sm: new Ext.grid.RowSelectionModel({multiSelect:true})
@@ -430,7 +441,7 @@ Zarafa.plugins.calendarimporter.dialogs.ImportPanel = Ext.extend(Ext.Panel, {
 	createSubmitButton: function() {
 		return {
 			xtype: "button",
-			ref: "submitButton",
+			ref: "../submitButton",
 			disabled: true,
 			width: 100,
 			border: false,
@@ -444,7 +455,7 @@ Zarafa.plugins.calendarimporter.dialogs.ImportPanel = Ext.extend(Ext.Panel, {
 	createSubmitAllButton: function() {
 		return {
 			xtype: "button",
-			ref: "submitAllButton",
+			ref: "../submitAllButton",
 			disabled: true,
 			width: 100,
 			border: false,
@@ -548,20 +559,22 @@ Zarafa.plugins.calendarimporter.dialogs.ImportPanel = Ext.extend(Ext.Panel, {
 	},
 	
 	handleParsingResult: function(response) {
-		this.loadMask.hide();
+		var self = this.scope;
+
+		self.loadMask.hide();
 		
 		if(response["status"] == true) {
-			this.submitButton.enable();
-			this.submitAllButton.enable();
+			self.submitButton.enable();
+			self.submitAllButton.enable();
 
 			if(typeof response.parsed.calendar["X-WR-TIMEZONE"] !== "undefined") {
-				this.timezone = response.parsed.calendar["X-WR-TIMEZONE"];
-				this.timezoneselector.setValue(Zarafa.plugins.calendarimporter.data.Timezones.unMap(this.timezone));
+				self.timezone = response.parsed.calendar["X-WR-TIMEZONE"];
+				self.timezoneselector.setValue(Zarafa.plugins.calendarimporter.data.Timezones.unMap(this.timezone));
 			}
-			this.reloadGridStore(response.parsed);
+			self.reloadGridStore(response.parsed);
 		} else {
-			this.submitButton.disable();
-			this.submitAllButton.disable();
+			self.submitButton.disable();
+			self.submitAllButton.disable();
 			Zarafa.common.dialogs.MessageBox.show({
 				title   : _('Parser Error'),
 				msg     : _(response["message"]),

@@ -1,5 +1,5 @@
 {
   "require": {
-    "kigkonsult/icalcreator": "dev-master"
+    "sabre/vobject": "4.1"
   }
 }

@@ -20,7 +20,7 @@
 					<serverfile type="module" module="calendarmodule">php/module.calendar.php</serverfile>
 				</server>
 				<client>
-					<clientfile load="release">js/calendarimporter.js</clientfile>
+					<clientfile load="release">js/calendarimporter-debug.js</clientfile>
 					<clientfile load="debug">js/calendarimporter-debug.js</clientfile>
 					
 					<clientfile load="source">js/data/timezones.js</clientfile>
@@ -39,7 +39,7 @@
 					<clientfile load="source">js/plugin.calendarimporter.js</clientfile>
 				</client>
 				<resources>
-					<resourcefile load="release">resources/css/calendarimporter-min.css</resourcefile>
+					<resourcefile load="release">resources/css/calendarimporter.css</resourcefile>
 					<resourcefile load="debug">resources/css/calendarimporter.css</resourcefile>
 					<resourcefile load="source">resources/css/calendarimporter-main.css</resourcefile>
 				</resources>

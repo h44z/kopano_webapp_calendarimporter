@@ -23,6 +23,8 @@
 
 include_once('vendor/autoload.php');
 
+use Sabre\VObject;
+
 class CalendarModule extends Module
 {
 
@@ -585,13 +587,10 @@ class CalendarModule extends Module
 			$parser = null;
 
 			try {
-				$parser = new vcalendar([
-					"unique_id" => md5($actionData["ics_filepath"]),
-					"directory" => dirname($actionData["ics_filepath"]),
-					"filename" => basename($actionData["ics_filepath"])
-				]);
-				$parser->parse();
-				error_log(print_r($parser, true));
+				$parser = VObject\Reader::read(
+					fopen($actionData["ics_filepath"],'r')
+				);
+				error_log(print_r($parser->VTIMEZONE, true));
 			} catch (Exception $e) {
 				$error = true;
 				$error_msg = $e->getMessage();
@@ -600,14 +599,16 @@ class CalendarModule extends Module
 				$response['status'] = false;
 				$response['message'] = $error_msg;
 			} else {
-				if (count($parser->components) == 0) {
+				if (count($parser->VEVENT) == 0) {
 					$response['status'] = false;
 					$response['message'] = "No event in ics file";
 				} else {
 					$response['status'] = true;
 					$response['parsed_file'] = $actionData["ics_filepath"];
 					$response['parsed'] = array(
-						'contacts' => $this->parseCalendarToArray($parser)
+						'events' => $this->parseCalendarToArray($parser),
+						'timezone' => $parser->VTIMEZONE->TZID,
+						'calendar' => $parser
 					);
 				}
 			}
@@ -627,13 +628,42 @@ class CalendarModule extends Module
 	/**
 	 * Create a array with contacts
 	 *
-	 * @param calendar ics parser object
+	 * @param {VObject} $calendar ics parser object
 	 * @return array parsed events
 	 * @private
 	 */
 	private function parseCalendarToArray($calendar)
 	{
-		return false;
+		$events = array();
+		foreach ($calendar->VEVENT as $Index => $vEvent) {
+			// Sabre\VObject\Parser\XML\Element\VEvent
+			$properties = array();
+
+			//uid - used for front/backend communication
+			$properties["internal_fields"] = array();
+			$properties["internal_fields"]["event_uid"] = base64_encode($Index . $vEvent->UID);
+
+			$properties["startdate"] = (string)$vEvent->DTSTART->getDateTime()->getTimestamp();
+			$properties["enddate"] = (string)$vEvent->DTEND->getDateTime()->getTimestamp();
+			$properties["location"] = (string)$vEvent->LOCATION;
+			$properties["subject"] = (string)$vEvent->SUMMARY;
+			$properties["body"] = (string)$vEvent->DESCRIPTION;
+			$properties["comment"] = (string)$vEvent->COMMENT;
+			$properties["timezone"] = (string)$vEvent->DTSTART["TZID"];
+			$properties["organizer"] = (string)$vEvent->ORGANIZER;
+			$properties["busy"] = (string)$vEvent->{'X-MICROSOFT-CDO-INTENDEDSTATUS'}; // X-MICROSOFT-CDO-BUSYSTATUS
+			$properties["transp"] = (string)$vEvent->TRANSP;
+			//$properties["trigger"] = (string)$vEvent->COMMENT;
+			$properties["priority"] = (string)$vEvent->PRIORITY;
+			$properties["class"] = (string)$vEvent->CLASS;
+			$properties["label"] = (string)$vEvent->COMMENT;
+			$properties["lastmodified"] = (string)$vEvent->{'LAST-MODIFIED'};
+			$properties["created"] = (string)$vEvent->CREATED;
+
+			array_push($events, $properties);
+		}
+
+		return $events;
 	}
 }
 
