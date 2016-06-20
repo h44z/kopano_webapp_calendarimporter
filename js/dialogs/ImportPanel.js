@@ -372,7 +372,7 @@ Zarafa.plugins.calendarimporter.dialogs.ImportPanel = Ext.extend(Ext.Panel, {
 			name: "choosen_timezone",
 			value: Zarafa.plugins.calendarimporter.data.Timezones.unMap(container.getSettingsModel().get("zarafa/v1/plugins/calendarimporter/default_timezone")),
 			width: 100,
-			fieldLabel: "Select a timezone (optional)",
+			fieldLabel: "Timezone",
 			store: Zarafa.plugins.calendarimporter.data.Timezones.store,
 			labelSeperator: ":",
 			mode: 'local',
@@ -393,7 +393,7 @@ Zarafa.plugins.calendarimporter.dialogs.ImportPanel = Ext.extend(Ext.Panel, {
 			ref: 'dstcheck',
 			name: "dst_check",
 			width: 100,
-			fieldLabel: "Ignore DST (optional)",
+			fieldLabel: "Ignore DST",
 			boxLabel: 'This will ignore "Daylight saving time" offsets.',
 			labelSeperator: ":",
 			border: false,
@@ -529,14 +529,15 @@ Zarafa.plugins.calendarimporter.dialogs.ImportPanel = Ext.extend(Ext.Panel, {
 	
 	parseCalendar: function (icsPath, timezone, ignoredst) {
 		this.loadMask.show();
-		// call export function here!
+
 		var responseHandler = new Zarafa.plugins.calendarimporter.data.ResponseHandler({
-			successCallback: this.handleParsingResult.createDelegate(this)
+			successCallback: this.handleParsingResult,
+			scope: this
 		});
 		
 		container.getRequest().singleRequest(
 			'calendarmodule',
-			'import',
+			'load',
 			{
 				ics_filepath: icsPath,
 				timezone: timezone,
@@ -550,17 +551,17 @@ Zarafa.plugins.calendarimporter.dialogs.ImportPanel = Ext.extend(Ext.Panel, {
 		this.loadMask.hide();
 		
 		if(response["status"] == true) {
-			Ext.getCmp('submitButton').enable();
-			Ext.getCmp('submitAllButton').enable();
-		
-			if(typeof response.parsed.calendar["X-WR-TIMEZONE"] !== "undefined") {;
+			this.submitButton.enable();
+			this.submitAllButton.enable();
+
+			if(typeof response.parsed.calendar["X-WR-TIMEZONE"] !== "undefined") {
 				this.timezone = response.parsed.calendar["X-WR-TIMEZONE"];
 				this.timezoneselector.setValue(Zarafa.plugins.calendarimporter.data.Timezones.unMap(this.timezone));
 			}
 			this.reloadGridStore(response.parsed);
 		} else {
-			Ext.getCmp('submitButton').disable();
-			Ext.getCmp('submitAllButton').disable();
+			this.submitButton.disable();
+			this.submitAllButton.disable();
 			Zarafa.common.dialogs.MessageBox.show({
 				title   : _('Parser Error'),
 				msg     : _(response["message"]),
@@ -575,54 +576,6 @@ Zarafa.plugins.calendarimporter.dialogs.ImportPanel = Ext.extend(Ext.Panel, {
 		this.dialog.close()
 	},
 
-	convertToAppointmentRecord: function (calendarFolder,entry) {
-		var newRecord = Zarafa.core.data.RecordFactory.createRecordObjectByMessageClass('IPM.Appointment', {
-			startdate: new Date(entry.start),
-			duedate: (entry.end != null) ?
-				new Date(entry.end) :
-				new Date(entry.start).add(Date.HOUR, 1),
-			location: entry.location,
-			subject: entry.title,
-			body: entry.description,
-			commonstart: new Date(entry.start),
-			commonend: (entry.end != null) ?
-				new Date(entry.end) :
-				new Date(entry.start).add(Date.HOUR, 1),
-			timezone: this.timezone,
-			parent_entryid: calendarFolder.get('entryid'),
-			store_entryid: calendarFolder.get('store_entryid')
-		});
-		
-		var busystate = new Array("FREE", "TENTATIVE", "BUSY", "OOF");
-		var zlabel = new Array("NONE", "IMPORTANT", "WORK", "PERSONAL", "HOLIDAY", "REQUIRED", "TRAVEL REQUIRED", "PREPARATION REQUIERED", "BIRTHDAY", "SPECIAL DATE", "PHONE INTERVIEW");
-		
-		/* optional fields */
-		if(entry.priority !== "") {
-			newRecord.data.importance = entry.priority;
-		}
-		if(entry.label !== "") {
-			newRecord.data.label = zlabel.indexOf(entry.label);
-		}
-		if(entry.busy !== "") {
-			newRecord.data.busystatus = busystate.indexOf(entry.busy);
-		}
-		if(entry.privatestate !== "") {
-			newRecord.data["private"] = entry.privatestate == "PUBLIC" ? false : true;
-		}
-		if(entry.organizer !== "") {
-			newRecord.data.sent_representing_email_address = entry.organizer;
-		}
-		if(entry.trigger != null) {
-			newRecord.data.reminder = true;
-			newRecord.data.reminder_minutes = new Date((entry.start - entry.trigger)/60);
-			newRecord.data.reminder_time = new Date(entry.trigger);
-		} else {
-			newRecord.data.reminder = false;
-		}
-		
-		return newRecord;
-	},
-	
 	importCheckedEvents: function () {
 		var newRecords = this.eventgrid.selModel.getSelections();
 		this.importEvents(newRecords);
@@ -635,295 +588,15 @@ Zarafa.plugins.calendarimporter.dialogs.ImportPanel = Ext.extend(Ext.Panel, {
 		this.importEvents(newRecords);
     },
 	
-	exportAllEvents: function () {
-		//receive existing calendar store
-		var calValue = this.calendarselector.value;
-		
-		if(calValue == undefined) { // no calendar choosen
-			Zarafa.common.dialogs.MessageBox.show({
-				title   : _('Error'),
-				msg     : _('You have to choose a calendar!'),
-				icon    : Zarafa.common.dialogs.MessageBox.ERROR,
-				buttons : Zarafa.common.dialogs.MessageBox.OK
-			});
-		} else {
-			var calexist = true;
-			var calendarFolder =  container.getHierarchyStore().getDefaultFolder('calendar');
-			var pubStore = container.getHierarchyStore().getPublicStore();
-			var pubSubFolders = [];
-			var pubFolder;
-			
-			if(typeof pubStore !== "undefined") {
-				try {
-					pubFolder = pubStore.getDefaultFolder("publicfolders");
-					pubSubFolders = pubFolder.getChildren();
-				} catch (e) {
-					console.log("Error opening the shared folder...");
-					console.log(e);
-				}
-			}
-			
-			if(calValue != "calendar") {
-				var subFolders = calendarFolder.getChildren();
-				var i = 0;
-				
-				/* add public folders if any exist */
-				for(i = 0; i < pubSubFolders.length; i++) {		
-					if(pubSubFolders[i].isContainerClass("IPF.Appointment")){
-						subFolders.push(pubSubFolders[i]);
-					}
-				}
-				
-				for(i=0;i<subFolders.length;i++) {
-					// loo up right folder 
-					// TODO: improve!!
-					if(subFolders[i].getDisplayName() == calValue) {
-						calendarFolder = subFolders[i];
-						break;
-					}
-				}
-				
-				if(calendarFolder.isDefaultFolder()) {
-					Zarafa.common.dialogs.MessageBox.show({
-						title   : _('Error'),
-						msg     : _('Selected calendar does not exist!'),
-						icon    : Zarafa.common.dialogs.MessageBox.ERROR,
-						buttons : Zarafa.common.dialogs.MessageBox.OK
-					});
-					calexist = false;
-				}
-			}
-			
-			if(calexist) {
-				Zarafa.common.dialogs.MessageBox.show({
-					title: 'Please wait',
-					msg: 'Generating ical file...',
-					progressText: 'Exporting...',
-					width:300,
-					progress:true,
-					closable:false
-				});
-				
-				// progress bar... ;)
-				var updateProgressBar = function(v){
-					return function(){
-						if(v == 100){
-							if(Zarafa.common.dialogs.MessageBox.isVisible()) {
-								updateTimer();
-							}
-						}else{
-							Zarafa.common.dialogs.MessageBox.updateProgress(v/100, 'Exporting...');
-						}
-				   };
-				};
-				
-				var updateTimer = function() {
-					for(var i = 1; i < 101; i++){
-						setTimeout(updateProgressBar(i), 20*i);
-					}
-				};
-				
-				updateTimer();
-			
-				// call export function here!
-				var responseHandler = new Zarafa.plugins.calendarimporter.data.ResponseHandler({
-					successCallback: this.exportPagedEvents.createDelegate(this)
-				});
-				
-				container.getRequest().singleRequest(
-					'appointmentlistmodule',
-					'list',
-					{
-						groupDir: "ASC",
-						restriction: {
-							//start: 0,
-							//limit: 500,	// limit to 500 events.... not working because of hardcoded limit in listmodule
-							//startdate: 0,
-							//duedate: 2145826800	// 2037... nearly highest unix timestamp
-						},
-						sort: [{
-								"field": "startdate",
-								"direction": "DESC"
-						}],
-						store_entryid : calendarFolder.data.store_entryid,
-						entryid : calendarFolder.data.entryid
-					},
-					responseHandler
-				);
-			}
-		}
-    },
-	
-	/**
-	 * Calculate needed Requests for all events
-	 * Needed because the listmodule has hardcoded pageing setting -.-
-	 * @param {Object} response
-	 */
-	exportPagedEvents:function(response) {
-	
-		if(response.page.start = 0 && response.item.length <= 0) {
-			container.getNotifier().notify('info', 'Export Failed', 'There were no items to export!');
-			Zarafa.common.dialogs.MessageBox.hide();
-		} else {
-			this.exportResponse = response.item;
-		}
-		
-		if(this.totalExportCount == null) {
-			this.totalExportCount = response.page.totalrowcount;
-		}
-		
-		var requests = Math.ceil(response.page.totalrowcount / response.page.rowcount);
-		this.runningRequests = requests;
-		
-		var i = 0;
-		
-		//receive existing calendar store
-		var calValue = this.calendarselector.value;		
-		var calendarFolder =  container.getHierarchyStore().getDefaultFolder('calendar');
-		var pubStore = container.getHierarchyStore().getPublicStore();
-		var pubSubFolders = [];
-		var pubFolder;
-		
-		if(typeof pubStore !== "undefined") {
-			try {
-				pubFolder = pubStore.getDefaultFolder("publicfolders");
-				pubSubFolders = pubFolder.getChildren();
-			} catch (e) {
-				console.log("Error opening the shared folder...");
-				console.log(e);
-			}
-		}
-		
-		if(calValue != "calendar") {
-			var subFolders = calendarFolder.getChildren();
-			i = 0;
-			
-			/* add public folders if any exist */
-			for(i = 0; i < pubSubFolders.length; i++) {		
-				if(pubSubFolders[i].isContainerClass("IPF.Appointment")){
-					subFolders.push(pubSubFolders[i]);
-				}
-			}
-			
-			for(i=0;i<subFolders.length;i++) {
-				// loo up right folder 
-				// TODO: improve!!
-				if(subFolders[i].getDisplayName() == calValue) {
-					calendarFolder = subFolders[i];
-					break;
-				}
-			}
-			
-			if(calendarFolder.isDefaultFolder()) {
-				Zarafa.common.dialogs.MessageBox.show({
-					title   : _('Error'),
-					msg     : _('Selected calendar does not exist!'),
-					icon    : Zarafa.common.dialogs.MessageBox.ERROR,
-					buttons : Zarafa.common.dialogs.MessageBox.OK
-				});
-			}
-		}
-		
-		for(i = 0; i < requests; i++) {
-			var responseHandler = new Zarafa.plugins.calendarimporter.data.ResponseHandler({
-				successCallback: this.storeResult.createDelegate(this)
-			});
-			this.requestNext(calendarFolder, responseHandler, response.page.rowcount *(i+1), response.page.rowcount);
-		}
-	},
-
-	/**
-	 * Responsehandler for the single requests... will merge all events into one array
-	 * @param {Object} response
-	 */
-	storeResult: function(response) {
-			var tmp = this.exportResponse;
-			
-			this.exportResponse = tmp.concat(response.item);
-			
-			if(this.runningRequests <= 1) {
-				// final request =)
-				var responseHandler = new Zarafa.plugins.calendarimporter.data.ResponseHandler({
-					successCallback: this.downLoadICS.createDelegate(this)
-				});
-				
-				container.getRequest().singleRequest(
-					'calendarmodule',
-					'export',
-					{
-						data: this.exportResponse,
-						calendar: this.calendarselector.value
-					},
-					responseHandler
-				);
-				container.getNotifier().notify('info', 'Exported', 'Found ' + this.exportResponse.length + ' entries to export. Preparing download...');
-				this.dialog.close();
-			}
-			
-			this.runningRequests--;
-	},
-	
-	/**
-	 * build a new event request for the listmodule
-	 * @param {Object} calendarFolder the calendarFolder to export
-	 * @param {Object} responseHandler (should be storeResult)
-	 * @param {int} start
-	 * @param {int} limit
-	 */
-	requestNext: function(calendarFolder, responseHandler, start, limit) {
-		
-		container.getRequest().singleRequest(
-			'appointmentlistmodule',
-			'list',
-			{
-				groupDir: "ASC",
-				restriction: {
-					start: start,
-					limit: limit
-					//startdate: 0,
-					//duedate: 2145826800	// 2037... nearly highest unix timestamp
-				},
-				sort: [{
-						"field": "startdate",
-						"direction": "DESC"
-				}],
-				store_entryid : calendarFolder.data.store_entryid,
-				entryid : calendarFolder.data.entryid
-			},
-			responseHandler
-		);
-	},
-	
-	/**
-	 * download ics file =)
-	 * @param {Object} response
-	 * @private
-	 */
-	downLoadICS : function(response) {
-		Zarafa.common.dialogs.MessageBox.hide();
-		if(response.status === true) {
-			if(!this.downloadFrame){
-				this.downloadFrame = Ext.getBody().createChild({
-					tag: 'iframe',
-					cls: 'x-hidden'
-				});
-			}
-			var url = 'plugins/calendarimporter/php/download.php?fileid='+response.fileid+'&basedir='+response.basedir+'&secid='+response.secid+'&realname='+response.realname;
-			this.downloadFrame.dom.contentWindow.location = url;
-		} else {
-			container.getNotifier().notify('error', 'Export Failed', 'ICal File creation failed!');
-		}
-	},
-	
 	/** 
 	 * This function stores all given events to the appointmentstore 
 	 * @param events
 	 */
 	importEvents: function (events) {
 		//receive existing calendar store
-		var calValue = this.calendarselector.value;
+		var calValue = this.calendarselector.getValue();
 
-		if(calValue == undefined) { // no calendar choosen
+		if(Ext.isEmpty(calValue)) { // no calendar choosen
 			Zarafa.common.dialogs.MessageBox.show({
 				title   : _('Error'),
 				msg     : _('You have to choose a calendar!'),
@@ -931,7 +604,6 @@ Zarafa.plugins.calendarimporter.dialogs.ImportPanel = Ext.extend(Ext.Panel, {
 				buttons : Zarafa.common.dialogs.MessageBox.OK
 			});
 		} else {
-			var calexist = true;
 			if(this.eventgrid.selModel.getCount() < 1) {
 				Zarafa.common.dialogs.MessageBox.show({
 					title   : _('Error'),
@@ -940,55 +612,54 @@ Zarafa.plugins.calendarimporter.dialogs.ImportPanel = Ext.extend(Ext.Panel, {
 					buttons : Zarafa.common.dialogs.MessageBox.OK
 				});
 			} else {
-				var calendarStore = new Zarafa.calendar.AppointmentStore();
-				var calendarFolder =  container.getHierarchyStore().getDefaultFolder('calendar');
-				var pubStore = container.getHierarchyStore().getPublicStore();
-				var pubFolder = pubStore.getDefaultFolder("publicfolders");
-				var pubSubFolders = pubFolder.getChildren();
-			
-				if(calValue != "calendar") {
-					var subFolders = calendarFolder.getChildren();
-					var i = 0;
-					for(i = 0; i < pubSubFolders.length; i++) {
-						if(pubSubFolders[i].isContainerClass("IPF.Appointment")){
-							subFolders.push(pubSubFolders[i]);
-						}
-					}
-					for(i=0;i<subFolders.length;i++) {
-						// look up right folder 
-						// TODO: improve!!
-						if(subFolders[i].getDisplayName() == calValue) {
-							calendarFolder = subFolders[i];
-							break;
-						}
-					}
-					
-					if(calendarFolder.isDefaultFolder()) {
-						Zarafa.common.dialogs.MessageBox.show({
-							title   : _('Error'),
-							msg     : _('Selected calendar does not exist!'),
-							icon    : Zarafa.common.dialogs.MessageBox.ERROR,
-							buttons : Zarafa.common.dialogs.MessageBox.OK
-						});
-						calexist = false;
-					}
-				}
+				var calendarFolder = this.getContactFolderByEntryid(folderValue);
 
-				if(calexist) {
-					this.loadMask.show();
-					//receive Records from grid rows
-					Ext.each(events, function(newRecord) {
-						var record = this.convertToAppointmentRecord(calendarFolder,newRecord.data);
-						calendarStore.add(record);
-					}, this);
-					calendarStore.save();
-					this.loadMask.hide();
-					this.dialog.close();
-					container.getNotifier().notify('info', 'Imported', 'Imported ' + events.length + ' events. Please reload your calendar!');
-				}
+				this.loadMask.show();
+				var uids = [];
+
+				//receive Records from grid rows
+				Ext.each(events, function(newRecord) {
+					uids.push(newRecord.data.record.internal_fields.event_uid);
+				}, this);
+
+				var responseHandler = new Zarafa.plugins.contactimporter.data.ResponseHandler({
+					successCallback: this.importEventsDone,
+					scope: this
+				});
+
+				container.getRequest().singleRequest(
+					'calendarmodule',
+					'import',
+					{
+						storeid     : contactFolder.store_entryid,
+						folderid    : contactFolder.entryid,
+						uids        : uids,
+						vcf_filepath: this.vcffile
+					},
+					responseHandler
+				);
 			}
 		}
-	}	
+	},
+
+	/**
+	 * Callback for the import request.
+	 * @param {Object} response
+	 */
+	importEventsDone: function (response) {
+		this.loadMask.hide();
+		this.dialog.close();
+		if (response.status == true) {
+			container.getNotifier().notify('info', 'Imported', 'Imported ' + response.count + ' events. Please reload your calendar!');
+		} else {
+			Zarafa.common.dialogs.MessageBox.show({
+				title  : _('Error'),
+				msg    : _('Import failed: ') + response.message,
+				icon   : Zarafa.common.dialogs.MessageBox.ERROR,
+				buttons: Zarafa.common.dialogs.MessageBox.OK
+			});
+		}
+	}
 });
 
 Ext.reg('calendarimporter.importpanel', Zarafa.plugins.calendarimporter.dialogs.ImportPanel);

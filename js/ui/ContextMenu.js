@@ -95,7 +95,7 @@ Zarafa.plugins.calendarimporter.ui.ContextMenu = Ext.extend(Zarafa.hierarchy.ui.
 	 */
 	onContextItemExport: function () {
 		var responseHandler = new Zarafa.plugins.calendarimporter.data.ResponseHandler({
-			successCallback: this.downloadICS,
+			successCallback: Zarafa.plugins.calendarimporter.data.Actions.downloadICS,
 			scope          : this
 		});
 
@@ -116,42 +116,13 @@ Zarafa.plugins.calendarimporter.ui.ContextMenu = Ext.extend(Zarafa.hierarchy.ui.
 	 * @private
 	 */
 	onContextItemImport: function () {
-		var componentType = Zarafa.core.data.SharedComponentType['plugins.calendarimporter.dialogs.importcontacts'];
+		var componentType = Zarafa.core.data.SharedComponentType['plugins.calendarimporter.dialogs.importevents'];
 		var config = {
 			modal : true,
 			folder: this.records.get("entryid")
 		};
 
 		Zarafa.core.data.UIFactory.openLayerComponent(componentType, undefined, config);
-	},
-
-	/**
-	 * Callback for the export request.
-	 * @param {Object} response
-	 */
-	downloadICS: function (response) {
-		if (response.status == false) {
-			Zarafa.common.dialogs.MessageBox.show({
-				title  : dgettext('plugin_files', 'Warning'),
-				msg    : dgettext('plugin_files', response.message),
-				icon   : Zarafa.common.dialogs.MessageBox.WARNING,
-				buttons: Zarafa.common.dialogs.MessageBox.OK
-			});
-		} else {
-			var downloadFrame = Ext.getBody().createChild({
-				tag: 'iframe',
-				cls: 'x-hidden'
-			});
-
-			var url = document.URL;
-			var link = url.substring(0, url.lastIndexOf('/') + 1);
-
-			link += "index.php?sessionid=" + container.getUser().getSessionId() + "&load=custom&name=download_ics";
-			link = Ext.urlAppend(link, "token=" + encodeURIComponent(response.download_token));
-			link = Ext.urlAppend(link, "filename=" + encodeURIComponent(response.filename));
-
-			downloadFrame.dom.contentWindow.location = link;
-		}
 	}
 });
 

@@ -26,13 +26,6 @@ Zarafa.plugins.calendarimporter.settings.SettingsWidget = Ext.extend(Zarafa.sett
 			items : [
 				{
 					xtype : 'checkbox',
-					name : 'zarafa/v1/plugins/calendarimporter/enable_export',
-					ref : 'enableExport',
-					fieldLabel : 'Enable exporter',
-					lazyInit : false
-				},
-				{
-					xtype : 'checkbox',
 					name : 'zarafa/v1/plugins/calendarimporter/enable_sync',
 					ref : 'enableSync',
 					fieldLabel : 'Enable ical sync',
@@ -123,7 +116,6 @@ Zarafa.plugins.calendarimporter.settings.SettingsWidget = Ext.extend(Zarafa.sett
 	 * @param {Zarafa.settings.SettingsModel} settingsModel The settings to load
 	 */
 	update : function(settingsModel) {
-		this.enableExport.setValue(settingsModel.get(this.enableExport.name));
 		this.enableSync.setValue(settingsModel.get(this.enableSync.name));
 		this.defaultCalendar.setValue(settingsModel.get(this.defaultCalendar.name));
 		this.defaultTimezone.setValue(settingsModel.get(this.defaultTimezone.name));
@@ -136,7 +128,6 @@ Zarafa.plugins.calendarimporter.settings.SettingsWidget = Ext.extend(Zarafa.sett
 	 * @param {Zarafa.settings.SettingsModel} settingsModel The settings to update
 	 */
 	updateSettings : function(settingsModel) {
-		settingsModel.set(this.enableExport.name, this.enableExport.getValue());
 		settingsModel.set(this.enableSync.name, this.enableSync.getValue());
 		settingsModel.set(this.defaultCalendar.name, this.defaultCalendar.getValue());
 		settingsModel.set(this.defaultTimezone.name, this.defaultTimezone.getValue());

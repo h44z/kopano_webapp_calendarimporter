@@ -19,136 +19,158 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  *
  */
- 
+
 Ext.namespace("Zarafa.plugins.calendarimporter");									// Assign the right namespace
 
 Zarafa.plugins.calendarimporter.ImportPlugin = Ext.extend(Zarafa.core.Plugin, {		// create new import plugin
 
-    /**
-     * @constructor
-     * @param {Object} config Configuration object
-     *
-     */
+	/**
+	 * @constructor
+	 * @param {Object} config Configuration object
+	 *
+	 */
 	constructor: function (config) {
 		config = config || {};
-				
+
 		Zarafa.plugins.calendarimporter.ImportPlugin.superclass.constructor.call(this, config);
 	},
-	
+
 	/**
 	 * initialises insertion point for plugin
 	 * @protected
 	 */
-	initPlugin : function()	{
+	initPlugin: function () {
 		Zarafa.plugins.calendarimporter.ImportPlugin.superclass.initPlugin.apply(this, arguments);
-		
+
 		/* our panel */
 		Zarafa.core.data.SharedComponentType.addProperty('plugins.calendarimporter.dialogs.importevents');
-		
+
 		/* directly import received icals */
 		this.registerInsertionPoint('common.contextmenu.attachment.actions', this.createAttachmentImportButton);
-		/* add import button to south navigation */
-		this.registerInsertionPoint("navigation.south", this.createImportButton, this);
+
 		/* add settings widget */
 		this.registerInsertionPoint('context.settings.category.calendar', this.createSettingsWidget);
-		
+
+		/* export a calendar entry via rightclick */
+		this.registerInsertionPoint('context.calendar.contextmenu.actions', this.createItemExportInsertionPoint, this);
+
 		/* ical sync stuff */
-		if(container.getSettingsModel().get("zarafa/v1/plugins/calendarimporter/enable_sync") === true) {
+		if (container.getSettingsModel().get("zarafa/v1/plugins/calendarimporter/enable_sync") === true) {
 			/* edit panel */
 			Zarafa.core.data.SharedComponentType.addProperty('plugins.calendarimporter.settings.dialogs.calsyncedit');
+
 			/* enable the settings widget */
 			this.registerInsertionPoint('context.settings.category.calendar', this.createSettingsCalSyncWidget);
 		}
-		
 	},
-	
-    /**
-     * Creates the button
-     *
-     * @return {Object} Configuration object for a {@link Ext.Button button}
-     * 
-     */
-	createImportButton: function () {
-		var button = {
-			xtype				: 'button',
-			ref		  			: "importbutton",
-			id		  			: "importbutton",
-			text				: _('Import Calendar'),
-			iconCls				: 'icon_calendarimporter_button',
-			navigationContext	: container.getContextByName('calendar'),
-			handler				: this.onImportButtonClick,
-			scope				: this
-		};
-		
-		if(container.getSettingsModel().get("zarafa/v1/plugins/calendarimporter/enable_export")) {
-			button.text = _('Import/Export Calendar');
-		}
-		
-		return  button;
-	},
-	
+
 	/**
-     * Creates the button
-     *
-     * @return {Object} Configuration object for a {@link Ext.Button button}
-     * 
-     */
+	 * This method hooks to the contact context menu and allows users to export users to vcf.
+	 *
+	 * @param include
+	 * @param btn
+	 * @returns {Object}
+	 */
+	createItemExportInsertionPoint: function (include, btn) {
+		return {
+			text   : dgettext('plugin_files', 'Export Event'),
+			handler: this.exportToICS.createDelegate(this, [btn]),
+			scope  : this,
+			iconCls: 'icon_calendarimporter_export'
+		};
+	},
+
+	/**
+	 * Generates a request to download the selected records as vCard.
+	 * @param {Ext.Button} btn
+	 */
+	exportToICS: function (btn) {
+		if (btn.records.length == 0) {
+			return; // skip if no records where given!
+		}
+
+		var recordIds = [];
+
+		for (var i = 0; i < btn.records.length; i++) {
+			recordIds.push(btn.records[i].get("entryid"));
+		}
+
+		var responseHandler = new Zarafa.plugins.contactimporter.data.ResponseHandler({
+			successCallback: Zarafa.plugins.calendarimporter.data.Actions.downloadICS,
+			scope          : this
+		});
+
+		// request attachment preperation
+		container.getRequest().singleRequest(
+			'calendarmodule',
+			'export',
+			{
+				storeid: btn.records[0].get("store_entryid"),
+				records: recordIds
+			},
+			responseHandler
+		);
+	},
+
+	/**
+	 * Creates the button
+	 *
+	 * @return {Object} Configuration object for a {@link Ext.Button button}
+	 *
+	 */
 	createSettingsWidget: function () {
 		return [{
-			xtype : 'calendarimporter.settingswidget'
+			xtype: 'calendarimporter.settingswidget'
 		}];
 	},
-	
+
 	/**
-     * Creates the button
-     *
-     * @return {Object} Configuration object for a {@link Ext.Button button}
-     * 
-     */
+	 * Creates the button
+	 *
+	 * @return {Object} Configuration object for a {@link Ext.Button button}
+	 *
+	 */
 	createSettingsCalSyncWidget: function () {
 		return [{
-			xtype : 'calendarimporter.settingscalsyncwidget'
+			xtype: 'calendarimporter.settingscalsyncwidget'
 		}];
 	},
-	
+
 	/**
 	 * Insert import button in all attachment suggestions
-	 
+
 	 * @return {Object} Configuration object for a {@link Ext.Button button}
 	 */
-	createAttachmentImportButton : function(include, btn) {
+	createAttachmentImportButton: function (include, btn) {
 		return {
-			text 		: _('Import Calendar'),
-			handler 	: this.getAttachmentFileName.createDelegate(this, [btn, this.gotAttachmentFileName]),
-			scope		: this,
-			iconCls		: 'icon_calendarimporter_button',
-			beforeShow 	: function(item, record) {
+			text      : _('Import to Calendar'),
+			handler   : this.getAttachmentFileName.createDelegate(this, [btn]),
+			scope     : this,
+			iconCls   : 'icon_calendarimporter_button',
+			beforeShow: function (item, record) {
 				var extension = record.data.name.split('.').pop().toLowerCase();
-				
-				if(record.data.filetype  == "text/calendar" || extension == "ics" || extension == "ifb" || extension == "ical" || extension == "ifbf") {
-					item.setDisabled(false);
+
+				if (record.data.filetype == "text/calendar" || extension == "ics" || extension == "ifb" || extension == "ical" || extension == "ifbf") {
+					item.setVisible(true);
 				} else {
-					item.setDisabled(true);
+					item.setVisible(false);
 				}
 			}
 		};
 	},
-	
+
 	/**
 	 * Callback for getAttachmentFileName
 	 */
-	gotAttachmentFileName: function(response) {
-		if(response.status == true) {
-			Zarafa.core.data.UIFactory.openLayerComponent(Zarafa.core.data.SharedComponentType['plugins.calendarimporter.dialogs.importevents'], undefined, {
-				manager : Ext.WindowMgr,
-				filename : response.tmpname
-			});
+	gotAttachmentFileName: function (response) {
+		if (response.status == true) {
+			this.openImportDialog(response.tmpname);
 		} else {
 			Zarafa.common.dialogs.MessageBox.show({
-				title   : _('Error'),
-				msg     : _(response["message"]),
-				icon    : Zarafa.common.dialogs.MessageBox.ERROR,
-				buttons : Zarafa.common.dialogs.MessageBox.OK
+				title  : _('Error'),
+				msg    : _(response["message"]),
+				icon   : Zarafa.common.dialogs.MessageBox.ERROR,
+				buttons: Zarafa.common.dialogs.MessageBox.OK
 			});
 		}
 	},
@@ -158,71 +180,78 @@ Zarafa.plugins.calendarimporter.ImportPlugin = Ext.extend(Zarafa.core.Plugin, {	
 	 */
 	getAttachmentFileName: function (btn, callback) {
 		Zarafa.common.dialogs.MessageBox.show({
-			title: 'Please wait',
-			msg: 'Loading attachment...',
+			title       : 'Please wait',
+			msg         : 'Loading attachment...',
 			progressText: 'Initializing...',
-			width:300,
-			progress:true,
-			closable:false
+			width       : 300,
+			progress    : true,
+			closable    : false
 		});
 
 		// progress bar... ;)
-		var f = function(v){
-			return function(){
-				if(v == 100){
+		var f = function (v) {
+			return function () {
+				if (v == 100) {
 					Zarafa.common.dialogs.MessageBox.hide();
-				}else{
-					Zarafa.common.dialogs.MessageBox.updateProgress(v/100, Math.round(v)+'% loaded');
+				} else {
+					Zarafa.common.dialogs.MessageBox.updateProgress(v / 100, Math.round(v) + '% loaded');
 				}
-		   };
+			};
 		};
-		
-		for(var i = 1; i < 101; i++){
-			setTimeout(f(i), 20*i);
+
+		for (var i = 1; i < 101; i++) {
+			setTimeout(f(i), 20 * i);
 		}
-		
+
 		/* store the attachment to a temporary folder and prepare it for uploading */
 		var attachmentRecord = btn.records;
 		var attachmentStore = attachmentRecord.store;
-		
+
 		var store = attachmentStore.getParentRecord().get('store_entryid');
 		var entryid = attachmentStore.getAttachmentParentRecordEntryId();
 		var attachNum = new Array(1);
-		if (attachmentRecord.get('attach_num') != -1)
+		if (attachmentRecord.get('attach_num') != -1) {
 			attachNum[0] = attachmentRecord.get('attach_num');
-		else
+		} else {
 			attachNum[0] = attachmentRecord.get('tmpname');
+		}
 		var dialog_attachments = attachmentStore.getId();
 		var filename = attachmentRecord.data.name;
-		
+
 		var responseHandler = new Zarafa.plugins.calendarimporter.data.ResponseHandler({
-			successCallback: callback
+			successCallback: this.gotAttachmentFileName,
+			scope          : this
 		});
-		
+
 		// request attachment preperation
 		container.getRequest().singleRequest(
 			'calendarmodule',
-			'attachmentpath',
+			'importattachment',
 			{
-				entryid : entryid,
-				store: store,
-				attachNum: attachNum,
+				entryid           : entryid,
+				store             : store,
+				attachNum         : attachNum,
 				dialog_attachments: dialog_attachments,
-				filename: filename
+				filename          : filename
 			},
 			responseHandler
 		);
 	},
-	
+
 	/**
-	 * Clickhandler for the button
+	 * Open the import dialog.
+	 * @param {String} filename
 	 */
-	onImportButtonClick: function () {
-		Zarafa.core.data.UIFactory.openLayerComponent(Zarafa.core.data.SharedComponentType['plugins.calendarimporter.dialogs.importevents'], undefined, {
-			manager : Ext.WindowMgr
-		});
+	openImportDialog: function (filename) {
+		var componentType = Zarafa.core.data.SharedComponentType['plugins.calendarimporter.dialogs.importevents'];
+		var config = {
+			filename: filename,
+			modal   : true
+		};
+
+		Zarafa.core.data.UIFactory.openLayerComponent(componentType, undefined, config);
 	},
-		
+
 	/**
 	 * Bid for the type of shared component
 	 * and the given record.
@@ -231,14 +260,21 @@ Zarafa.plugins.calendarimporter.ImportPlugin = Ext.extend(Zarafa.core.Plugin, {	
 	 * @param {Ext.data.Record} record Optionally passed record.
 	 * @return {Number} The bid for the shared component
 	 */
-	bidSharedComponent : function(type, record) {
+	bidSharedComponent: function (type, record) {
 		var bid = -1;
-		switch(type) {
+		switch (type) {
 			case Zarafa.core.data.SharedComponentType['plugins.calendarimporter.dialogs.importevents']:
 				bid = 2;
 				break;
 			case Zarafa.core.data.SharedComponentType['plugins.calendarimporter.settings.dialogs.calsyncedit']:
 				bid = 2;
+				break;
+			case Zarafa.core.data.SharedComponentType['common.contextmenu']:
+				if (record instanceof Zarafa.core.data.MAPIRecord) {
+					if (record.get('object_type') == Zarafa.core.mapi.ObjectType.MAPI_FOLDER && record.get('container_class') == "IPF.Appointment") {
+						bid = 2;
+					}
+				}
 				break;
 		}
 		return bid;
@@ -251,14 +287,17 @@ Zarafa.plugins.calendarimporter.ImportPlugin = Ext.extend(Zarafa.core.Plugin, {	
 	 * @param {Ext.data.Record} record Optionally passed record.
 	 * @return {Ext.Component} Component
 	 */
-	getSharedComponent : function(type, record) {
+	getSharedComponent: function (type, record) {
 		var component;
-		switch(type) {
+		switch (type) {
 			case Zarafa.core.data.SharedComponentType['plugins.calendarimporter.dialogs.importevents']:
 				component = Zarafa.plugins.calendarimporter.dialogs.ImportContentPanel;
 				break;
 			case Zarafa.core.data.SharedComponentType['plugins.calendarimporter.settings.dialogs.calsyncedit']:
 				component = Zarafa.plugins.calendarimporter.settings.dialogs.CalSyncEditContentPanel;
+				break;
+			case Zarafa.core.data.SharedComponentType['common.contextmenu']:
+				component = Zarafa.plugins.calendarimporter.ui.ContextMenu;
 				break;
 		}
 
@@ -270,11 +309,11 @@ Zarafa.plugins.calendarimporter.ImportPlugin = Ext.extend(Zarafa.core.Plugin, {	
 /*############################################################################################################################*
  * STARTUP 
  *############################################################################################################################*/
-Zarafa.onReady(function() {
+Zarafa.onReady(function () {
 	container.registerPlugin(new Zarafa.core.PluginMetaData({
-		name : 'calendarimporter',
-		displayName : _('Calendarimporter Plugin'),
-		about : Zarafa.plugins.calendarimporter.ABOUT,
-		pluginConstructor : Zarafa.plugins.calendarimporter.ImportPlugin
+		name             : 'calendarimporter',
+		displayName      : _('Calendarimporter Plugin'),
+		about            : Zarafa.plugins.calendarimporter.ABOUT,
+		pluginConstructor: Zarafa.plugins.calendarimporter.ImportPlugin
 	}));
 });

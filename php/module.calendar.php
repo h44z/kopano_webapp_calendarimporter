@@ -63,7 +63,7 @@ class CalendarModule extends Module {
 						case "import":
 							$result = $this->importCalendar($actionType, $actionData);
 							break;
-						case "attachmentpath":
+						case "importattachment":
 							$result = $this->getAttachmentPath($actionType, $actionData);
 							break;
 						default:

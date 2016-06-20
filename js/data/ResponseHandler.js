@@ -19,7 +19,7 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  *
  */
- 
+
 /**
  * ResponseHandler
  *
@@ -38,46 +38,46 @@ Zarafa.plugins.calendarimporter.data.ResponseHandler = Ext.extend(Zarafa.core.da
 	 * @cfg {Function} successCallback The function which
 	 * will be called after success request.
 	 */
-	successCallback : null,
-	
+	successCallback: null,
+
 	/**
 	 * Call the successCallback callback function.
 	 * @param {Object} response Object contained the response data.
 	 */
-	doExport : function(response) {
+	doExport: function (response) {
 		this.successCallback(response);
 	},
-	
+
 	/**
 	 * Call the successCallback callback function.
 	 * @param {Object} response Object contained the response data.
 	 */
-	doList : function(response) {
+	doList: function (response) {
 		this.successCallback(response);
 	},
-	
+
 	/**
 	 * Call the successCallback callback function.
 	 * @param {Object} response Object contained the response data.
 	 */
-	doImport : function(response) {
+	doImport: function (response) {
 		this.successCallback(response);
 	},
-	
+
 	/**
 	 * Call the successCallback callback function.
 	 * @param {Object} response Object contained the response data.
 	 */
-	doAttachmentpath : function(response) {
+	doImportattachment: function (response) {
 		this.successCallback(response);
 	},
-	
+
 	/**
 	 * In case exception happened on server, server will return
 	 * exception response with the code of exception.
 	 * @param {Object} response Object contained the response data.
 	 */
-	doError: function(response)	{
+	doError: function (response) {
 		alert("error response code: " + response.error.info.code);
 	}
 });
