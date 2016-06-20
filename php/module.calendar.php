@@ -395,10 +395,6 @@ class CalendarModule extends Module
 	 */
 	private function importCalendar($actionType, $actionData)
 	{
-		if ($this->DEBUG) {
-			error_log("PHP Timezone: " . $tz);
-		}
-
 		if (is_readable($actionData["ics_filepath"])) {
 			$ical = new ICal($actionData["ics_filepath"], $GLOBALS["settings"]->get("zarafa/v1/plugins/calendarimporter/default_timezone"), $actionData["timezone"], $actionData["ignore_dst"]); // Parse it!
 
@@ -591,9 +587,11 @@ class CalendarModule extends Module
 			try {
 				$parser = new vcalendar([
 					"unique_id" => md5($actionData["ics_filepath"]),
-					"filename" => $actionData["ics_filepath"]
+					"directory" => dirname($actionData["ics_filepath"]),
+					"filename" => basename($actionData["ics_filepath"])
 				]);
 				$parser->parse();
+				error_log(print_r($parser, true));
 			} catch (Exception $e) {
 				$error = true;
 				$error_msg = $e->getMessage();
@@ -602,7 +600,7 @@ class CalendarModule extends Module
 				$response['status'] = false;
 				$response['message'] = $error_msg;
 			} else {
-				if (iterator_count($parser) == 0) {
+				if (count($parser->components) == 0) {
 					$response['status'] = false;
 					$response['message'] = "No event in ics file";
 				} else {

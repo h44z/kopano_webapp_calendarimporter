@@ -507,8 +507,8 @@ Zarafa.plugins.calendarimporter.dialogs.ImportPanel = Ext.extend(Ext.Panel, {
 				waitMsg: 'Uploading and parsing calendar...',
 				url: 'plugins/calendarimporter/php/upload.php',
 				failure: function(file, action) {
-					Ext.getCmp('submitButton').disable();
-					Ext.getCmp('submitAllButton').disable();
+					this.submitButton.disable();
+					this.submitAllButton.disable();
 					Zarafa.common.dialogs.MessageBox.show({
 						title   : _('Error'),
 						msg     : _(action.result.error),

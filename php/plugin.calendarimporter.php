@@ -62,7 +62,7 @@ class Plugincalendarimporter extends Plugin
 				break;
 			case 'server.index.load.custom':
 				if ($data['name'] == 'download_ics') {
-					DownloadHandler::doDownload();
+					calendarimporter\DownloadHandler::doDownload();
 				}
 				break;
 		}
