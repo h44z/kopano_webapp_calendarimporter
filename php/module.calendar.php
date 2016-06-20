@@ -20,10 +20,9 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  *
  */
- 
-include_once('mapi/class.recurrence.php');
-include_once('plugins/calendarimporter/php/ical/class.icalcreator.php');
-include_once('plugins/calendarimporter/php/ical/class.icalparser.php');
+
+include_once('ical/class.icalcreator.php');
+include_once('ical/class.icalparser.php');
  
 class CalendarModule extends Module {
 

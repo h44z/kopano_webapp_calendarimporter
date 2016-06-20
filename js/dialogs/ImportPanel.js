@@ -2,7 +2,7 @@
  * ImportPanel.js zarafa calender to ics im/exporter
  *
  * Author: Christoph Haas <christoph.h@sprinternet.at>
- * Copyright (C) 2012-2013 Christoph Haas
+ * Copyright (C) 2012-2016 Christoph Haas
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -29,7 +29,7 @@ Ext.namespace("Zarafa.plugins.calendarimporter.dialogs");
 
 /**
  * @class Zarafa.plugins.calendarimporter.dialogs.ImportPanel
- * @extends Ext.form.FormPanel
+ * @extends Ext.Panel
  */
 Zarafa.plugins.calendarimporter.dialogs.ImportPanel = Ext.extend(Ext.Panel, {
 
@@ -46,21 +46,16 @@ Zarafa.plugins.calendarimporter.dialogs.ImportPanel = Ext.extend(Ext.Panel, {
 	loadMask: null,
 	
 	/* export event buffer */
-	exportResponse: new Array(),
+	exportResponse: [],
 	
 	/* how many requests are still running? */
 	runningRequests: null,
 	
 	/* The store for the selection grid */
 	store: null,
-	
-	/**
-	 * The internal 'iframe' which is hidden from the user, which is used for downloading
-	 * attachments. See {@link #doOpen}.
-	 * @property
-	 * @type Ext.Element
-	 */
-	downloadFrame : undefined,
+
+	/* selected folder */
+	folder : null,
 
 	/**
 	 * @constructor
@@ -70,9 +65,13 @@ Zarafa.plugins.calendarimporter.dialogs.ImportPanel = Ext.extend(Ext.Panel, {
 		config = config || {};
 		var self = this;
 		this.timezone = container.getSettingsModel().get("zarafa/v1/plugins/calendarimporter/default_timezone");
-		
-		if(typeof config.filename !== "undefined") {
+
+		if (!Ext.isEmpty(config.filename)) {
 			this.icsfile = config.filename;
+		}
+
+		if (!Ext.isEmpty(config.folder)) {
+			this.folder = config.folder;
 		}
 		
 		// create the data store
@@ -114,29 +113,19 @@ Zarafa.plugins.calendarimporter.dialogs.ImportPanel = Ext.extend(Ext.Panel, {
 				this.createGrid()
 			],
 			buttons: [
-				this.createExportAllButton(),
 				this.createSubmitAllButton(),
 				this.createSubmitButton(),
 				this.createCancelButton()
 			], 
 			listeners: {
 				afterrender: function (cmp) {
-					Ext.getCmp('importbutton').disable();
-					this.loadMask = new Ext.LoadMask(Ext.getCmp("importpanel").getEl(), {msg:'Loading...'});
+					this.loadMask = new Ext.LoadMask(this.getEl(), {msg:'Loading...'});
 					
 					if(this.icsfile != null) { // if we have got the filename from an attachment
 						this.parseCalendar(this.icsfile, this.timezone, this.ignoredst);
 					}
 				},
-				close: function (cmp) {
-					Ext.getCmp('importbutton').enable();
-				},
-				hide: function (cmp) {
-					Ext.getCmp('importbutton').enable();
-				},
-				destroy: function (cmp) {
-					Ext.getCmp('importbutton').enable();
-				}
+				scope: this
 			}
 		});
 		
@@ -165,6 +154,119 @@ Zarafa.plugins.calendarimporter.dialogs.ImportPanel = Ext.extend(Ext.Panel, {
 			},
 			items: [this.createUploadField()]
 		};
+	},
+
+	/**
+	 * Get all calendar folders.
+	 * @param {boolean} asDropdownStore If true, a simple array store will be returned.
+	 * @returns {*}
+	 */
+	getAllCalendarFolders: function (asDropdownStore) {
+		asDropdownStore = Ext.isEmpty(asDropdownStore) ? false : asDropdownStore;
+
+		var allFolders = [];
+
+		var inbox = container.getHierarchyStore().getDefaultStore();
+		var pub = container.getHierarchyStore().getPublicStore();
+
+		if (!Ext.isEmpty(inbox.subStores) && inbox.subStores.folders.totalLength > 0) {
+			for (var i = 0; i < inbox.subStores.folders.totalLength; i++) {
+				var folder = inbox.subStores.folders.getAt(i);
+				if (folder.get("container_class") == "IPF.Appointment") {
+					if (asDropdownStore) {
+						allFolders.push([
+							folder.get("entryid"),
+							folder.get("display_name")
+						]);
+					} else {
+						allFolders.push({
+							display_name : folder.get("display_name"),
+							entryid      : folder.get("entryid"),
+							store_entryid: folder.get("store_entryid"),
+							is_public    : false
+						});
+					}
+				}
+			}
+		}
+
+		if (!Ext.isEmpty(pub.subStores) && pub.subStores.folders.totalLength > 0) {
+			for (var j = 0; j < pub.subStores.folders.totalLength; j++) {
+				var folder = pub.subStores.folders.getAt(j);
+				if (folder.get("container_class") == "IPF.Appointment") {
+					if (asDropdownStore) {
+						allFolders.push([
+							folder.get("entryid"),
+							folder.get("display_name") + " (Public)"
+						]);
+					} else {
+						allFolders.push({
+							display_name : folder.get("display_name"),
+							entryid      : folder.get("entryid"),
+							store_entryid: folder.get("store_entryid"),
+							is_public    : true
+						});
+					}
+				}
+			}
+		}
+
+		if (asDropdownStore) {
+			return allFolders.sort(this.dynamicSort(1));
+		} else {
+			return allFolders;
+		}
+	},
+
+	/**
+	 * Dynamic sort function, sorts by property name.
+	 * @param {string|int} property
+	 * @returns {Function}
+	 */
+	dynamicSort: function (property) {
+		var sortOrder = 1;
+		if (property[0] === "-") {
+			sortOrder = -1;
+			property = property.substr(1);
+		}
+		return function (a, b) {
+			var result = (a[property].toLowerCase() < b[property].toLowerCase()) ? -1 : (a[property].toLowerCase() > b[property].toLowerCase()) ? 1 : 0;
+			return result * sortOrder;
+		}
+	},
+
+	/**
+	 * Return a calendar folder element by name.
+	 * @param {string} name
+	 * @returns {*}
+	 */
+	getCalendarFolderByName: function (name) {
+		var folders = this.getAllCalendarFolders(false);
+
+		for (var i = 0; i < folders.length; i++) {
+			if (folders[i].display_name == name) {
+				return folders[i];
+			}
+		}
+
+		return container.getHierarchyStore().getDefaultFolder('calendar');
+	},
+
+	/**
+	 * Return a calendar folder element by entryid.
+	 * @param {string} entryid
+	 * @returns {*}
+	 */
+	getCalendarFolderByEntryid: function (entryid) {
+		var folders = this.getAllCalendarFolders(false);
+
+		for (var i = 0; i < folders.length; i++) {
+			if (folders[i].entryid == entryid) {
+				return folders[i];
+			}
+		}
+
+		return container.getHierarchyStore().getDefaultFolder('calendar');
 	},
 
 	/**
@@ -241,52 +343,23 @@ Zarafa.plugins.calendarimporter.dialogs.ImportPanel = Ext.extend(Ext.Panel, {
 	},
 	
 	createSelectBox: function() {
-		var defaultFolder = container.getHierarchyStore().getDefaultFolder('calendar'); // @type: Zarafa.hierarchy.data.MAPIFolderRecord		
-		var subFolders = defaultFolder.getChildren();
-		var myStore = [];
-		
-		/* add all local calendar folders */
-		var i = 0;
-		myStore.push(new Array(defaultFolder.getDefaultFolderKey(), defaultFolder.getDisplayName()));
-		for(i = 0; i < subFolders.length; i++) {
-			/* Store all subfolders */
-			myStore.push(new Array(subFolders[i].getDisplayName(), subFolders[i].getDisplayName(), false)); // 3rd field = isPublicfolder
-		}
-		
-		/* add all shared calendar folders */
-		var pubStore = container.getHierarchyStore().getPublicStore();
-		
-		if(typeof pubStore !== "undefined") {
-			try {
-				var pubFolder = pubStore.getDefaultFolder("publicfolders");
-				var pubSubFolders = pubFolder.getChildren();
-				
-				for(i = 0; i < pubSubFolders.length; i++) {
-					if(pubSubFolders[i].isContainerClass("IPF.Appointment")){
-						myStore.push(new Array(pubSubFolders[i].getDisplayName(), pubSubFolders[i].getDisplayName() + " [Shared]", true)); // 3rd field = isPublicfolder
-					}
-				}
-			} catch (e) {
-				console.log("Error opening the shared folder...");
-				console.log(e);
-			}
-		}
-		
+		var myStore = this.getAllCalendarFolders(true);
+
 		return {
 			xtype: "selectbox",
 			ref: 'calendarselector',
-			id: 'calendarselector',  
 			editable: false,
 			name: "choosen_calendar",
-			value: container.getSettingsModel().get("zarafa/v1/plugins/calendarimporter/default_calendar"),
+			value: Ext.isEmpty(this.folder) ? this.getCalendarFolderByName(container.getSettingsModel().get("zarafa/v1/plugins/calendarimporter/default_calendar")).entryid : this.folder,
 			width: 100,
-			fieldLabel: "Select a calender",
+			fieldLabel: "Select folder",
 			store: myStore,
 			mode: 'local',
 			labelSeperator: ":",
 			border: false,
 			anchor: "100%",
 			scope: this,
+			hidden        : Ext.isEmpty(this.folder) ? false : true,
 			allowBlank: false
 		}
 	},
@@ -295,7 +368,6 @@ Zarafa.plugins.calendarimporter.dialogs.ImportPanel = Ext.extend(Ext.Panel, {
 		return {
 			xtype: "selectbox",
 			ref: 'timezoneselector',
-			id: 'timezoneselector',  
 			editable: false,
 			name: "choosen_timezone",
 			value: Zarafa.plugins.calendarimporter.data.Timezones.unMap(container.getSettingsModel().get("zarafa/v1/plugins/calendarimporter/default_timezone")),
@@ -309,7 +381,7 @@ Zarafa.plugins.calendarimporter.dialogs.ImportPanel = Ext.extend(Ext.Panel, {
 			scope: this,
 			allowBlank: true,
 			listeners: {
-				'select': this.onTimezoneSelected,
+				select: this.onTimezoneSelected,
 				scope: this
 			}
 		}
@@ -319,7 +391,6 @@ Zarafa.plugins.calendarimporter.dialogs.ImportPanel = Ext.extend(Ext.Panel, {
 		return {
 			xtype: "checkbox",
 			ref: 'dstcheck',
-			id: 'dstcheck',
 			name: "dst_check",
 			width: 100,
 			fieldLabel: "Ignore DST (optional)",
@@ -330,7 +401,7 @@ Zarafa.plugins.calendarimporter.dialogs.ImportPanel = Ext.extend(Ext.Panel, {
 			scope: this,
 			allowBlank: true,
 			listeners: {
-				'check': this.onDstChecked,
+				check: this.onDstChecked,
 				scope: this
 			}
 		}
@@ -346,10 +417,11 @@ Zarafa.plugins.calendarimporter.dialogs.ImportPanel = Ext.extend(Ext.Panel, {
 			emptyText: 'Select an .ics calendar',
 			border: false,
 			anchor: "100%",
+			height     : "30",
 			scope: this,
 			allowBlank: false,
 			listeners: {
-				'fileselected': this.onFileSelected,
+				fileselected: this.onFileSelected,
 				scope: this
 			}
 		}
@@ -359,15 +431,13 @@ Zarafa.plugins.calendarimporter.dialogs.ImportPanel = Ext.extend(Ext.Panel, {
 		return {
 			xtype: "button",
 			ref: "submitButton",
-			id: "submitButton",
 			disabled: true,
 			width: 100,
 			border: false,
 			text: _("Import"),
 			anchor: "100%",
 			handler: this.importCheckedEvents,
-			scope: this,
-			allowBlank: false
+			scope: this
 		}
 	},
 	
@@ -375,31 +445,13 @@ Zarafa.plugins.calendarimporter.dialogs.ImportPanel = Ext.extend(Ext.Panel, {
 		return {
 			xtype: "button",
 			ref: "submitAllButton",
-			id: "submitAllButton",
 			disabled: true,
 			width: 100,
 			border: false,
 			text: _("Import All"),
 			anchor: "100%",
 			handler: this.importAllEvents,
-			scope: this,
-			allowBlank: false
-		}
-	},
-	
-	createExportAllButton: function() {
-		return {
-			xtype: "button",
-			ref: "exportAllButton",
-			id: "exportAllButton",
-			hidden: !container.getSettingsModel().get("zarafa/v1/plugins/calendarimporter/enable_export"),
-			width: 100,
-			border: false,
-			text: _("Export All"),
-			anchor: "100%",
-			handler: this.exportAllEvents,
-			scope: this,
-			allowBlank: false
+			scope: this
 		}
 	},
 	
@@ -411,8 +463,7 @@ Zarafa.plugins.calendarimporter.dialogs.ImportPanel = Ext.extend(Ext.Panel, {
 			text: _("Cancel"),
 			anchor: "100%",
 			handler: this.close,
-			scope: this,
-			allowBlank: false
+			scope: this
 		}
 	},
 	
@@ -432,7 +483,7 @@ Zarafa.plugins.calendarimporter.dialogs.ImportPanel = Ext.extend(Ext.Panel, {
 	
 	/**
 	 * This is called when the dst checkbox has been selected
-	 * @param {Ext.form.CheckBox} combo
+	 * @param {Ext.form.CheckBox} checkbox
 	 * @param {boolean} checked
 	 */
 	onDstChecked : function(checkbox, checked) {

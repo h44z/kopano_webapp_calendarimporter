@@ -2,7 +2,7 @@
  * ImportContentPanel.js zarafa calender to ics im/exporter
  *
  * Author: Christoph Haas <christoph.h@sprinternet.at>
- * Copyright (C) 2012-2013 Christoph Haas
+ * Copyright (C) 2012-2016 Christoph Haas
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -42,13 +42,9 @@ Zarafa.plugins.calendarimporter.dialogs.ImportContentPanel = Ext.extend(Zarafa.c
 	 */
 	constructor : function(config) {
 		config = config || {};
-		var title = _('Import Calendar File');
-		if(container.getSettingsModel().get("zarafa/v1/plugins/calendarimporter/enable_export")){
-			title = _('Import/Export Calendar File');
-		}
 		Ext.applyIf(config, {
 			layout		: 'fit',
-			title		: title,
+			title		: _('Import Calendar File'),
 			closeOnSave	: true,
 			width		: 800,
 			height		: 700,
@@ -56,7 +52,8 @@ Zarafa.plugins.calendarimporter.dialogs.ImportContentPanel = Ext.extend(Zarafa.c
 			items : [
 				{
 					xtype	 : 'calendarimporter.importpanel',
-					filename : config.filename 
+					filename : config.filename,
+					folder  : config.folder
 				}
 			]
 		});

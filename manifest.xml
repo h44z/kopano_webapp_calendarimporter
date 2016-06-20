@@ -2,7 +2,7 @@
 <!DOCTYPE plugin SYSTEM "manifest.dtd">
 <plugin version="2">
 	<info>
-		<version>@_@PLUGIN_VERSION@_@</version>
+		<version>2.2.0</version>
 		<name>calendarimporter</name>
 		<title>ICS Calendar Importer/Exporter</title>
 		<author>Christoph Haas</author>
