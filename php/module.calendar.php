@@ -258,6 +258,14 @@ class CalendarModule extends Module
 			}
 
 			$vcalendar = new VObject\Component\VCalendar();
+
+			// Add static stuff to vcalendar
+			$vcalendar->add('METHOD', 'PUBLISH');
+			$vcalendar->add('X-WR-CALDESC', 'Exported Zarafa Calendar');
+			$vcalendar->add('X-WR-TIMEZONE', date_default_timezone_get());
+
+			// TODO: add VTIMEZONE object to ical.
+
 			for ($index = 0, $count = count($records); $index < $count; $index++) {
 				$message = mapi_msgstore_openentry($store, hex2bin($records[$index]));
 
