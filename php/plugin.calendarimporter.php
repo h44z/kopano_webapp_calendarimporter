@@ -45,6 +45,7 @@ class Plugincalendarimporter extends Plugin
 	function init()
 	{
 		$this->registerHook('server.core.settings.init.before');
+		$this->registerHook('server.index.load.custom');
 	}
 
 	/**

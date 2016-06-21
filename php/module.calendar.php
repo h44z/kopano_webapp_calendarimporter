@@ -30,6 +30,12 @@ class CalendarModule extends Module
 
 	private $DEBUG = true;    // enable error_log debugging
 
+	private $busystates = null;
+
+	private $labels = null;
+
+	private $attendeetype = null;
+
 	/**
 	 * @constructor
 	 * @param $id
@@ -38,6 +44,38 @@ class CalendarModule extends Module
 	public function __construct($id, $data)
 	{
 		parent::Module($id, $data);
+
+		// init default timezone
+		date_default_timezone_set(PLUGIN_CALENDARIMPORTER_DEFAULT_TIMEZONE);
+
+		// init mappings
+		$this->busystates = array(
+			"FREE",
+			"TENTATIVE",
+			"BUSY",
+			"OOF"
+		);
+
+		$this->labels = array(
+			"NONE",
+			"IMPORTANT",
+			"WORK",
+			"PERSONAL",
+			"HOLIDAY",
+			"REQUIRED",
+			"TRAVEL REQUIRED",
+			"PREPARATION REQUIERED",
+			"BIRTHDAY",
+			"SPECIAL DATE",
+			"PHONE INTERVIEW"
+		);
+
+		$this->attendeetype = array(
+			"NON-PARTICIPANT", // needed as zarafa starts counting at 1
+			"REQ-PARTICIPANT",
+			"OPT-PARTICIPANT",
+			"NON-PARTICIPANT"
+		);
 	}
 
 	/**
@@ -115,13 +153,190 @@ class CalendarModule extends Module
 	}
 
 	/**
+	 * Get a property from the array.
+	 * @param $props
+	 * @param $propname
+	 * @return string
+	 */
+	private function getProp($props, $propname)
+	{
+		if (isset($props["props"][$propname])) {
+			return $props["props"][$propname];
+		}
+		return "";
+	}
+
+	private function getDurationStringFromMintues($minutes, $pos = false) {
+		$pos = $pos === true ? "+" : "-";
+		$str = $pos . "P";
+
+
+
+		// variables for holding values
+		$mins = intval($minutes);
+		$hours = 0;
+		$days  = 0;
+		$weeks = 0;
+
+		// calculations
+		if ( $mins >= 60 ) {
+			$hours = (int)($mins / 60);
+			$mins = $mins % 60;
+		}
+		if ( $hours >= 24 ) {
+			$days = (int)($hours / 24);
+			$hours = $hours % 60;
+		}
+		if ( $days >= 7 ) {
+			$weeks = (int)($days / 7);
+			$days = $days % 7;
+		}
+
+		// format result
+		if ( $weeks ) {
+			$str .= "{$weeks}W";
+		}
+		if ( $days ) {
+			$str .= "{$days}D";
+		}
+		if ( $hours ) {
+			$str .= "{$hours}H";
+		}
+		if ( $mins ) {
+			$str .= "{$mins}M";
+		}
+
+		return $str;
+	}
+
+	/**
 	 * The main export function, creates the ics file for download
 	 * @param $actionType
 	 * @param $actionData
 	 */
 	private function exportCalendar($actionType, $actionData)
 	{
-		// TODO: implement
+		// Get store id
+		$storeid = false;
+		if (isset($actionData["storeid"])) {
+			$storeid = $actionData["storeid"];
+		}
+
+		// Get records
+		$records = array();
+		if (isset($actionData["records"])) {
+			$records = $actionData["records"];
+		}
+
+		// Get folders
+		$folder = false;
+		if (isset($actionData["folder"])) {
+			$folder = $actionData["folder"];
+		}
+
+		$response = array();
+		$error = false;
+		$error_msg = "";
+
+		// write csv
+		$token = $this->randomstring(16);
+		$file = PLUGIN_CALENDARIMPORTER_TMP_UPLOAD . "ics_" . $token . ".ics";
+		file_put_contents($file, "");
+
+		$store = $GLOBALS["mapisession"]->openMessageStore(hex2bin($storeid));
+		if ($store) {
+			// load folder first
+			if ($folder !== false) {
+				$mapifolder = mapi_msgstore_openentry($store, hex2bin($folder));
+
+				$table = mapi_folder_getcontentstable($mapifolder);
+				$list = mapi_table_queryallrows($table, array(PR_ENTRYID));
+
+				foreach ($list as $item) {
+					$records[] = bin2hex($item[PR_ENTRYID]);
+				}
+			}
+
+			$vcalendar = new VObject\Component\VCalendar();
+			for ($index = 0, $count = count($records); $index < $count; $index++) {
+				$message = mapi_msgstore_openentry($store, hex2bin($records[$index]));
+
+				// get message properties.
+				$properties = $GLOBALS['properties']->getAppointmentProperties();
+				$plaintext = true;
+				$messageProps = $GLOBALS['operations']->getMessageProps($store, $message, $properties, $plaintext);
+
+				$vevent = $vcalendar->add('VEVENT', [
+					'SUMMARY' => $this->getProp($messageProps, "subject"),
+					'DTSTART' => date_timestamp_set(new DateTime(), $this->getProp($messageProps, "startdate")),
+					'DTEND' => date_timestamp_set(new DateTime(), $this->getProp($messageProps, "duedate")),
+					'CREATED' => date_timestamp_set(new DateTime(), $this->getProp($messageProps, "creation_time")),
+					'LAST-MODIFIED' => date_timestamp_set(new DateTime(), $this->getProp($messageProps, "last_modification_time")),
+					'PRIORITY' => $this->getProp($messageProps, "importance"),
+					'X-MICROSOFT-CDO-INTENDEDSTATUS' => $this->busystates[intval($this->getProp($messageProps, "busystatus"))], // both seem to be valid...
+					'X-MICROSOFT-CDO-BUSYSTATUS' => $this->busystates[intval($this->getProp($messageProps, "busystatus"))], // both seem to be valid...
+					'X-ZARAFA-LABEL' => $this->labels[intval($this->getProp($messageProps, "label"))],
+					'CLASS' => $this->getProp($messageProps, "private") ? "PRIVATE" : "PUBLIC",
+					'COMMENT' => "eid:" . $records[$index]
+				]);
+
+				// Add organizer
+				$vevent->add('ORGANIZER','mailto:' . $this->getProp($messageProps, "sender_email_address"));
+				$vevent->ORGANIZER['CN'] = $this->getProp($messageProps, "sender_name");
+
+				// Add Attendees
+				if(isset($messageProps["recipients"]) && count($messageProps["recipients"]["item"]) > 0) {
+					foreach($messageProps["recipients"]["item"] as $attendee) {
+						$att = $vevent->add('ATTENDEE', "mailto:" . $this->getProp($attendee, "email_address"));
+						$att["CN"] = $this->getProp($attendee, "display_name");
+						$att["ROLE"] = $this->attendeetype[intval($this->getProp($attendee, "recipient_type"))];
+					}
+				}
+
+				// Add alarms
+				if(!empty($this->getProp($messageProps, "reminder")) && $this->getProp($messageProps, "reminder") == 1) {
+					$valarm = $vevent->add('VALARM', [
+						'ACTION' => 'DISPLAY',
+						'DESCRIPTION' => $this->getProp($messageProps, "subject") // reuse the event summary
+					]);
+
+					// Add trigger
+					$durationValue = $this->getDurationStringFromMintues($this->getProp($messageProps, "reminder_minutes"), false);
+					$valarm->add('TRIGGER', $durationValue); // default trigger type is duration (see 4.8.6.3)
+
+					/*
+					$valarm->add('TRIGGER', date_timestamp_set(new DateTime(), $this->getProp($messageProps, "reminder_time"))); // trigger type "DATE-TIME"
+					$valarm->TRIGGER['VALUE'] = 'DATE-TIME';
+					*/
+				}
+
+				// Add location
+				if(!empty($this->getProp($messageProps, "location"))) {
+					$vevent->add('LOCATION',$this->getProp($messageProps, "location"));
+				}
+
+				// Add description
+				$body = $this->getProp($messageProps, "isHTML") ? $this->getProp($messageProps, "html_body") : $this->getProp($messageProps, "body");
+				if(!empty($body)) {
+					$vevent->add('DESCRIPTION',$body);
+				}
+			}
+
+			// write combined ics file
+			file_put_contents($file, file_get_contents($file) . $vcalendar->serialize());
+		}
+
+		if (count($records) > 0) {
+			$response['status'] = true;
+			$response['download_token'] = $token;
+			$response['filename'] = count($records) . "events.ics";
+		} else {
+			$response['status'] = false;
+			$response['message'] = "No events found. Export skipped!";
+		}
+
+		$this->addActionData($actionType, $response);
+		$GLOBALS["bus"]->addData($this->getResponseData());
 	}
 
 	/**
