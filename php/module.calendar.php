@@ -354,7 +354,99 @@ class CalendarModule extends Module
 	 */
 	private function importCalendar($actionType, $actionData)
 	{
-		// TODO: implement
+		// Get uploaded vcf path
+		$icsfile = false;
+		if (isset($actionData["ics_filepath"])) {
+			$icsfile = $actionData["ics_filepath"];
+		}
+
+		// Get store id
+		$storeid = false;
+		if (isset($actionData["storeid"])) {
+			$storeid = $actionData["storeid"];
+		}
+
+		// Get folder entryid
+		$folderid = false;
+		if (isset($actionData["folderid"])) {
+			$folderid = $actionData["folderid"];
+		}
+
+		// Get uids
+		$uids = array();
+		if (isset($actionData["uids"])) {
+			$uids = $actionData["uids"];
+		}
+
+		$response = array();
+		$error = false;
+		$error_msg = "";
+
+		// parse the ics file a last time...
+		$parser = null;
+		try {
+			$parser = VObject\Reader::read(
+				fopen($icsfile,'r')
+			);
+		} catch (Exception $e) {
+			$error = true;
+			$error_msg = $e->getMessage();
+		}
+
+		$events = array();
+		if (count($parser->VEVENT) > 0) {
+			$events = $this->parseCalendarToArray($parser);
+			$store = $GLOBALS["mapisession"]->openMessageStore(hex2bin($storeid));
+			$folder = mapi_msgstore_openentry($store, hex2bin($folderid));
+
+			$importall = false;
+			if (count($uids) == count($events)) {
+				$importall = true;
+			}
+
+			$propValuesMAPI = array();
+			$properties = $GLOBALS['properties']->getAppointmentProperties();
+			$count = 0;
+
+			// iterate through all events and import them :)
+			foreach ($events as $event) {
+				if (isset($event["startdate"]) && ($importall || in_array($event["internal_fields"]["event_uid"], $uids))) {
+					// parse the arraykeys
+					// TODO: this is very slow...
+					foreach ($events as $key => $value) {
+						if ($key !== "internal_fields") {
+							if(isset($properties[$key])) {
+								$propValuesMAPI[$properties[$key]] = $value;
+							}
+						}
+					}
+
+					$propValuesMAPI[$properties["message_class"]] = "IPM.Appointment";
+					$propValuesMAPI[$properties["icon_index"]] = "1024";
+					$message = mapi_folder_createmessage($folder);
+
+
+					mapi_setprops($message, $propValuesMAPI);
+					mapi_savechanges($message);
+					if ($this->DEBUG) {
+						error_log("New event added: \"" . $propValuesMAPI[$properties["startdate"]] . "\".\n");
+					}
+					$count++;
+				}
+			}
+
+			$response['status'] = true;
+			$response['count'] = $count;
+			$response['message'] = "";
+
+		} else {
+			$response['status'] = false;
+			$response['count'] = 0;
+			$response['message'] = $error ? $error_msg : "ICS file empty!";
+		}
+
+		$this->addActionData($actionType, $response);
+		$GLOBALS["bus"]->addData($this->getResponseData());
 	}
 
 	/**

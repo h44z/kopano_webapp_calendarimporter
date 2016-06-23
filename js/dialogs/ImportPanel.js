@@ -620,7 +620,7 @@ Zarafa.plugins.calendarimporter.dialogs.ImportPanel = Ext.extend(Ext.Panel, {
 					buttons : Zarafa.common.dialogs.MessageBox.OK
 				});
 			} else {
-				var calendarFolder = this.getContactFolderByEntryid(folderValue);
+				var calendarFolder = this.getCalendarFolderByEntryid(calValue);
 
 				this.loadMask.show();
 				var uids = [];
@@ -630,7 +630,7 @@ Zarafa.plugins.calendarimporter.dialogs.ImportPanel = Ext.extend(Ext.Panel, {
 					uids.push(newRecord.data.record.internal_fields.event_uid);
 				}, this);
 
-				var responseHandler = new Zarafa.plugins.contactimporter.data.ResponseHandler({
+				var responseHandler = new Zarafa.plugins.calendarimporter.data.ResponseHandler({
 					successCallback: this.importEventsDone,
 					scope: this
 				});
@@ -639,10 +639,10 @@ Zarafa.plugins.calendarimporter.dialogs.ImportPanel = Ext.extend(Ext.Panel, {
 					'calendarmodule',
 					'import',
 					{
-						storeid     : contactFolder.store_entryid,
-						folderid    : contactFolder.entryid,
+						storeid     : calendarFolder.store_entryid,
+						folderid    : calendarFolder.entryid,
 						uids        : uids,
-						vcf_filepath: this.vcffile
+						ics_filepath: this.icsfile
 					},
 					responseHandler
 				);
@@ -655,8 +655,10 @@ Zarafa.plugins.calendarimporter.dialogs.ImportPanel = Ext.extend(Ext.Panel, {
 	 * @param {Object} response
 	 */
 	importEventsDone: function (response) {
-		this.loadMask.hide();
-		this.dialog.close();
+		var self = this.scope;
+
+		self.loadMask.hide();
+		self.dialog.close();
 		if (response.status == true) {
 			container.getNotifier().notify('info', 'Imported', 'Imported ' + response.count + ' events. Please reload your calendar!');
 		} else {
