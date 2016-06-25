@@ -406,20 +406,29 @@ class CalendarModule extends Module
 
 			$propValuesMAPI = array();
 			$properties = $GLOBALS['properties']->getAppointmentProperties();
+			error_log("properties: " . print_r($properties, true));
 			$count = 0;
 
 			// iterate through all events and import them :)
 			foreach ($events as $event) {
 				if (isset($event["startdate"]) && ($importall || in_array($event["internal_fields"]["event_uid"], $uids))) {
+
+					error_log("Importing: " . print_r($event, true));
+
 					// parse the arraykeys
 					// TODO: this is very slow...
-					foreach ($events as $key => $value) {
+					foreach ($event as $key => $value) {
 						if ($key !== "internal_fields") {
 							if(isset($properties[$key])) {
 								$propValuesMAPI[$properties[$key]] = $value;
 							}
 						}
 					}
+
+					error_log("MAPI: " . print_r($propValuesMAPI, true));
+
+					$propValuesMAPI[$properties["commonstart"]] = $propValuesMAPI[$properties["startdate"]];
+					$propValuesMAPI[$properties["commonend"]] = $propValuesMAPI[$properties["duedate"]];
 
 					$propValuesMAPI[$properties["message_class"]] = "IPM.Appointment";
 					$propValuesMAPI[$properties["icon_index"]] = "1024";
@@ -429,7 +438,7 @@ class CalendarModule extends Module
 					mapi_setprops($message, $propValuesMAPI);
 					mapi_savechanges($message);
 					if ($this->DEBUG) {
-						error_log("New event added: \"" . $propValuesMAPI[$properties["startdate"]] . "\".\n");
+						error_log("New event added: \"" . $event["startdate"] . "\".\n");
 					}
 					$count++;
 				}
@@ -663,21 +672,23 @@ class CalendarModule extends Module
 			$properties["internal_fields"]["event_uid"] = base64_encode($Index . $vEvent->UID);
 
 			$properties["startdate"] = (string)$vEvent->DTSTART->getDateTime()->getTimestamp();
-			$properties["enddate"] = (string)$vEvent->DTEND->getDateTime()->getTimestamp();
+			$properties["duedate"] = (string)$vEvent->DTEND->getDateTime()->getTimestamp();
 			$properties["location"] = (string)$vEvent->LOCATION;
 			$properties["subject"] = (string)$vEvent->SUMMARY;
 			$properties["body"] = (string)$vEvent->DESCRIPTION;
 			$properties["comment"] = (string)$vEvent->COMMENT;
 			$properties["timezone"] = (string)$vEvent->DTSTART["TZID"];
 			$properties["organizer"] = (string)$vEvent->ORGANIZER;
-			$properties["busy"] = (string)$vEvent->{'X-MICROSOFT-CDO-INTENDEDSTATUS'}; // X-MICROSOFT-CDO-BUSYSTATUS
+			$properties["busystatus"] = array_search((string)$vEvent->{'X-MICROSOFT-CDO-INTENDEDSTATUS'}, $this->busystates); // X-MICROSOFT-CDO-BUSYSTATUS
 			$properties["transp"] = (string)$vEvent->TRANSP;
 			//$properties["trigger"] = (string)$vEvent->COMMENT;
 			$properties["priority"] = (string)$vEvent->PRIORITY;
-			$properties["class"] = (string)$vEvent->CLASS;
-			//$properties["label"] = (string)$vEvent->COMMENT;
-			$properties["lastmodified"] = (string)$vEvent->{'LAST-MODIFIED'};
-			$properties["created"] = (string)$vEvent->CREATED;
+			$properties["private"] = ((string)$vEvent->CLASS) == "PRIVATE" ? true : false;
+			if(!empty((string)$vEvent->{'X-ZARAFA-LABEL'})) {
+				$properties["label"] = array_search((string)$vEvent->{'X-ZARAFA-LABEL'}, $this->labels);
+			}
+			$properties["last_modification_time"] = (string)$vEvent->{'LAST-MODIFIED'}->getDateTime()->getTimestamp();
+			$properties["creation_time"] = (string)$vEvent->CREATED->getDateTime()->getTimestamp();
 			$properties["rrule"] = (string)$vEvent->RRULE;
 
 			// Attendees
