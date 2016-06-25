@@ -406,17 +406,18 @@ class CalendarModule extends Module
 
 			$propValuesMAPI = array();
 			$properties = $GLOBALS['properties']->getAppointmentProperties();
-			error_log("properties: " . print_r($properties, true));
+			// extend properties...
+			$properties["body"] = PR_BODY;
+
 			$count = 0;
 
 			// iterate through all events and import them :)
 			foreach ($events as $event) {
 				if (isset($event["startdate"]) && ($importall || in_array($event["internal_fields"]["event_uid"], $uids))) {
 
-					error_log("Importing: " . print_r($event, true));
+					$message = mapi_folder_createmessage($folder);
 
 					// parse the arraykeys
-					// TODO: this is very slow...
 					foreach ($event as $key => $value) {
 						if ($key !== "internal_fields") {
 							if(isset($properties[$key])) {
@@ -425,20 +426,20 @@ class CalendarModule extends Module
 						}
 					}
 
-					error_log("MAPI: " . print_r($propValuesMAPI, true));
-
 					$propValuesMAPI[$properties["commonstart"]] = $propValuesMAPI[$properties["startdate"]];
 					$propValuesMAPI[$properties["commonend"]] = $propValuesMAPI[$properties["duedate"]];
+					$propValuesMAPI[$properties["duration"]] = ($propValuesMAPI[$properties["duedate"]] - $propValuesMAPI[$properties["startdate"]]) / 60; // Minutes needed
+					$propValuesMAPI[$properties["reminder"]] = false; // needed, overwritten if there is a timer
 
 					$propValuesMAPI[$properties["message_class"]] = "IPM.Appointment";
 					$propValuesMAPI[$properties["icon_index"]] = "1024";
-					$message = mapi_folder_createmessage($folder);
 
+					// TODO: set attendees and alarms
 
 					mapi_setprops($message, $propValuesMAPI);
 					mapi_savechanges($message);
 					if ($this->DEBUG) {
-						error_log("New event added: \"" . $event["startdate"] . "\".\n");
+						error_log("New event added: \"" . $event["subject"] . "\".\n");
 					}
 					$count++;
 				}
