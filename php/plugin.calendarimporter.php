@@ -33,9 +33,7 @@ class Plugincalendarimporter extends Plugin
 	/**
 	 * Constructor
 	 */
-	function Plugincalendarimporter()
-	{
-	}
+	function __construct() {}
 
 	/**
 	 * Function initializes the Plugin and registers all hooks

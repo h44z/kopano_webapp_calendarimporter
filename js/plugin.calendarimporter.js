@@ -95,7 +95,7 @@ Zarafa.plugins.calendarimporter.ImportPlugin = Ext.extend(Zarafa.core.Plugin, {	
 			recordIds.push(btn.records[i].get("entryid"));
 		}
 
-		var responseHandler = new Zarafa.plugins.contactimporter.data.ResponseHandler({
+		var responseHandler = new Zarafa.plugins.calendarimporter.data.ResponseHandler({
 			successCallback: Zarafa.plugins.calendarimporter.data.Actions.downloadICS,
 			scope          : this
 		});
@@ -164,7 +164,7 @@ Zarafa.plugins.calendarimporter.ImportPlugin = Ext.extend(Zarafa.core.Plugin, {	
 	 */
 	gotAttachmentFileName: function (response) {
 		if (response.status == true) {
-			this.openImportDialog(response.tmpname);
+			this.scope.openImportDialog(response.tmpname);
 		} else {
 			Zarafa.common.dialogs.MessageBox.show({
 				title  : _('Error'),

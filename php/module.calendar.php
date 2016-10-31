@@ -43,7 +43,7 @@ class CalendarModule extends Module
 	 */
 	public function __construct($id, $data)
 	{
-		parent::Module($id, $data);
+		parent::__construct($id, $data);
 
 		// init default timezone
 		date_default_timezone_set(PLUGIN_CALENDARIMPORTER_DEFAULT_TIMEZONE);
@@ -619,7 +619,7 @@ class CalendarModule extends Module
 				$parser = VObject\Reader::read(
 					fopen($actionData["ics_filepath"],'r')
 				);
-				error_log(print_r($parser->VTIMEZONE, true));
+				//error_log(print_r($parser->VTIMEZONE, true));
 			} catch (Exception $e) {
 				$error = true;
 				$error_msg = $e->getMessage();
