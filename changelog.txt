@@ -1,3 +1,10 @@
+calendarimporter 2.2.0:
+ - support for Kopano Webapp 3.1.1
+ - Code rework
+ - Calendar export improved
+ - Calendar import improved
+ - GUI improvements
+
 calendarimporter 2.1.0:
  - ics sync is now implemented
 
