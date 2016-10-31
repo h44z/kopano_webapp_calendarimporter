@@ -2,11 +2,11 @@
 <project version="4">
   <component name="ChangeListManager">
     <list default="true" id="e7c9c2bb-66f1-4e37-904c-d33d8c113bde" name="Default" comment="">
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/js/data/CalendarHelper.js" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/.idea/workspace.xml" afterPath="$PROJECT_DIR$/.idea/workspace.xml" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/js/data/Actions.js" afterPath="$PROJECT_DIR$/js/data/Actions.js" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/js/dialogs/ImportPanel.js" afterPath="$PROJECT_DIR$/js/dialogs/ImportPanel.js" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/js/settings/SettingsCalSyncWidget.js" afterPath="$PROJECT_DIR$/js/settings/SettingsCalSyncWidget.js" />
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/js/settings/SettingsWidget.js" afterPath="$PROJECT_DIR$/js/settings/SettingsWidget.js" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/js/settings/dialogs/CalSyncEditContentPanel.js" afterPath="$PROJECT_DIR$/js/settings/dialogs/CalSyncEditContentPanel.js" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/js/settings/dialogs/CalSyncEditPanel.js" afterPath="$PROJECT_DIR$/js/settings/dialogs/CalSyncEditPanel.js" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/js/settings/ui/CalSyncGrid.js" afterPath="$PROJECT_DIR$/js/settings/ui/CalSyncGrid.js" />
     </list>
     <ignored path="calendarimporter.iws" />
     <ignored path=".idea/workspace.xml" />
@@ -27,24 +27,62 @@
   </component>
   <component name="FileEditorManager">
     <leaf>
-      <file leaf-file-name="SettingsWidget.js" pinned="false" current-in-tab="true">
-        <entry file="file://$PROJECT_DIR$/js/settings/SettingsWidget.js">
+      <file leaf-file-name="CalSyncEditPanel.js" pinned="false" current-in-tab="true">
+        <entry file="file://$PROJECT_DIR$/js/settings/dialogs/CalSyncEditPanel.js">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="700">
-              <caret line="113" column="34" selection-start-line="113" selection-start-column="34" selection-end-line="113" selection-end-column="34" />
+            <state relative-caret-position="1480">
+              <caret line="101" column="30" selection-start-line="101" selection-start-column="30" selection-end-line="101" selection-end-column="30" />
               <folding />
             </state>
           </provider>
         </entry>
       </file>
-      <file leaf-file-name="ImportPanel.js" pinned="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/js/dialogs/ImportPanel.js">
+      <file leaf-file-name="CalSyncGrid.js" pinned="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/js/settings/ui/CalSyncGrid.js">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="332">
-              <caret line="245" column="12" selection-start-line="245" selection-start-column="12" selection-end-line="245" selection-end-column="226" />
-              <folding>
-                <element signature="n#!!doc" expanded="true" />
-              </folding>
+            <state relative-caret-position="504">
+              <caret line="85" column="59" selection-start-line="85" selection-start-column="59" selection-end-line="85" selection-end-column="59" />
+              <folding />
+            </state>
+          </provider>
+        </entry>
+      </file>
+      <file leaf-file-name="plugin.calendarimporter.js" pinned="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/js/plugin.calendarimporter.js">
+          <provider selected="true" editor-type-id="text-editor">
+            <state relative-caret-position="-51">
+              <caret line="262" column="12" selection-start-line="262" selection-start-column="12" selection-end-line="262" selection-end-column="12" />
+              <folding />
+            </state>
+          </provider>
+        </entry>
+      </file>
+      <file leaf-file-name="SettingsCalSyncWidget.js" pinned="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/js/settings/SettingsCalSyncWidget.js">
+          <provider selected="true" editor-type-id="text-editor">
+            <state relative-caret-position="729">
+              <caret line="104" column="16" selection-start-line="104" selection-start-column="16" selection-end-line="104" selection-end-column="142" />
+              <folding />
+            </state>
+          </provider>
+        </entry>
+      </file>
+      <file leaf-file-name="sync.php" pinned="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/backend/sync.php">
+          <provider selected="true" editor-type-id="text-editor">
+            <state relative-caret-position="510">
+              <caret line="131" column="50" selection-start-line="131" selection-start-column="30" selection-end-line="131" selection-end-column="50" />
+              <folding />
+            </state>
+          </provider>
+        </entry>
+      </file>
+      <file leaf-file-name="CalSyncEditContentPanel.js" pinned="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/js/settings/dialogs/CalSyncEditContentPanel.js">
+          <provider selected="true" editor-type-id="text-editor">
+            <state relative-caret-position="0">
+              <caret line="0" column="63" selection-start-line="0" selection-start-column="63" selection-end-line="0" selection-end-column="63" />
+              <folding />
             </state>
           </provider>
         </entry>
@@ -52,8 +90,8 @@
       <file leaf-file-name="Actions.js" pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/js/data/Actions.js">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="-6">
-              <caret line="107" column="8" selection-start-line="107" selection-start-column="8" selection-end-line="107" selection-end-column="8" />
+            <state relative-caret-position="144">
+              <caret line="133" column="67" selection-start-line="133" selection-start-column="22" selection-end-line="133" selection-end-column="67" />
               <folding>
                 <element signature="n#!!doc" expanded="true" />
               </folding>
@@ -83,7 +121,11 @@
         <option value="$PROJECT_DIR$/js/data/CalendarHelper.js" />
         <option value="$PROJECT_DIR$/js/data/Actions.js" />
         <option value="$PROJECT_DIR$/js/dialogs/ImportPanel.js" />
+        <option value="$PROJECT_DIR$/js/settings/dialogs/CalSyncEditContentPanel.js" />
         <option value="$PROJECT_DIR$/js/settings/SettingsWidget.js" />
+        <option value="$PROJECT_DIR$/js/settings/SettingsCalSyncWidget.js" />
+        <option value="$PROJECT_DIR$/js/settings/ui/CalSyncGrid.js" />
+        <option value="$PROJECT_DIR$/js/settings/dialogs/CalSyncEditPanel.js" />
       </list>
     </option>
   </component>
@@ -172,6 +214,24 @@
               <option name="myItemType" value="com.jetbrains.php.projectView.PhpTreeStructureProvider$1" />
             </PATH_ELEMENT>
             <PATH_ELEMENT>
+              <option name="myItemId" value="ui" />
+              <option name="myItemType" value="com.jetbrains.php.projectView.PhpTreeStructureProvider$1" />
+            </PATH_ELEMENT>
+          </PATH>
+          <PATH>
+            <PATH_ELEMENT>
+              <option name="myItemId" value="calendarimporter" />
+              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.ProjectViewProjectNode" />
+            </PATH_ELEMENT>
+            <PATH_ELEMENT>
+              <option name="myItemId" value="calendarimporter" />
+              <option name="myItemType" value="com.jetbrains.php.projectView.PhpTreeStructureProvider$1" />
+            </PATH_ELEMENT>
+            <PATH_ELEMENT>
+              <option name="myItemId" value="js" />
+              <option name="myItemType" value="com.jetbrains.php.projectView.PhpTreeStructureProvider$1" />
+            </PATH_ELEMENT>
+            <PATH_ELEMENT>
               <option name="myItemId" value="settings" />
               <option name="myItemType" value="com.jetbrains.php.projectView.PhpTreeStructureProvider$1" />
             </PATH_ELEMENT>
@@ -212,6 +272,28 @@
               <option name="myItemType" value="com.jetbrains.php.projectView.PhpTreeStructureProvider$1" />
             </PATH_ELEMENT>
             <PATH_ELEMENT>
+              <option name="myItemId" value="settings" />
+              <option name="myItemType" value="com.jetbrains.php.projectView.PhpTreeStructureProvider$1" />
+            </PATH_ELEMENT>
+            <PATH_ELEMENT>
+              <option name="myItemId" value="dialogs" />
+              <option name="myItemType" value="com.jetbrains.php.projectView.PhpTreeStructureProvider$1" />
+            </PATH_ELEMENT>
+          </PATH>
+          <PATH>
+            <PATH_ELEMENT>
+              <option name="myItemId" value="calendarimporter" />
+              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.ProjectViewProjectNode" />
+            </PATH_ELEMENT>
+            <PATH_ELEMENT>
+              <option name="myItemId" value="calendarimporter" />
+              <option name="myItemType" value="com.jetbrains.php.projectView.PhpTreeStructureProvider$1" />
+            </PATH_ELEMENT>
+            <PATH_ELEMENT>
+              <option name="myItemId" value="js" />
+              <option name="myItemType" value="com.jetbrains.php.projectView.PhpTreeStructureProvider$1" />
+            </PATH_ELEMENT>
+            <PATH_ELEMENT>
               <option name="myItemId" value="dialogs" />
               <option name="myItemType" value="com.jetbrains.php.projectView.PhpTreeStructureProvider$1" />
             </PATH_ELEMENT>
@@ -231,6 +313,20 @@
             </PATH_ELEMENT>
             <PATH_ELEMENT>
               <option name="myItemId" value="data" />
+              <option name="myItemType" value="com.jetbrains.php.projectView.PhpTreeStructureProvider$1" />
+            </PATH_ELEMENT>
+          </PATH>
+          <PATH>
+            <PATH_ELEMENT>
+              <option name="myItemId" value="calendarimporter" />
+              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.ProjectViewProjectNode" />
+            </PATH_ELEMENT>
+            <PATH_ELEMENT>
+              <option name="myItemId" value="calendarimporter" />
+              <option name="myItemType" value="com.jetbrains.php.projectView.PhpTreeStructureProvider$1" />
+            </PATH_ELEMENT>
+            <PATH_ELEMENT>
+              <option name="myItemId" value="backend" />
               <option name="myItemType" value="com.jetbrains.php.projectView.PhpTreeStructureProvider$1" />
             </PATH_ELEMENT>
           </PATH>
@@ -296,12 +392,12 @@
       <option name="number" value="Default" />
       <option name="presentableId" value="Default" />
       <updated>1477949602474</updated>
-      <workItem from="1477949603566" duration="4096000" />
+      <workItem from="1477949603566" duration="7047000" />
     </task>
     <servers />
   </component>
   <component name="TimeTrackingManager">
-    <option name="totallyTimeSpent" value="4096000" />
+    <option name="totallyTimeSpent" value="7047000" />
   </component>
   <component name="ToolWindowManager">
     <frame x="65" y="24" width="1792" height="999" extended-state="6" />
@@ -381,16 +477,8 @@
         <state relative-caret-position="-456">
           <caret line="0" column="0" selection-start-line="0" selection-start-column="0" selection-end-line="0" selection-end-column="0" />
           <folding>
-            <element signature="n#!!doc" expanded="true" />
+            <element signature="n#!!doc" expanded="false" />
           </folding>
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/js/plugin.calendarimporter.js">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="287">
-          <caret line="107" column="19" selection-start-line="107" selection-start-column="17" selection-end-line="107" selection-end-column="19" />
-          <folding />
         </state>
       </provider>
     </entry>
@@ -428,20 +516,12 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/js/settings/SettingsCalSyncWidget.js">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="0">
-          <caret line="0" column="0" selection-start-line="0" selection-start-column="0" selection-end-line="0" selection-end-column="0" />
-          <folding />
-        </state>
-      </provider>
-    </entry>
     <entry file="file://$PROJECT_DIR$/js/dialogs/ImportContentPanel.js">
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="-171">
           <caret line="0" column="0" selection-start-line="0" selection-start-column="0" selection-end-line="0" selection-end-column="0" />
           <folding>
-            <element signature="n#!!doc" expanded="true" />
+            <element signature="n#!!doc" expanded="false" />
           </folding>
         </state>
       </provider>
@@ -466,8 +546,8 @@
     </entry>
     <entry file="file://$PROJECT_DIR$/js/data/Actions.js">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="-6">
-          <caret line="107" column="8" selection-start-line="107" selection-start-column="8" selection-end-line="107" selection-end-column="8" />
+        <state relative-caret-position="144">
+          <caret line="133" column="67" selection-start-line="133" selection-start-column="22" selection-end-line="133" selection-end-column="67" />
           <folding>
             <element signature="n#!!doc" expanded="true" />
           </folding>
@@ -476,8 +556,56 @@
     </entry>
     <entry file="file://$PROJECT_DIR$/js/settings/SettingsWidget.js">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="700">
-          <caret line="113" column="34" selection-start-line="113" selection-start-column="34" selection-end-line="113" selection-end-column="34" />
+        <state relative-caret-position="340">
+          <caret line="83" column="82" selection-start-line="83" selection-start-column="82" selection-end-line="83" selection-end-column="82" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/backend/sync.php">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="510">
+          <caret line="131" column="50" selection-start-line="131" selection-start-column="30" selection-end-line="131" selection-end-column="50" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/js/plugin.calendarimporter.js">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="-51">
+          <caret line="262" column="12" selection-start-line="262" selection-start-column="12" selection-end-line="262" selection-end-column="12" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/js/settings/ui/CalSyncGrid.js">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="504">
+          <caret line="85" column="59" selection-start-line="85" selection-start-column="59" selection-end-line="85" selection-end-column="59" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/js/settings/SettingsCalSyncWidget.js">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="729">
+          <caret line="104" column="16" selection-start-line="104" selection-start-column="16" selection-end-line="104" selection-end-column="142" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/js/settings/dialogs/CalSyncEditContentPanel.js">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="0">
+          <caret line="0" column="63" selection-start-line="0" selection-start-column="63" selection-end-line="0" selection-end-column="63" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/js/settings/dialogs/CalSyncEditPanel.js">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="1480">
+          <caret line="101" column="30" selection-start-line="101" selection-start-column="30" selection-end-line="101" selection-end-column="30" />
           <folding />
         </state>
       </provider>

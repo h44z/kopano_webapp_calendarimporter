@@ -88,7 +88,7 @@ Zarafa.plugins.calendarimporter.settings.SettingsWidget = Ext.extend(Zarafa.sett
 	 */
 	update : function(settingsModel) {
 		this.enableSync.setValue(settingsModel.get(this.enableSync.name));
-		this.defaultCalendar.setValue(settingsModel.get(this.defaultCalendar.name));
+		this.defaultCalendar.setValue(Zarafa.plugins.calendarimporter.data.Actions.getCalendarFolderByName(settingsModel.get(this.defaultCalendar.name)).entryid);
 		this.defaultTimezone.setValue(settingsModel.get(this.defaultTimezone.name));
 	},
 
@@ -104,7 +104,7 @@ Zarafa.plugins.calendarimporter.settings.SettingsWidget = Ext.extend(Zarafa.sett
 
         if(settingsModel.get(this.enableSync.name) != this.enableSync.getValue()) {
             changed = true;
-        } else if(settingsModel.get(this.defaultCalendar.name) != this.defaultCalendar.getValue()) {
+        } else if(settingsModel.get(this.defaultCalendar.name) != Zarafa.plugins.calendarimporter.data.Actions.getCalendarFolderByEntryid(this.defaultCalendar.getValue()).display_name) {
             changed = true;
         } else if(settingsModel.get(this.defaultTimezone.name) != this.defaultTimezone.getValue()) {
             changed = true;
@@ -113,7 +113,7 @@ Zarafa.plugins.calendarimporter.settings.SettingsWidget = Ext.extend(Zarafa.sett
         if(changed) {
             // Really save changes
             settingsModel.set(this.enableSync.name, this.enableSync.getValue());
-            settingsModel.set(this.defaultCalendar.name, this.defaultCalendar.getValue());
+            settingsModel.set(this.defaultCalendar.name, Zarafa.plugins.calendarimporter.data.Actions.getCalendarFolderByEntryid(this.defaultCalendar.getValue()).display_name); // store name
             settingsModel.set(this.defaultTimezone.name, this.defaultTimezone.getValue());
 
             this.onUpdateSettings();

@@ -27,6 +27,7 @@ Zarafa.plugins.calendarimporter.settings.SettingsCalSyncWidget = Ext.extend(Zara
 				{ name : 'pass' },
 				{ name : 'intervall', type : 'int' },
 				{ name : 'calendar' },
+                { name : 'calendarname' },
 				{ name : 'lastsync' }
 			],
 			sortInfo : {
@@ -68,7 +69,9 @@ Zarafa.plugins.calendarimporter.settings.SettingsCalSyncWidget = Ext.extend(Zara
 		var icslinks = settingsModel.get('zarafa/v1/contexts/calendar/icssync', true);
 		var syncArray = [];
 		for (var key in icslinks) {
-			syncArray.push(Ext.apply({}, icslinks[key], { id : key }));
+			if(icslinks.hasOwnProperty(key)) { // skip inherited props
+				syncArray.push(Ext.apply({}, icslinks[key], {id: key}));
+			}
 		}
 
 		// Load all icslinks into the GridPanel
@@ -98,7 +101,8 @@ Zarafa.plugins.calendarimporter.settings.SettingsCalSyncWidget = Ext.extend(Zara
 				'user' : icslink.get('user'),
 				'pass' : icslink.get('pass'),
 				'lastsync' : icslink.get('lastsync'),
-				'calendar' : icslink.get('calendar')
+				'calendar' : icslink.get('calendar'),
+                'calendarname' : Zarafa.plugins.calendarimporter.data.Actions.getCalendarFolderByEntryid(icslink.get('calendar')).display_name
 			};
 		}
 		settingsModel.set('zarafa/v1/contexts/calendar/icssync', icslinkData);

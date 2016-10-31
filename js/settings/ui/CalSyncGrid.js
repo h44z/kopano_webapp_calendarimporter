@@ -59,6 +59,16 @@ Zarafa.plugins.calendarimporter.settings.ui.CalSyncGrid = Ext.extend(Ext.grid.Gr
 	},
 
 	/**
+	 * Render function
+	 * @return {String}
+	 * @private
+	 */
+	renderCalendarColumn : function(value, p, record)
+	{
+		return Zarafa.plugins.calendarimporter.data.Actions.getCalendarFolderByEntryid(value).display_name;
+	},
+
+	/**
 	 * Creates a column model object, used in {@link #colModel} config
 	 * @return {Ext.grid.ColumnModel} column model object
 	 * @private
@@ -71,7 +81,7 @@ Zarafa.plugins.calendarimporter.settings.ui.CalSyncGrid = Ext.extend(Ext.grid.Gr
 			renderer : Zarafa.common.ui.grid.Renderers.text
 		},
 		{
-			dataIndex : 'calendar',
+			dataIndex : 'calendarname',
 			header : _('Destination Calender'),
 			renderer : Zarafa.common.ui.grid.Renderers.text
 		},

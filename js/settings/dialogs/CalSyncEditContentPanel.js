@@ -23,7 +23,7 @@ Zarafa.plugins.calendarimporter.settings.dialogs.CalSyncEditContentPanel = Ext.e
 			model : true,
 			autoSave : false,
 			width : 400,
-			height : 350,
+			height : 400,
 			title : _('ICAL Sync'),
 			items : [{
 				xtype : 'calendarimporter.calsynceditpanel',
