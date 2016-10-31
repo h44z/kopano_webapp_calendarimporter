@@ -61,5 +61,118 @@ Zarafa.plugins.calendarimporter.data.Actions = {
 
 			downloadFrame.dom.contentWindow.location = link;
 		}
+	},
+
+	/**
+	 * Get all calendar folders.
+	 * @param {boolean} asDropdownStore If true, a simple array store will be returned.
+	 * @returns {*}
+	 */
+	getAllCalendarFolders: function (asDropdownStore) {
+		asDropdownStore = Ext.isEmpty(asDropdownStore) ? false : asDropdownStore;
+
+		var allFolders = [];
+
+		var inbox = container.getHierarchyStore().getDefaultStore();
+		var pub = container.getHierarchyStore().getPublicStore();
+
+		if (!Ext.isEmpty(inbox.subStores) && inbox.subStores.folders.totalLength > 0) {
+			for (var i = 0; i < inbox.subStores.folders.totalLength; i++) {
+				var folder = inbox.subStores.folders.getAt(i);
+				if (folder.get("container_class") == "IPF.Appointment") {
+					if (asDropdownStore) {
+						allFolders.push([
+							folder.get("entryid"),
+							folder.get("display_name")
+						]);
+					} else {
+						allFolders.push({
+							display_name : folder.get("display_name"),
+							entryid      : folder.get("entryid"),
+							store_entryid: folder.get("store_entryid"),
+							is_public    : false
+						});
+					}
+				}
+			}
+		}
+
+		if (!Ext.isEmpty(pub.subStores) && pub.subStores.folders.totalLength > 0) {
+			for (var j = 0; j < pub.subStores.folders.totalLength; j++) {
+				var folder = pub.subStores.folders.getAt(j);
+				if (folder.get("container_class") == "IPF.Appointment") {
+					if (asDropdownStore) {
+						allFolders.push([
+							folder.get("entryid"),
+							folder.get("display_name") + " (Public)"
+						]);
+					} else {
+						allFolders.push({
+							display_name : folder.get("display_name"),
+							entryid      : folder.get("entryid"),
+							store_entryid: folder.get("store_entryid"),
+							is_public    : true
+						});
+					}
+				}
+			}
+		}
+
+		if (asDropdownStore) {
+			return allFolders.sort(Zarafa.plugins.calendarimporter.data.Actions.dynamicSort(1));
+		} else {
+			return allFolders;
+		}
+	},
+
+    /**
+     * Return a calendar folder element by name.
+     * @param {string} name
+     * @returns {*}
+     */
+    getCalendarFolderByName: function (name) {
+        var folders = Zarafa.plugins.calendarimporter.data.Actions.getAllCalendarFolders(false);
+
+        for (var i = 0; i < folders.length; i++) {
+            if (folders[i].display_name == name) {
+                return folders[i];
+            }
+        }
+
+        return container.getHierarchyStore().getDefaultFolder('calendar');
+    },
+
+    /**
+     * Return a calendar folder element by entryid.
+     * @param {string} entryid
+     * @returns {*}
+     */
+    getCalendarFolderByEntryid: function (entryid) {
+        var folders = Zarafa.plugins.calendarimporter.data.Actions.getAllCalendarFolders(false);
+
+        for (var i = 0; i < folders.length; i++) {
+            if (folders[i].entryid == entryid) {
+                return folders[i];
+            }
+        }
+
+        return container.getHierarchyStore().getDefaultFolder('calendar');
+    },
+
+	/**
+	 * Dynamic sort function, sorts by property name.
+	 * @param {string|int} property
+	 * @returns {Function}
+	 */
+	dynamicSort: function (property) {
+		var sortOrder = 1;
+		if (property[0] === "-") {
+			sortOrder = -1;
+			property = property.substr(1);
+		}
+		return function (a, b) {
+			var result = (a[property].toLowerCase() < b[property].toLowerCase()) ? -1 : (a[property].toLowerCase() > b[property].toLowerCase()) ? 1 : 0;
+			return result * sortOrder;
+		}
 	}
 };
