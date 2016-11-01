@@ -2,5 +2,29 @@
 	background: url(../images/import_icon.png) no-repeat !important;
 	background-repeat: no-repeat;
 	background-position: center;
-	background-size: 18px!important;
+}
+
+.icon_calendarimporter_export {
+    background: url(../images/download.png) no-repeat;
+    background-repeat: no-repeat;
+    background-position: center;
+}
+
+.icon_calendarimporter_import {
+    background: url(../images/upload.png) no-repeat;
+    background-repeat: no-repeat;
+    background-position: center;
+}
+
+.zarafa-caiplg-container {
+    width: 100%;
+    height: 50px;
+}
+
+.zarafa-caiplg-button .x-btn-small {
+    width: 80%;
+    height: 30px;
+    margin-left: 10%;
+    margin-right: 10%;
+    margin-top: 10px;
 }

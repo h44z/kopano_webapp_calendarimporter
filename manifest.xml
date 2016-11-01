@@ -2,7 +2,7 @@
 <!DOCTYPE plugin SYSTEM "manifest.dtd">
 <plugin version="2">
 	<info>
-		<version>@_@PLUGIN_VERSION@_@</version>
+		<version>2.2.0</version>
 		<name>calendarimporter</name>
 		<title>ICS Calendar Importer/Exporter</title>
 		<author>Christoph Haas</author>
@@ -20,13 +20,14 @@
 					<serverfile type="module" module="calendarmodule">php/module.calendar.php</serverfile>
 				</server>
 				<client>
-					<clientfile load="release">js/calendarimporter.js</clientfile>
+					<clientfile load="release">js/calendarimporter-debug.js</clientfile>
 					<clientfile load="debug">js/calendarimporter-debug.js</clientfile>
 					
 					<clientfile load="source">js/data/timezones.js</clientfile>
-					<clientfile load="source">js/external/Ext.util.base64.js</clientfile>
-					<clientfile load="source">js/plugin.calendarimporter.js</clientfile>
+					<clientfile load="source">js/data/Actions.js</clientfile>
 					<clientfile load="source">js/data/ResponseHandler.js</clientfile>
+					<clientfile load="source">js/external/Ext.util.base64.js</clientfile>
+					<clientfile load="source">js/ui/ContextMenu.js</clientfile>
 					<clientfile load="source">js/dialogs/ImportContentPanel.js</clientfile>
 					<clientfile load="source">js/dialogs/ImportPanel.js</clientfile>
 					<clientfile load="source">js/dialogs/settings/SettingsWidget.js</clientfile>
@@ -35,9 +36,10 @@
 					<clientfile load="source">js/dialogs/settings/ui/CalSyncPanel.js</clientfile>
 					<clientfile load="source">js/dialogs/settings/dialogs/CalSyncEditContentPanel.js</clientfile>
 					<clientfile load="source">js/dialogs/settings/dialogs/CalSyncEditPanel.js</clientfile>
+					<clientfile load="source">js/plugin.calendarimporter.js</clientfile>
 				</client>
 				<resources>
-					<resourcefile load="release">resources/css/calendarimporter-min.css</resourcefile>
+					<resourcefile load="release">resources/css/calendarimporter.css</resourcefile>
 					<resourcefile load="debug">resources/css/calendarimporter.css</resourcefile>
 					<resourcefile load="source">resources/css/calendarimporter-main.css</resourcefile>
 				</resources>

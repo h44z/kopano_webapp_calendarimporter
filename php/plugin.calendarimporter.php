@@ -19,25 +19,31 @@
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  *
- *
+ */
+require_once __DIR__ . "/download.php";
+
+/**
  * calendarimporter Plugin
  *
  * With this plugin you can import a ics file to your zarafa calendar
  *
  */
-class Plugincalendarimporter extends Plugin {
+class Plugincalendarimporter extends Plugin
+{
 	/**
 	 * Constructor
 	 */
-	function Plugincalendarimporter() {}
+	function __construct() {}
 
 	/**
 	 * Function initializes the Plugin and registers all hooks
 	 *
 	 * @return void
 	 */
-	function init() {
+	function init()
+	{
 		$this->registerHook('server.core.settings.init.before');
+		$this->registerHook('server.index.load.custom');
 	}
 
 	/**
@@ -47,10 +53,16 @@ class Plugincalendarimporter extends Plugin {
 	 * @param mixed $data object(s) related to the hook
 	 * @return void
 	 */
-	function execute($eventID, &$data) {
-		switch($eventID) {
+	function execute($eventID, &$data)
+	{
+		switch ($eventID) {
 			case 'server.core.settings.init.before' :
 				$this->injectPluginSettings($data);
+				break;
+			case 'server.index.load.custom':
+				if ($data['name'] == 'download_ics') {
+					calendarimporter\DownloadHandler::doDownload();
+				}
 				break;
 		}
 	}
@@ -60,17 +72,17 @@ class Plugincalendarimporter extends Plugin {
 	 * settings.
 	 * @param Array $data Reference to the data of the triggered hook
 	 */
-	function injectPluginSettings(&$data) {
+	function injectPluginSettings(&$data)
+	{
 		$data['settingsObj']->addSysAdminDefaults(Array(
 			'zarafa' => Array(
 				'v1' => Array(
 					'plugins' => Array(
 						'calendarimporter' => Array(
-							'enable'        => PLUGIN_CALENDARIMPORTER_USER_DEFAULT_ENABLE,
-							'enable_export' => PLUGIN_CALENDARIMPORTER_USER_DEFAULT_ENABLE_EXPORT,
+							'enable' => PLUGIN_CALENDARIMPORTER_USER_DEFAULT_ENABLE,
 							'enable_sync' => PLUGIN_CALENDARIMPORTER_USER_DEFAULT_ENABLE_SYNC,
-							'default_calendar'	=> PLUGIN_CALENDARIMPORTER_DEFAULT,
-							'default_timezone' 	=> PLUGIN_CALENDARIMPORTER_DEFAULT_TIMEZONE
+							'default_calendar' => PLUGIN_CALENDARIMPORTER_DEFAULT,
+							'default_timezone' => PLUGIN_CALENDARIMPORTER_DEFAULT_TIMEZONE
 						)
 					)
 				)
@@ -78,4 +90,5 @@ class Plugincalendarimporter extends Plugin {
 		));
 	}
 }
+
 ?>

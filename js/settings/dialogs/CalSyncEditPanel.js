@@ -59,8 +59,7 @@ Zarafa.plugins.calendarimporter.settings.dialogs.CalSyncEditPanel = Ext.extend(E
 		var store = this.dialog.store;
 		var id = 0;
 		var record = undefined;
-		
-		console.log(this);
+
 		if(!this.currentItem) {
 			record = new store.recordType({
 				id: this.hashCode(this.icsurl.getValue()),
@@ -69,6 +68,7 @@ Zarafa.plugins.calendarimporter.settings.dialogs.CalSyncEditPanel = Ext.extend(E
 				user: this.user.getValue(),
 				pass: Ext.util.base64.encode(this.pass.getValue()),
 				calendar: this.calendar.getValue(),
+                calendarname : Zarafa.plugins.calendarimporter.data.Actions.getCalendarFolderByEntryid(this.calendar.getValue()).display_name,
 				lastsync: "never"
 			});
 		}
@@ -82,6 +82,7 @@ Zarafa.plugins.calendarimporter.settings.dialogs.CalSyncEditPanel = Ext.extend(E
 				this.currentItem.set('user', this.user.getValue());
 				this.currentItem.set('pass', Ext.util.base64.encode(this.pass.getValue()));
 				this.currentItem.set('calendar', this.calendar.getValue());
+                this.currentItem.set('calendarname', Zarafa.plugins.calendarimporter.data.Actions.getCalendarFolderByEntryid(this.calendar.getValue()).display_name);
 			}
 			this.dialog.close();
 		}
@@ -95,48 +96,20 @@ Zarafa.plugins.calendarimporter.settings.dialogs.CalSyncEditPanel = Ext.extend(E
 	createPanelItems : function(config)
 	{
 		var icsurl = "";
-		var intervall = "";
+		var intervall = "15";
 		var user = "";
 		var pass = "";
-		var calendar = "";
-		
-		var defaultFolder = container.getHierarchyStore().getDefaultFolder('calendar'); // @type: Zarafa.hierarchy.data.MAPIFolderRecord		
-		var subFolders = defaultFolder.getChildren();
-		var myStore = [];
-		
-		if(config.item){
+        var calendarname = "";
+		var calendar = Zarafa.plugins.calendarimporter.data.Actions.getCalendarFolderByName(container.getSettingsModel().get("zarafa/v1/plugins/calendarimporter/default_calendar")).entryid;
+        var myStore = Zarafa.plugins.calendarimporter.data.Actions.getAllCalendarFolders(true);
+
+        if(config.item){
 			icsurl = config.item.get('icsurl');
 			intervall = config.item.get('intervall');
 			user = config.item.get('user');
 			pass = Ext.util.base64.decode(config.item.get('pass'));
 			calendar = config.item.get('calendar');
-		}
-		
-		/* add all local calendar folders */
-		var i = 0;
-		myStore.push(new Array(defaultFolder.getDefaultFolderKey(), defaultFolder.getDisplayName()));
-		for(i = 0; i < subFolders.length; i++) {
-			/* Store all subfolders */
-			myStore.push(new Array(subFolders[i].getDisplayName(), subFolders[i].getDisplayName(), false)); // 3rd field = isPublicfolder
-		}
-		
-		/* add all shared calendar folders */
-		var pubStore = container.getHierarchyStore().getPublicStore();
-		
-		if(typeof pubStore !== "undefined") {
-			try {
-				var pubFolder = pubStore.getDefaultFolder("publicfolders");
-				var pubSubFolders = pubFolder.getChildren();
-				
-				for(i = 0; i < pubSubFolders.length; i++) {
-					if(pubSubFolders[i].isContainerClass("IPF.Appointment")){
-						myStore.push(new Array(pubSubFolders[i].getDisplayName(), pubSubFolders[i].getDisplayName() + " [Shared]", true)); // 3rd field = isPublicfolder
-					}
-				}
-			} catch (e) {
-				console.log("Error opening the shared folder...");
-				console.log(e);
-			}
+            calendarname = config.item.get('calendarname');
 		}
 		
 				

@@ -1,4 +1,4 @@
-<?php	
+<?php
 /**
  * module.calendar.php, zarafa calender to ics im/exporter
  *
@@ -20,22 +20,62 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  *
  */
- 
-include_once('mapi/class.recurrence.php');
-include_once('plugins/calendarimporter/php/ical/class.icalcreator.php');
-include_once('plugins/calendarimporter/php/ical/class.icalparser.php');
- 
-class CalendarModule extends Module {
 
-	private $DEBUG = false; 	// enable error_log debugging
+include_once('vendor/autoload.php');
+
+use Sabre\VObject;
+
+class CalendarModule extends Module
+{
+
+	private $DEBUG = true;    // enable error_log debugging
+
+	private $busystates = null;
+
+	private $labels = null;
+
+	private $attendeetype = null;
 
 	/**
 	 * @constructor
 	 * @param $id
 	 * @param $data
 	 */
-	public function __construct($id, $data) {
-			parent::Module($id, $data);	
+	public function __construct($id, $data)
+	{
+		parent::__construct($id, $data);
+
+		// init default timezone
+		date_default_timezone_set(PLUGIN_CALENDARIMPORTER_DEFAULT_TIMEZONE);
+
+		// init mappings
+		$this->busystates = array(
+			"FREE",
+			"TENTATIVE",
+			"BUSY",
+			"OOF"
+		);
+
+		$this->labels = array(
+			"NONE",
+			"IMPORTANT",
+			"WORK",
+			"PERSONAL",
+			"HOLIDAY",
+			"REQUIRED",
+			"TRAVEL REQUIRED",
+			"PREPARATION REQUIERED",
+			"BIRTHDAY",
+			"SPECIAL DATE",
+			"PHONE INTERVIEW"
+		);
+
+		$this->attendeetype = array(
+			"NON-PARTICIPANT", // needed as zarafa starts counting at 1
+			"REQ-PARTICIPANT",
+			"OPT-PARTICIPANT",
+			"NON-PARTICIPANT"
+		);
 	}
 
 	/**
@@ -43,28 +83,32 @@ class CalendarModule extends Module {
 	 * Exception part is used for authentication errors also
 	 * @return boolean true on success or false on failure.
 	 */
-	public function execute() {
+	public function execute()
+	{
 		$result = false;
-		
-		if(!$this->DEBUG) {
+
+		if (!$this->DEBUG) {
 			/* disable error printing - otherwise json communication might break... */
 			ini_set('display_errors', '0');
 		}
-		
-		foreach($this->data as $actionType => $actionData) {
-			if(isset($actionType)) {
+
+		foreach ($this->data as $actionType => $actionData) {
+			if (isset($actionType)) {
 				try {
-					if($this->DEBUG) {
+					if ($this->DEBUG) {
 						error_log("exec: " . $actionType);
 					}
-					switch($actionType) {
+					switch ($actionType) {
+						case "load":
+							$result = $this->loadCalendar($actionType, $actionData);
+							break;
 						case "export":
 							$result = $this->exportCalendar($actionType, $actionData);
 							break;
 						case "import":
 							$result = $this->importCalendar($actionType, $actionData);
 							break;
-						case "attachmentpath":
+						case "importattachment":
 							$result = $this->getAttachmentPath($actionType, $actionData);
 							break;
 						default:
@@ -72,30 +116,31 @@ class CalendarModule extends Module {
 					}
 
 				} catch (MAPIException $e) {
-					if($this->DEBUG) {
+					if ($this->DEBUG) {
 						error_log("mapi exception: " . $e->getMessage());
 					}
 				} catch (Exception $e) {
-					if($this->DEBUG) {
+					if ($this->DEBUG) {
 						error_log("exception: " . $e->getMessage());
 					}
 				}
 			}
 		}
-		
+
 		return $result;
 	}
-	
+
 	/**
 	 * Generates a random string with variable length.
 	 * @param $length the lenght of the generated string
 	 * @return string a random string
 	 */
-	private function randomstring($length = 6) {
+	private function randomstring($length = 6)
+	{
 		// $chars - all allowed charakters
 		$chars = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890";
 
-		srand((double)microtime()*1000000);
+		srand((double)microtime() * 1000000);
 		$i = 0;
 		$pass = "";
 		while ($i < $length) {
@@ -106,347 +151,331 @@ class CalendarModule extends Module {
 		}
 		return $pass;
 	}
-	
+
 	/**
-	 * Generates the secid file (used to verify the download path)
-	 * @param $secid the secid, a random security token
+	 * Get a property from the array.
+	 * @param $props
+	 * @param $propname
+	 * @return string
 	 */
-	private function createSecIDFile($secid) {
-		$lockFile = TMP_PATH . "/secid." . $secid;
-		$fh = fopen($lockFile, 'w') or die("can't open secid file");
-		$stringData = date(DATE_RFC822);
-		fwrite($fh, $stringData);
-		fclose($fh);
-	}
-	
-	/**
-	 * Generates the secid file (used to verify the download path)
-	 * @param $time a timestamp
-	 * @param $incl_time true if date should include time
-	 * @ return date object
-	 */
-	private function getIcalDate($time, $incl_time = true) {
-		return $incl_time ? date('Ymd\THis', $time) : date('Ymd', $time);
-	}
-	
-	/**
-	 * adds an event to the exported calendar)
-	 * @param $vevent pointer to the eventstore
-	 * @param $event the event to add
-	 */
-	private function addEvent(&$vevent, $event) {
-		
-		$busystate = array("FREE", "TENTATIVE", "BUSY", "OOF");
-		$zlabel = array("NONE", "IMPORTANT", "WORK", "PERSONAL", "HOLIDAY", "REQUIRED", "TRAVEL REQUIRED", "PREPARATION REQUIERED", "BIRTHDAY", "SPECIAL DATE", "PHONE INTERVIEW");
-		
-		$vevent->setProperty("LOCATION", $event["location"]);       // property name - case independent
-		$vevent->setProperty("SUMMARY", $event["subject"]);
-		$vevent->setProperty("DESCRIPTION", str_replace("\n", "\\n",$event["description"]));
-		$vevent->setProperty("COMMENT", "Exported from Zarafa" );
-		$vevent->setProperty("ORGANIZER", $event["sent_representing_email_address"]);
-		$vevent->setProperty("DTSTART", $this->getIcalDate($event["commonstart"]) . "Z"); 
-		$vevent->setProperty("DTEND", $this->getIcalDate($event["commonend"]) . "Z");
-		$vevent->setProperty("DTSTAMP", $this->getIcalDate($event["creation_time"]) . "Z");
-		$vevent->setProperty("CREATED", $this->getIcalDate($event["creation_time"]) . "Z");
-		$vevent->setProperty("LAST-MODIFIED", $this->getIcalDate($event["last_modification_time"]) . "Z");
-		$vevent->setProperty("X-MICROSOFT-CDO-BUSYSTATUS", $busystate[$event["busystatus"]]);
-		$vevent->setProperty("X-ZARAFA-LABEL", $zlabel[$event["label"]]);
-		$vevent->setProperty("PRIORITY", $event["importance"]);
-		$vevent->setProperty("CLASS", $event["private"] ? "PRIVATE" : "PUBLIC");
-		
-		// ATTENDEES
-		if(count($event["attendees"]) > 0) {
-			foreach($event["attendees"] as $attendee) {
-				$vevent->setProperty("ATTENDEE", $attendee["props"]["smtp_address"]);
-			}
-		}		
-		
-		// REMINDERS
-		if($event["reminder"]) {
-			$valarm = & $vevent->newComponent("valarm");	// create an event alarm
-			$valarm->setProperty("action", "DISPLAY" );
-			$valarm->setProperty("description", $vevent->getProperty("SUMMARY"));	// reuse the event summary
-			$valarm->setProperty("trigger", $this->getIcalDate($event["reminder_time"]) . "Z");	// create alarm trigger (in UTC datetime)
+	private function getProp($props, $propname)
+	{
+		if (isset($props["props"][$propname])) {
+			return $props["props"][$propname];
 		}
+		return "";
 	}
-	
-	/**
-	 * Loads the descriptiontext of an event
-	 * @param $event
-	 * @return array with event description/body
-	 */
-	private function loadEventDescription($event) {
-		$entryid = $this->getActionEntryID($event);
-		$store = $this->getActionStore($event);
-		
-		$basedate = null;
-		
-		$properties = $GLOBALS['properties']->getAppointmentProperties();
-		$plaintext = true;
-		
-		$data = array();
-		
-		if($store && $entryid) {			
-			$message = $GLOBALS['operations']->openMessage($store, $entryid);
-			
-			
-			// add all standard properties from the series/normal message 
-			$data['item'] = $GLOBALS['operations']->getMessageProps($store, $message, $properties, (isset($plaintext) && $plaintext));
-			
-			// if appointment is recurring then only we should get properties of occurence if basedate is supplied
-			if($data['item']['props']['recurring'] === true) {
-				if(isset($basedate) && $basedate) {
-					$recur = new Recurrence($store, $message);
 
-					$exceptionatt = $recur->getExceptionAttachment($basedate);
+	private function getDurationStringFromMintues($minutes, $pos = false) {
+		$pos = $pos === true ? "+" : "-";
+		$str = $pos . "P";
 
-					// Single occurences are never recurring
-					$data['item']['props']['recurring'] = false;
 
-					if($exceptionatt) {
-						// Existing exception (open existing item, which includes basedate)
-						$exceptionattProps = mapi_getprops($exceptionatt, array(PR_ATTACH_NUM));
-						$exception = mapi_attach_openobj($exceptionatt, 0);
 
-						// overwrite properties with the ones from the exception
-						$exceptionProps = $GLOBALS['operations']->getMessageProps($store, $exception, $properties, (isset($plaintext) && $plaintext));
+		// variables for holding values
+		$mins = intval($minutes);
+		$hours = 0;
+		$days  = 0;
+		$weeks = 0;
 
-						/**
-						 * If recurring item has set reminder to true then
-						 * all occurrences before the 'flagdueby' value(of recurring item)
-						 * should not show that reminder is set.
-						 */
-						if (isset($exceptionProps['props']['reminder']) && $data['item']['props']['reminder'] == true) {
-							$flagDueByDay = $recur->dayStartOf($data['item']['props']['flagdueby']);
-
-							if ($flagDueByDay > $basedate) {
-								$exceptionProps['props']['reminder'] = false;
-							}
-						}
-
-						// The properties must be merged, if the recipients or attachments are present in the exception
-						// then that list should be used. Otherwise the list from the series must be applied (this
-						// corresponds with OL2007).
-						// @FIXME getMessageProps should not return empty string if exception doesn't contain body
-						// by this change we can handle a situation where user has set empty string in the body explicitly
-						if (!empty($exceptionProps['props']['body']) || !empty($exceptionProps['props']['html_body'])) {
-							if(!empty($exceptionProps['props']['body'])) {
-								$data['item']['props']['body'] = $exceptionProps['props']['body'];
-							}
-
-							if(!empty($exceptionProps['props']['html_body'])) {
-								$data['item']['props']['html_body'] = $exceptionProps['props']['html_body'];
-							}
-
-							$data['item']['props']['isHTML'] = $exceptionProps['props']['isHTML'];
-						}
-						// remove properties from $exceptionProps so array_merge will not overwrite it
-						unset($exceptionProps['props']['html_body']);
-						unset($exceptionProps['props']['body']);
-						unset($exceptionProps['props']['isHTML']);
-
-						$data['item']['props'] = array_merge($data['item']['props'], $exceptionProps['props']);
-						if (isset($exceptionProps['recipients'])) {
-							$data['item']['recipients'] = $exceptionProps['recipients'];
-						}
-
-						if (isset($exceptionProps['attachments'])) {
-							$data['item']['attachments'] = $exceptionProps['attachments'];
-						}
-
-						// Make sure we are using the passed basedate and not something wrong in the opened item
-						$data['item']['props']['basedate'] = $basedate;
-					} else {
-						// opening an occurence of a recurring series (same as normal open, but add basedate, startdate and enddate)
-						$data['item']['props']['basedate'] = $basedate;
-						$data['item']['props']['startdate'] = $recur->getOccurrenceStart($basedate);
-						$data['item']['props']['duedate'] = $recur->getOccurrenceEnd($basedate);
-						$data['item']['props']['commonstart'] = $data['item']['props']['startdate'];
-						$data['item']['props']['commonend'] = $data['item']['props']['duedate'];
-						unset($data['item']['props']['reminder_time']);
-
-						/**
-						 * If recurring item has set reminder to true then
-						 * all occurrences before the 'flagdueby' value(of recurring item)
-						 * should not show that reminder is set.
-						 */
-						if (isset($exceptionProps['props']['reminder']) && $data['item']['props']['reminder'] == true) {
-							$flagDueByDay = $recur->dayStartOf($data['item']['props']['flagdueby']);
-
-							if ($flagDueByDay > $basedate) {
-								$exceptionProps['props']['reminder'] = false;
-							}
-						}
-					}
-				} else {
-					// Opening a recurring series, get the recurrence information
-					$recur = new Recurrence($store, $message);
-					$recurpattern = $recur->getRecurrence();
-					$tz = $recur->tz; // no function to do this at the moment
-
-					// Add the recurrence pattern to the data
-					if(isset($recurpattern) && is_array($recurpattern)) {
-						$data['item']['props'] += $recurpattern;
-					}
-
-					// Add the timezone information to the data
-					if(isset($tz) && is_array($tz)) {
-						$data['item']['props'] += $tz;
-					}
-				}
-			}
+		// calculations
+		if ( $mins >= 60 ) {
+			$hours = (int)($mins / 60);
+			$mins = $mins % 60;
+		}
+		if ( $hours >= 24 ) {
+			$days = (int)($hours / 24);
+			$hours = $hours % 60;
+		}
+		if ( $days >= 7 ) {
+			$weeks = (int)($days / 7);
+			$days = $days % 7;
 		}
 
-		return $data['item']['props']['body'];
-	}
-	
-	/**
-	 * Loads the attendees of an event
-	 * @param $event
-	 * @return array with event attendees
-	 */
-	private function loadAttendees($event) {
-		$entryid = $this->getActionEntryID($event);
-		$store = $this->getActionStore($event);
-		
-		$basedate = null;
-		
-		$properties = $GLOBALS['properties']->getAppointmentProperties();
-		$plaintext = true;
-		
-		$data = array();
-		
-		if($store && $entryid) {
-			$message = $GLOBALS['operations']->openMessage($store, $entryid);
-			
-			
-			// add all standard properties from the series/normal message 
-			$data['item'] = $GLOBALS['operations']->getMessageProps($store, $message, $properties, (isset($plaintext) && $plaintext));
-			
+		// format result
+		if ( $weeks ) {
+			$str .= "{$weeks}W";
+		}
+		if ( $days ) {
+			$str .= "{$days}D";
+		}
+		if ( $hours ) {
+			$str .= "{$hours}H";
+		}
+		if ( $mins ) {
+			$str .= "{$mins}M";
 		}
 
-		return $data['item']['recipients']['item'];
+		return $str;
 	}
-	
+
 	/**
 	 * The main export function, creates the ics file for download
 	 * @param $actionType
 	 * @param $actionData
 	 */
-	private function exportCalendar($actionType, $actionData) {
-		$secid = $this->randomstring();	
-		$this->createSecIDFile($secid);
-		$tmpname = stripslashes($actionData["calendar"] . ".ics." . $this->randomstring(8));
-		$filename = TMP_PATH . "/" . $tmpname . "." . $secid;
-		
-		if(!is_writable(TMP_PATH . "/")) {
-			error_log("could not write to export tmp directory!");
+	private function exportCalendar($actionType, $actionData)
+	{
+		// Get store id
+		$storeid = false;
+		if (isset($actionData["storeid"])) {
+			$storeid = $actionData["storeid"];
 		}
-		
-		$tz = date("e");	// use php timezone (maybe set up in php.ini, date.timezone)
-		
-		if($this->DEBUG) {
-			error_log("PHP Timezone: " . $tz);
-		}		
-		
-		$config = array(
-						"language" => substr($GLOBALS["settings"]->get("zarafa/v1/main/language"),0,2),
-						"directory" => TMP_PATH . "/", 
-						"filename" => $tmpname . "." . $secid,
-						"unique_id" => "zarafa-export-plugin", 
-						"TZID" => $tz
-						);
-		
-		$v = new vcalendar($config); 
-		$v->setProperty("method", "PUBLISH");							// required of some calendar software
-		$v->setProperty("x-wr-calname", $actionData["calendar"]);		// required of some calendar software
-		$v->setProperty("X-WR-CALDESC", "Exported Zarafa Calendar");	// required of some calendar software
-		$v->setProperty("X-WR-TIMEZONE", $tz); 
 
-		$xprops = array("X-LIC-LOCATION" => $tz);					// required of some calendar software
-		iCalUtilityFunctions::createTimezone($v, $tz, $xprops);		// create timezone object in calendar
-				
-		
-		foreach($actionData["data"] as $event) {
-			$event["props"]["description"] = $this->loadEventDescription($event);
-			$event["props"]["attendees"] = $this->loadAttendees($event);
-			
-			$vevent = & $v->newComponent("vevent");	// create a new event object
-			$this->addEvent($vevent, $event["props"]);
+		// Get records
+		$records = array();
+		if (isset($actionData["records"])) {
+			$records = $actionData["records"];
 		}
-		
-		$v->saveCalendar();
-		
-		$response['status']		= true;
-		$response['fileid']		= $tmpname;	// number of entries that will be exported
-		$response['basedir']	= TMP_PATH;
-		$response['secid']		= $secid;
-		$response['realname']	= $actionData["calendar"];
+
+		// Get folders
+		$folder = false;
+		if (isset($actionData["folder"])) {
+			$folder = $actionData["folder"];
+		}
+
+		$response = array();
+		$error = false;
+		$error_msg = "";
+
+		// write csv
+		$token = $this->randomstring(16);
+		$file = PLUGIN_CALENDARIMPORTER_TMP_UPLOAD . "ics_" . $token . ".ics";
+		file_put_contents($file, "");
+
+		$store = $GLOBALS["mapisession"]->openMessageStore(hex2bin($storeid));
+		if ($store) {
+			// load folder first
+			if ($folder !== false) {
+				$mapifolder = mapi_msgstore_openentry($store, hex2bin($folder));
+
+				$table = mapi_folder_getcontentstable($mapifolder);
+				$list = mapi_table_queryallrows($table, array(PR_ENTRYID));
+
+				foreach ($list as $item) {
+					$records[] = bin2hex($item[PR_ENTRYID]);
+				}
+			}
+
+			$vcalendar = new VObject\Component\VCalendar();
+
+			// Add static stuff to vcalendar
+			$vcalendar->add('METHOD', 'PUBLISH');
+			$vcalendar->add('X-WR-CALDESC', 'Exported Zarafa Calendar');
+			$vcalendar->add('X-WR-TIMEZONE', date_default_timezone_get());
+
+			// TODO: add VTIMEZONE object to ical.
+
+			for ($index = 0, $count = count($records); $index < $count; $index++) {
+				$message = mapi_msgstore_openentry($store, hex2bin($records[$index]));
+
+				// get message properties.
+				$properties = $GLOBALS['properties']->getAppointmentProperties();
+				$plaintext = true;
+				$messageProps = $GLOBALS['operations']->getMessageProps($store, $message, $properties, $plaintext);
+
+				$vevent = $vcalendar->add('VEVENT', [
+					'SUMMARY' => $this->getProp($messageProps, "subject"),
+					'DTSTART' => date_timestamp_set(new DateTime(), $this->getProp($messageProps, "startdate")),
+					'DTEND' => date_timestamp_set(new DateTime(), $this->getProp($messageProps, "duedate")),
+					'CREATED' => date_timestamp_set(new DateTime(), $this->getProp($messageProps, "creation_time")),
+					'LAST-MODIFIED' => date_timestamp_set(new DateTime(), $this->getProp($messageProps, "last_modification_time")),
+					'PRIORITY' => $this->getProp($messageProps, "importance"),
+					'X-MICROSOFT-CDO-INTENDEDSTATUS' => $this->busystates[intval($this->getProp($messageProps, "busystatus"))], // both seem to be valid...
+					'X-MICROSOFT-CDO-BUSYSTATUS' => $this->busystates[intval($this->getProp($messageProps, "busystatus"))], // both seem to be valid...
+					'X-ZARAFA-LABEL' => $this->labels[intval($this->getProp($messageProps, "label"))],
+					'CLASS' => $this->getProp($messageProps, "private") ? "PRIVATE" : "PUBLIC",
+					'COMMENT' => "eid:" . $records[$index]
+				]);
+
+				// Add organizer
+				$vevent->add('ORGANIZER','mailto:' . $this->getProp($messageProps, "sender_email_address"));
+				$vevent->ORGANIZER['CN'] = $this->getProp($messageProps, "sender_name");
+
+				// Add Attendees
+				if(isset($messageProps["recipients"]) && count($messageProps["recipients"]["item"]) > 0) {
+					foreach($messageProps["recipients"]["item"] as $attendee) {
+						$att = $vevent->add('ATTENDEE', "mailto:" . $this->getProp($attendee, "email_address"));
+						$att["CN"] = $this->getProp($attendee, "display_name");
+						$att["ROLE"] = $this->attendeetype[intval($this->getProp($attendee, "recipient_type"))];
+					}
+				}
+
+				// Add alarms
+				if(!empty($this->getProp($messageProps, "reminder")) && $this->getProp($messageProps, "reminder") == 1) {
+					$valarm = $vevent->add('VALARM', [
+						'ACTION' => 'DISPLAY',
+						'DESCRIPTION' => $this->getProp($messageProps, "subject") // reuse the event summary
+					]);
+
+					// Add trigger
+					$durationValue = $this->getDurationStringFromMintues($this->getProp($messageProps, "reminder_minutes"), false);
+					$valarm->add('TRIGGER', $durationValue); // default trigger type is duration (see 4.8.6.3)
+
+					/*
+					$valarm->add('TRIGGER', date_timestamp_set(new DateTime(), $this->getProp($messageProps, "reminder_time"))); // trigger type "DATE-TIME"
+					$valarm->TRIGGER['VALUE'] = 'DATE-TIME';
+					*/
+				}
+
+				// Add location
+				if(!empty($this->getProp($messageProps, "location"))) {
+					$vevent->add('LOCATION',$this->getProp($messageProps, "location"));
+				}
+
+				// Add description
+				$body = $this->getProp($messageProps, "isHTML") ? $this->getProp($messageProps, "html_body") : $this->getProp($messageProps, "body");
+				if(!empty($body)) {
+					$vevent->add('DESCRIPTION',$body);
+				}
+			}
+
+			// write combined ics file
+			file_put_contents($file, file_get_contents($file) . $vcalendar->serialize());
+		}
+
+		if (count($records) > 0) {
+			$response['status'] = true;
+			$response['download_token'] = $token;
+			$response['filename'] = count($records) . "events.ics";
+		} else {
+			$response['status'] = false;
+			$response['message'] = "No events found. Export skipped!";
+		}
+
 		$this->addActionData($actionType, $response);
 		$GLOBALS["bus"]->addData($this->getResponseData());
-		
-		if($this->DEBUG) {
-			error_log("export done, bus data written!");
-		}
 	}
-	
+
 	/**
 	 * The main import function, parses the uploaded ics file
 	 * @param $actionType
 	 * @param $actionData
 	 */
-	private function importCalendar($actionType, $actionData) {
-		if($this->DEBUG) {
-			error_log("PHP Timezone: " . $tz);
+	private function importCalendar($actionType, $actionData)
+	{
+		// Get uploaded vcf path
+		$icsfile = false;
+		if (isset($actionData["ics_filepath"])) {
+			$icsfile = $actionData["ics_filepath"];
 		}
-		
-		if(is_readable ($actionData["ics_filepath"])) {
-			$ical = new ICal($actionData["ics_filepath"], $GLOBALS["settings"]->get("zarafa/v1/plugins/calendarimporter/default_timezone"), $actionData["timezone"], $actionData["ignore_dst"]); // Parse it!
-			
-			if(isset($ical->errors)) {
-				$response['status']	= false;
-				$response['message']= $ical->errors;
-			} else if(!$ical->hasEvents()) {
-				$response['status']	= false;
-				$response['message']= "No events in ics file";
-			} else {
-				$response['status']		= true;
-				$response['parsed_file']= $actionData["ics_filepath"];
-				$response['parsed']		= array (
-					'timezone'  =>  $ical->timezone(),
-					'calendar'	=>	$ical->calendar(),
-					'events'	=>	$ical->events()
-				);
+
+		// Get store id
+		$storeid = false;
+		if (isset($actionData["storeid"])) {
+			$storeid = $actionData["storeid"];
+		}
+
+		// Get folder entryid
+		$folderid = false;
+		if (isset($actionData["folderid"])) {
+			$folderid = $actionData["folderid"];
+		}
+
+		// Get uids
+		$uids = array();
+		if (isset($actionData["uids"])) {
+			$uids = $actionData["uids"];
+		}
+
+		$response = array();
+		$error = false;
+		$error_msg = "";
+
+		// parse the ics file a last time...
+		$parser = null;
+		try {
+			$parser = VObject\Reader::read(
+				fopen($icsfile,'r')
+			);
+		} catch (Exception $e) {
+			$error = true;
+			$error_msg = $e->getMessage();
+		}
+
+		$events = array();
+		if (count($parser->VEVENT) > 0) {
+			$events = $this->parseCalendarToArray($parser);
+			$store = $GLOBALS["mapisession"]->openMessageStore(hex2bin($storeid));
+			$folder = mapi_msgstore_openentry($store, hex2bin($folderid));
+
+			$importall = false;
+			if (count($uids) == count($events)) {
+				$importall = true;
 			}
+
+			$propValuesMAPI = array();
+			$properties = $GLOBALS['properties']->getAppointmentProperties();
+			// extend properties...
+			$properties["body"] = PR_BODY;
+
+			$count = 0;
+
+			// iterate through all events and import them :)
+			foreach ($events as $event) {
+				if (isset($event["startdate"]) && ($importall || in_array($event["internal_fields"]["event_uid"], $uids))) {
+
+					$message = mapi_folder_createmessage($folder);
+
+					// parse the arraykeys
+					foreach ($event as $key => $value) {
+						if ($key !== "internal_fields") {
+							if(isset($properties[$key])) {
+								$propValuesMAPI[$properties[$key]] = $value;
+							}
+						}
+					}
+
+					$propValuesMAPI[$properties["commonstart"]] = $propValuesMAPI[$properties["startdate"]];
+					$propValuesMAPI[$properties["commonend"]] = $propValuesMAPI[$properties["duedate"]];
+					$propValuesMAPI[$properties["duration"]] = ($propValuesMAPI[$properties["duedate"]] - $propValuesMAPI[$properties["startdate"]]) / 60; // Minutes needed
+					$propValuesMAPI[$properties["reminder"]] = false; // needed, overwritten if there is a timer
+
+					$propValuesMAPI[$properties["message_class"]] = "IPM.Appointment";
+					$propValuesMAPI[$properties["icon_index"]] = "1024";
+
+					// TODO: set attendees and alarms
+
+					mapi_setprops($message, $propValuesMAPI);
+					mapi_savechanges($message);
+					if ($this->DEBUG) {
+						error_log("New event added: \"" . $event["subject"] . "\".\n");
+					}
+					$count++;
+				}
+			}
+
+			$response['status'] = true;
+			$response['count'] = $count;
+			$response['message'] = "";
+
 		} else {
-			$response['status']	= false;
-			$response['message']= "File could not be read by server";
+			$response['status'] = false;
+			$response['count'] = 0;
+			$response['message'] = $error ? $error_msg : "ICS file empty!";
 		}
-		
+
 		$this->addActionData($actionType, $response);
 		$GLOBALS["bus"]->addData($this->getResponseData());
-		
-		if($this->DEBUG) {
-			error_log("parsing done, bus data written!");
-		}
 	}
-	
+
 	/**
 	 * Store the file to a temporary directory, prepare it for oc upload
 	 * @param $actionType
 	 * @param $actionData
 	 * @private
 	 */
-	private function getAttachmentPath($actionType, $actionData) {
+	private function getAttachmentPath($actionType, $actionData)
+	{
 		// Get store id
 		$storeid = false;
-		if(isset($actionData["store"])) {
+		if (isset($actionData["store"])) {
 			$storeid = $actionData["store"];
 		}
 
 		// Get message entryid
 		$entryid = false;
-		if(isset($actionData["entryid"])) {
+		if (isset($actionData["entryid"])) {
 			$entryid = $actionData["entryid"];
 		}
 
@@ -455,42 +484,41 @@ class CalendarModule extends Module {
 
 		// Get number of attachment which should be opened.
 		$attachNum = false;
-		if(isset($actionData["attachNum"])) {
+		if (isset($actionData["attachNum"])) {
 			$attachNum = $actionData["attachNum"];
 		}
 
 		// Check if storeid and entryid isset
-		if($storeid && $entryid) {
+		if ($storeid && $entryid) {
 			// Open the store
 			$store = $GLOBALS["mapisession"]->openMessageStore(hex2bin($storeid));
-			
-			if($store) {
+
+			if ($store) {
 				// Open the message
 				$message = mapi_msgstore_openentry($store, hex2bin($entryid));
-				
-				if($message) {
+
+				if ($message) {
 					$attachment = false;
 
 					// Check if attachNum isset
-					if($attachNum) {
+					if ($attachNum) {
 						// Loop through the attachNums, message in message in message ...
-						for($i = 0; $i < (count($attachNum) - 1); $i++)
-						{
+						for ($i = 0; $i < (count($attachNum) - 1); $i++) {
 							// Open the attachment
-							$tempattach = mapi_message_openattach($message, (int) $attachNum[$i]);
-							if($tempattach) {
+							$tempattach = mapi_message_openattach($message, (int)$attachNum[$i]);
+							if ($tempattach) {
 								// Open the object in the attachment
 								$message = mapi_attach_openobj($tempattach);
 							}
 						}
 
 						// Open the attachment
-						$attachment = mapi_message_openattach($message, (int) $attachNum[(count($attachNum) - 1)]);
+						$attachment = mapi_message_openattach($message, (int)$attachNum[(count($attachNum) - 1)]);
 					}
 
 					// Check if the attachment is opened
-					if($attachment) {
-						
+					if ($attachment) {
+
 						// Get the props of the attachment
 						$props = mapi_attach_getprops($attachment, array(PR_ATTACH_LONG_FILENAME, PR_ATTACH_MIME_TAG, PR_DISPLAY_NAME, PR_ATTACH_METHOD));
 						// Content Type
@@ -499,29 +527,33 @@ class CalendarModule extends Module {
 						$filename = "ERROR";
 
 						// Set filename
-						if(isset($props[PR_ATTACH_LONG_FILENAME])) {
+						if (isset($props[PR_ATTACH_LONG_FILENAME])) {
 							$filename = $props[PR_ATTACH_LONG_FILENAME];
-						} else if(isset($props[PR_ATTACH_FILENAME])) {
-							$filename = $props[PR_ATTACH_FILENAME];
-						} else if(isset($props[PR_DISPLAY_NAME])) {
-							$filename = $props[PR_DISPLAY_NAME];
-						} 
-				
+						} else {
+							if (isset($props[PR_ATTACH_FILENAME])) {
+								$filename = $props[PR_ATTACH_FILENAME];
+							} else {
+								if (isset($props[PR_DISPLAY_NAME])) {
+									$filename = $props[PR_DISPLAY_NAME];
+								}
+							}
+						}
+
 						// Set content type
-						if(isset($props[PR_ATTACH_MIME_TAG])) {
+						if (isset($props[PR_ATTACH_MIME_TAG])) {
 							$contentType = $props[PR_ATTACH_MIME_TAG];
 						} else {
 							// Parse the extension of the filename to get the content type
-							if(strrpos($filename, ".") !== false) {
+							if (strrpos($filename, ".") !== false) {
 								$extension = strtolower(substr($filename, strrpos($filename, ".")));
 								$contentType = "application/octet-stream";
-								if (is_readable("mimetypes.dat")){
-									$fh = fopen("mimetypes.dat","r");
+								if (is_readable("mimetypes.dat")) {
+									$fh = fopen("mimetypes.dat", "r");
 									$ext_found = false;
-									while (!feof($fh) && !$ext_found){
+									while (!feof($fh) && !$ext_found) {
 										$line = fgets($fh);
 										preg_match("/(\.[a-z0-9]+)[ \t]+([^ \t\n\r]*)/i", $line, $result);
-										if ($extension == $result[1]){
+										if ($extension == $result[1]) {
 											$ext_found = true;
 											$contentType = $result[2];
 										}
@@ -530,24 +562,24 @@ class CalendarModule extends Module {
 								}
 							}
 						}
-						
-						
+
+
 						$tmpname = tempnam(TMP_PATH, stripslashes($filename));
 
 						// Open a stream to get the attachment data
 						$stream = mapi_openpropertytostream($attachment, PR_ATTACH_DATA_BIN);
 						$stat = mapi_stream_stat($stream);
 						// File length =  $stat["cb"]
-						
-						$fhandle = fopen($tmpname,'w');
+
+						$fhandle = fopen($tmpname, 'w');
 						$buffer = null;
-						for($i = 0; $i < $stat["cb"]; $i += BLOCK_SIZE) {
+						for ($i = 0; $i < $stat["cb"]; $i += BLOCK_SIZE) {
 							// Write stream
 							$buffer = mapi_stream_read($stream, BLOCK_SIZE);
-							fwrite($fhandle,$buffer,strlen($buffer));
+							fwrite($fhandle, $buffer, strlen($buffer));
 						}
 						fclose($fhandle);
-						
+
 						$response = array();
 						$response['tmpname'] = $tmpname;
 						$response['filename'] = $filename;
@@ -569,6 +601,129 @@ class CalendarModule extends Module {
 			$GLOBALS["bus"]->addData($this->getResponseData());
 		}
 	}
-};
+
+	/**
+	 * Function that parses the uploaded ics file and posts it via json
+	 * @param $actionType
+	 * @param $actionData
+	 */
+	private function loadCalendar($actionType, $actionData)
+	{
+		$error = false;
+		$error_msg = "";
+
+		if (is_readable($actionData["ics_filepath"])) {
+			$parser = null;
+
+			try {
+				$parser = VObject\Reader::read(
+					fopen($actionData["ics_filepath"],'r')
+				);
+				//error_log(print_r($parser->VTIMEZONE, true));
+			} catch (Exception $e) {
+				$error = true;
+				$error_msg = $e->getMessage();
+			}
+			if ($error) {
+				$response['status'] = false;
+				$response['message'] = $error_msg;
+			} else {
+				if (count($parser->VEVENT) == 0) {
+					$response['status'] = false;
+					$response['message'] = "No event in ics file";
+				} else {
+					$response['status'] = true;
+					$response['parsed_file'] = $actionData["ics_filepath"];
+					$response['parsed'] = array(
+						'events' => $this->parseCalendarToArray($parser),
+						'timezone' => isset($parser->VTIMEZONE->TZID) ? (string)$parser->VTIMEZONE->TZID : (string)$parser->{'X-WR-TIMEZONE'},
+						'calendar' => (string)$parser->PRODID
+					);
+				}
+			}
+		} else {
+			$response['status'] = false;
+			$response['message'] = "File could not be read by server";
+		}
+
+		$this->addActionData($actionType, $response);
+		$GLOBALS["bus"]->addData($this->getResponseData());
+
+		if ($this->DEBUG) {
+			error_log("parsing done, bus data written!");
+		}
+	}
+
+	/**
+	 * Create a array with contacts
+	 *
+	 * @param {VObject} $calendar ics parser object
+	 * @return array parsed events
+	 * @private
+	 */
+	private function parseCalendarToArray($calendar)
+	{
+		$events = array();
+		foreach ($calendar->VEVENT as $Index => $vEvent) {
+			// Sabre\VObject\Parser\XML\Element\VEvent
+			$properties = array();
+
+			//uid - used for front/backend communication
+			$properties["internal_fields"] = array();
+			$properties["internal_fields"]["event_uid"] = base64_encode($Index . $vEvent->UID);
+
+			$properties["startdate"] = (string)$vEvent->DTSTART->getDateTime()->getTimestamp();
+			$properties["duedate"] = (string)$vEvent->DTEND->getDateTime()->getTimestamp();
+			$properties["location"] = (string)$vEvent->LOCATION;
+			$properties["subject"] = (string)$vEvent->SUMMARY;
+			$properties["body"] = (string)$vEvent->DESCRIPTION;
+			$properties["comment"] = (string)$vEvent->COMMENT;
+			$properties["timezone"] = (string)$vEvent->DTSTART["TZID"];
+			$properties["organizer"] = (string)$vEvent->ORGANIZER;
+			$properties["busystatus"] = array_search((string)$vEvent->{'X-MICROSOFT-CDO-INTENDEDSTATUS'}, $this->busystates); // X-MICROSOFT-CDO-BUSYSTATUS
+			$properties["transp"] = (string)$vEvent->TRANSP;
+			//$properties["trigger"] = (string)$vEvent->COMMENT;
+			$properties["priority"] = (string)$vEvent->PRIORITY;
+			$properties["private"] = ((string)$vEvent->CLASS) == "PRIVATE" ? true : false;
+			if(!empty((string)$vEvent->{'X-ZARAFA-LABEL'})) {
+				$properties["label"] = array_search((string)$vEvent->{'X-ZARAFA-LABEL'}, $this->labels);
+			}
+			$properties["last_modification_time"] = (string)$vEvent->{'LAST-MODIFIED'}->getDateTime()->getTimestamp();
+			$properties["creation_time"] = (string)$vEvent->CREATED->getDateTime()->getTimestamp();
+			$properties["rrule"] = (string)$vEvent->RRULE;
+
+			// Attendees
+			$properties["attendees"] = array();
+			if(isset($vEvent->ATTENDEE) && count($vEvent->ATTENDEE) > 0) {
+				foreach($vEvent->ATTENDEE as $attendee) {
+					$properties["attendees"][] = array(
+						"name" => (string)$attendee["CN"],
+						"mail" => (string)$attendee,
+						"status" => (string)$attendee["PARTSTAT"],
+						"role" => (string)$attendee["ROLE"]
+					);
+				}
+			}
+
+			// Alarms
+			$properties["alarms"] = array();
+			if(isset($vEvent->VALARM) && count($vEvent->VALARM) > 0) {
+				foreach($vEvent->VALARM as $alarm) {
+					$properties["alarms"][] = array(
+						"description" => (string)$alarm->DESCRIPTION,
+						"trigger" => (string)$alarm->TRIGGER,
+						"type" => (string)$alarm->TRIGGER["VALUE"]
+					);
+				}
+			}
+
+			array_push($events, $properties);
+		}
+
+		return $events;
+	}
+}
+
+;
 
 ?>

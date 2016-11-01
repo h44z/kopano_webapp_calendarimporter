@@ -1,9 +1,10 @@
 <?php
+
 /**
- * download.php, zarafa calender to ics im/exporter
+ * download.php, zarafa calendar to ics im/exporter
  *
  * Author: Christoph Haas <christoph.h@sprinternet.at>
- * Copyright (C) 2012-2014 Christoph Haas
+ * Copyright (C) 2012-2016 Christoph Haas
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -20,25 +21,54 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  *
  */
-$basedir  = $_GET["basedir"];
-$secid    = $_GET["secid"];
-$fileid   = $_GET["fileid"];
-$realname = $_GET["realname"];
+namespace calendarimporter;
 
-$secfile = $basedir . "/secid." . $secid;
-$icsfile = $basedir . "/" . $fileid . "." . $secid;
+class DownloadHandler
+{
+	/**
+	 * Download the given vcf file.
+	 * @return bool
+	 */
+	public static function doDownload()
+	{
+		if (isset($_GET["token"])) {
+			$token = $_GET["token"];
+		} else {
+			return false;
+		}
 
-// if the secid file exists -> download!
-if(file_exists($secfile)) {
-	@header("Last-Modified: " . @gmdate("D, d M Y H:i:s",time()) . " GMT");
-	@header("Content-type: text/calendar");
-	header("Content-Length: " . filesize($icsfile));
-	header("Content-Disposition: attachment; filename=" . $realname . ".ics");
+		if (isset($_GET["filename"])) {
+			$filename = $_GET["filename"];
+		} else {
+			return false;
+		}
 
-	//write ics
-	readfile($icsfile);
-	unlink($secfile);
-	unlink($icsfile);
+		// validate token
+		if (!ctype_alnum($token)) { // token is a md5 hash
+			return false;
+		}
+
+		$file = PLUGIN_CALENDARIMPORTER_TMP_UPLOAD . "ics_" . $token . ".ics";
+
+		if (!file_exists($file)) { // invalid token
+			return false;
+		}
+
+		// set headers here
+		header('Content-Disposition: attachment; filename="' . $filename . '"');
+
+		// no caching
+		header('Expires: 0'); // set expiration time
+		header('Content-Description: File Transfer');
+		header('Cache-Control: must-revalidate, post-check=0, pre-check=0');
+		header('Content-Length: ' . filesize($file));
+		header('Content-Type: application/octet-stream');
+		header('Pragma: public');
+		flush();
+
+		// print the downloaded file
+		readfile($file);
+		ignore_user_abort(true);
+		unlink($file);
+	}
 }
-
-?>

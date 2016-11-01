@@ -4,7 +4,7 @@
  * sync.php, zarafa calender to ics im/exporter backend
  *
  * Author: Christoph Haas <christoph.h@sprinternet.at>
- * Copyright (C) 2012-2014 Christoph Haas
+ * Copyright (C) 2012-2016 Christoph Haas
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -129,7 +129,7 @@ foreach($userList as $userName => $userData) {
 				if($icsData != NULL) {
 					file_put_contents($tmpFilename, $icsData);
 					echo "Got valid data for " . $syncItem["icsurl"] . " stored in " . $tmpFilename . "\n";
-					$result = upload_ics_to_caldav($tmpFilename, $CALDAVURL, $userName, $syncItem["calendar"], $ADMINUSERNAME, $ADMINPASSWORD);
+					$result = upload_ics_to_caldav($tmpFilename, $CALDAVURL, $userName, $syncItem["calendarname"], $ADMINUSERNAME, $ADMINPASSWORD);
 					if(intval($result) == 200) {
 						echo "Import completed: $result\n";
 						$result = update_last_sync_date($userStore, $syncItemName);

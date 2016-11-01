@@ -26,13 +26,6 @@ Zarafa.plugins.calendarimporter.settings.SettingsWidget = Ext.extend(Zarafa.sett
 			items : [
 				{
 					xtype : 'checkbox',
-					name : 'zarafa/v1/plugins/calendarimporter/enable_export',
-					ref : 'enableExport',
-					fieldLabel : 'Enable exporter',
-					lazyInit : false
-				},
-				{
-					xtype : 'checkbox',
 					name : 'zarafa/v1/plugins/calendarimporter/enable_sync',
 					ref : 'enableSync',
 					fieldLabel : 'Enable ical sync',
@@ -47,43 +40,14 @@ Zarafa.plugins.calendarimporter.settings.SettingsWidget = Ext.extend(Zarafa.sett
 	},
 	
 	createSelectBox: function() {
-		var defaultFolder = container.getHierarchyStore().getDefaultFolder('calendar'); // @type: Zarafa.hierarchy.data.MAPIFolderRecord		
-		var subFolders = defaultFolder.getChildren();
-		var myStore = [];
-		
-		/* add all local calendar folders */
-		var i = 0;
-		myStore.push(new Array(defaultFolder.getDefaultFolderKey(), defaultFolder.getDisplayName()));
-		for(i = 0; i < subFolders.length; i++) {
-			/* Store all subfolders */
-			myStore.push(new Array(subFolders[i].getDisplayName(), subFolders[i].getDisplayName(), false)); // 3rd field = isPublicfolder
-		}
-		
-		/* add all shared calendar folders */
-		var pubStore = container.getHierarchyStore().getPublicStore();
-		
-		if(typeof pubStore !== "undefined") {
-			try {
-				var pubFolder = pubStore.getDefaultFolder("publicfolders");
-				var pubSubFolders = pubFolder.getChildren();
-				
-				for(i = 0; i < pubSubFolders.length; i++) {
-					if(pubSubFolders[i].isContainerClass("IPF.Appointment")){
-						myStore.push(new Array(pubSubFolders[i].getDisplayName(), pubSubFolders[i].getDisplayName() + " [Shared]", true)); // 3rd field = isPublicfolder
-					}
-				}
-			} catch (e) {
-				console.log("Error opening the shared folder...");
-				console.log(e);
-			}
-		}
-		
+		var myStore = Zarafa.plugins.calendarimporter.data.Actions.getAllCalendarFolders(true);
+
 		return {
 			xtype: "selectbox",
 			ref : 'defaultCalendar',
 			editable: false,
 			name: "zarafa/v1/plugins/calendarimporter/default_calendar",
-			value: container.getSettingsModel().get("zarafa/v1/plugins/calendarimporter/default_calendar"),
+            value: Zarafa.plugins.calendarimporter.data.Actions.getCalendarFolderByName(container.getSettingsModel().get("zarafa/v1/plugins/calendarimporter/default_calendar")).entryid,
 			width: 100,
 			fieldLabel: "Default calender",
 			store: myStore,
@@ -123,9 +87,8 @@ Zarafa.plugins.calendarimporter.settings.SettingsWidget = Ext.extend(Zarafa.sett
 	 * @param {Zarafa.settings.SettingsModel} settingsModel The settings to load
 	 */
 	update : function(settingsModel) {
-		this.enableExport.setValue(settingsModel.get(this.enableExport.name));
 		this.enableSync.setValue(settingsModel.get(this.enableSync.name));
-		this.defaultCalendar.setValue(settingsModel.get(this.defaultCalendar.name));
+		this.defaultCalendar.setValue(Zarafa.plugins.calendarimporter.data.Actions.getCalendarFolderByName(settingsModel.get(this.defaultCalendar.name)).entryid);
 		this.defaultTimezone.setValue(settingsModel.get(this.defaultTimezone.name));
 	},
 
@@ -136,11 +99,115 @@ Zarafa.plugins.calendarimporter.settings.SettingsWidget = Ext.extend(Zarafa.sett
 	 * @param {Zarafa.settings.SettingsModel} settingsModel The settings to update
 	 */
 	updateSettings : function(settingsModel) {
-		settingsModel.set(this.enableExport.name, this.enableExport.getValue());
-		settingsModel.set(this.enableSync.name, this.enableSync.getValue());
-		settingsModel.set(this.defaultCalendar.name, this.defaultCalendar.getValue());
-		settingsModel.set(this.defaultTimezone.name, this.defaultTimezone.getValue());
-	}
+        // check if the user changed a value
+        var changed = false;
+
+        if(settingsModel.get(this.enableSync.name) != this.enableSync.getValue()) {
+            changed = true;
+        } else if(settingsModel.get(this.defaultCalendar.name) != Zarafa.plugins.calendarimporter.data.Actions.getCalendarFolderByEntryid(this.defaultCalendar.getValue()).display_name) {
+            changed = true;
+        } else if(settingsModel.get(this.defaultTimezone.name) != this.defaultTimezone.getValue()) {
+            changed = true;
+        }
+
+        if(changed) {
+            // Really save changes
+            settingsModel.set(this.enableSync.name, this.enableSync.getValue());
+            settingsModel.set(this.defaultCalendar.name, Zarafa.plugins.calendarimporter.data.Actions.getCalendarFolderByEntryid(this.defaultCalendar.getValue()).display_name); // store name
+            settingsModel.set(this.defaultTimezone.name, this.defaultTimezone.getValue());
+
+            this.onUpdateSettings();
+        }
+	},
+
+    /**
+     * Called after the {@link Zarafa.settings.SettingsModel} fires the {@link Zarafa.settings.SettingsModel#save save}
+     * event to indicate the settings were successfully saved and it will forcefully realod the webapp.
+     * settings which were saved to the server.
+     * @private
+     */
+    onUpdateSettings : function()
+    {
+        var message = _('Your WebApp needs to be reloaded to make the changes visible!');
+        message += '<br/><br/>';
+        message += _('WebApp will automatically restart in order for these changes to take effect');
+        message += '<br/>';
+
+        Zarafa.common.dialogs.MessageBox.addCustomButtons({
+            title: _('Restart WebApp'),
+            msg : message,
+            icon: Ext.MessageBox.QUESTION,
+            fn : this.restartWebapp,
+            customButton : [{
+                text : _('Restart'),
+                name : 'restart'
+            }, {
+                text : _('Cancel'),
+                name : 'cancel'
+            }],
+            scope : this
+        });
+
+    },
+
+    /**
+     * Event handler for {@link #onResetSettings}. This will check if the user
+     * wishes to reset the default settings or not.
+     * @param {String} button The button which user pressed.
+     * @private
+     */
+    restartWebapp : function(button)
+    {
+        if (button === 'restart') {
+            var contextModel = this.ownerCt.settingsContext.getModel();
+            var realModel = contextModel.getRealSettingsModel();
+
+            realModel.save();
+
+            this.loadMask = new Zarafa.common.ui.LoadMask(Ext.getBody(), {
+                msg : '<b>' + _('Webapp is reloading, Please wait.') + '</b>'
+            });
+            this.loadMask.show();
+
+            this.mon(realModel, 'save', this.onSettingsSave, this);
+            this.mon(realModel, 'exception', this.onSettingsException, this);
+        }
+
+    },
+
+    /**
+     * Called when the {@link Zarafa.settings.} fires the {@link Zarafa.settings.SettingsModel#save save}
+     * event to indicate the settings were successfully saved and it will forcefully realod the webapp.
+     * @param {Zarafa.settings.SettingsModel} model The model which fired the event.
+     * @param {Object} parameters The key-value object containing the action and the corresponding
+     * settings which were saved to the server.
+     * @private
+     */
+    onSettingsSave : function(model, parameters)
+    {
+        this.mun(model, 'save', this.onSettingsSave, this);
+        Zarafa.core.Util.reloadWebapp();
+    },
+
+    /**
+     * Called when the {@link Zarafa.settings.SettingsModel} fires the {@link Zarafa.settings.SettingsModel#exception exception}
+     * event to indicate the settings were not successfully saved.
+     * @param {Zarafa.settings.SettingsModel} model The settings model which fired the event
+     * @param {String} type The value of this parameter will be either 'response' or 'remote'.
+     * @param {String} action Name of the action (see {@link Ext.data.Api#actions}).
+     * @param {Object} options The object containing a 'path' and 'value' field indicating
+     * respectively the Setting and corresponding value for the setting which was being saved.
+     * @param {Object} response The response object as received from the PHP-side
+     * @private
+     */
+    onSettingsException : function(model, type, action, options, response)
+    {
+        this.loadMask.hide();
+
+        // Remove event handlers
+        this.mun(model, 'save', this.onSettingsSave, this);
+        this.mun(model, 'exception', this.onSettingsException, this);
+    }
 });
 
 Ext.reg('calendarimporter.settingswidget', Zarafa.plugins.calendarimporter.settings.SettingsWidget);
