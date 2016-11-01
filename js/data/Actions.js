@@ -79,7 +79,7 @@ Zarafa.plugins.calendarimporter.data.Actions = {
 		if (!Ext.isEmpty(inbox.subStores) && inbox.subStores.folders.totalLength > 0) {
 			for (var i = 0; i < inbox.subStores.folders.totalLength; i++) {
 				var folder = inbox.subStores.folders.getAt(i);
-				if (folder.get("container_class") == "IPF.Appointment") {
+				if (!Ext.isEmpty(folder) && folder.get("container_class") == "IPF.Appointment") {
 					if (asDropdownStore) {
 						allFolders.push([
 							folder.get("entryid"),
@@ -100,7 +100,7 @@ Zarafa.plugins.calendarimporter.data.Actions = {
 		if (!Ext.isEmpty(pub.subStores) && pub.subStores.folders.totalLength > 0) {
 			for (var j = 0; j < pub.subStores.folders.totalLength; j++) {
 				var folder = pub.subStores.folders.getAt(j);
-				if (folder.get("container_class") == "IPF.Appointment") {
+				if (!Ext.isEmpty(folder) && folder.get("container_class") == "IPF.Appointment") {
 					if (asDropdownStore) {
 						allFolders.push([
 							folder.get("entryid"),
