@@ -1,49 +1,52 @@
 <?xml version="1.0"?>
 <!DOCTYPE plugin SYSTEM "manifest.dtd">
 <plugin version="2">
-	<info>
-		<version>2.2.0</version>
-		<name>calendarimporter</name>
-		<title>ICS Calendar Importer/Exporter</title>
-		<author>Christoph Haas</author>
-		<authorURL>http://www.sprinternet.at</authorURL>
-		<description>Import or Export a ICS file to/from the zarafa calendar</description>
-	</info>
-	<config>
-		<configfile>config.php</configfile>
-	</config>
-	<components>
-		<component>
-			<files>
-				<server>
-					<serverfile>php/plugin.calendarimporter.php</serverfile>
-					<serverfile type="module" module="calendarmodule">php/module.calendar.php</serverfile>
-				</server>
-				<client>
-					<clientfile load="release">js/calendarimporter-debug.js</clientfile>
-					<clientfile load="debug">js/calendarimporter-debug.js</clientfile>
-					
-					<clientfile load="source">js/data/timezones.js</clientfile>
-					<clientfile load="source">js/data/Actions.js</clientfile>
-					<clientfile load="source">js/data/ResponseHandler.js</clientfile>
-					<clientfile load="source">js/external/Ext.util.base64.js</clientfile>
-					<clientfile load="source">js/ui/ContextMenu.js</clientfile>
-					<clientfile load="source">js/dialogs/ImportContentPanel.js</clientfile>
-					<clientfile load="source">js/dialogs/ImportPanel.js</clientfile>
-					<clientfile load="source">js/dialogs/settings/SettingsWidget.js</clientfile>
-					<clientfile load="source">js/dialogs/settings/SettingsCalSyncWidget.js</clientfile>
-					<clientfile load="source">js/dialogs/settings/ui/CalSyncGrid.js</clientfile>
-					<clientfile load="source">js/dialogs/settings/ui/CalSyncPanel.js</clientfile>
-					<clientfile load="source">js/dialogs/settings/dialogs/CalSyncEditContentPanel.js</clientfile>
-					<clientfile load="source">js/dialogs/settings/dialogs/CalSyncEditPanel.js</clientfile>
-					<clientfile load="source">js/plugin.calendarimporter.js</clientfile>
-				</client>
-				<resources>
-					<resourcefile load="release">resources/css/calendarimporter.css</resourcefile>
-					<resourcefile load="debug">resources/css/calendarimporter.css</resourcefile>
-					<resourcefile load="source">resources/css/calendarimporter-main.css</resourcefile>
-				</resources>
-			</files>
-		</component>
-	</components>
+    <info>
+        <version>2.2.1</version>
+        <name>calendarimporter</name>
+        <title>ICS Calendar Importer/Exporter</title>
+        <author>Christoph Haas</author>
+        <authorURL>http://www.sprinternet.at</authorURL>
+        <description>Import or Export a ICS file to/from the Kopano calendar</description>
+    </info>
+    <translations>
+        <translationsdir>languages</translationsdir>
+    </translations>
+    <config>
+        <configfile>config.php</configfile>
+    </config>
+    <components>
+        <component>
+            <files>
+                <server>
+                    <serverfile>php/plugin.calendarimporter.php</serverfile>
+                    <serverfile type="module" module="calendarmodule">php/module.calendar.php</serverfile>
+                </server>
+                <client>
+                    <clientfile load="release">js/calendarimporter-debug.js</clientfile>
+                    <clientfile load="debug">js/calendarimporter-debug.js</clientfile>
+
+                    <clientfile load="source">js/data/timezones.js</clientfile>
+                    <clientfile load="source">js/data/Actions.js</clientfile>
+                    <clientfile load="source">js/data/ResponseHandler.js</clientfile>
+                    <clientfile load="source">js/external/Ext.util.base64.js</clientfile>
+                    <clientfile load="source">js/ui/ContextMenu.js</clientfile>
+                    <clientfile load="source">js/dialogs/ImportContentPanel.js</clientfile>
+                    <clientfile load="source">js/dialogs/ImportPanel.js</clientfile>
+                    <clientfile load="source">js/dialogs/settings/SettingsWidget.js</clientfile>
+                    <clientfile load="source">js/dialogs/settings/SettingsCalSyncWidget.js</clientfile>
+                    <clientfile load="source">js/dialogs/settings/ui/CalSyncGrid.js</clientfile>
+                    <clientfile load="source">js/dialogs/settings/ui/CalSyncPanel.js</clientfile>
+                    <clientfile load="source">js/dialogs/settings/dialogs/CalSyncEditContentPanel.js</clientfile>
+                    <clientfile load="source">js/dialogs/settings/dialogs/CalSyncEditPanel.js</clientfile>
+                    <clientfile load="source">js/plugin.calendarimporter.js</clientfile>
+                </client>
+                <resources>
+                    <resourcefile load="release">resources/css/calendarimporter.css</resourcefile>
+                    <resourcefile load="debug">resources/css/calendarimporter.css</resourcefile>
+                    <resourcefile load="source">resources/css/calendarimporter-main.css</resourcefile>
+                </resources>
+            </files>
+        </component>
+    </components>
 </plugin>

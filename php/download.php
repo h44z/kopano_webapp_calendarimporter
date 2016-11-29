@@ -1,7 +1,7 @@
 <?php
 
 /**
- * download.php, zarafa calendar to ics im/exporter
+ * download.php, Kopano calendar to ics im/exporter
  *
  * Author: Christoph Haas <christoph.h@sprinternet.at>
  * Copyright (C) 2012-2016 Christoph Haas
@@ -25,50 +25,49 @@ namespace calendarimporter;
 
 class DownloadHandler
 {
-	/**
-	 * Download the given vcf file.
-	 * @return bool
-	 */
-	public static function doDownload()
-	{
-		if (isset($_GET["token"])) {
-			$token = $_GET["token"];
-		} else {
-			return false;
-		}
+    /**
+     * Download the given vcf file.
+     */
+    public static function doDownload()
+    {
+        if (isset($_GET["token"])) {
+            $token = $_GET["token"];
+        } else {
+            return false;
+        }
 
-		if (isset($_GET["filename"])) {
-			$filename = $_GET["filename"];
-		} else {
-			return false;
-		}
+        if (isset($_GET["filename"])) {
+            $filename = $_GET["filename"];
+        } else {
+            return false;
+        }
 
-		// validate token
-		if (!ctype_alnum($token)) { // token is a md5 hash
-			return false;
-		}
+        // validate token
+        if (!ctype_alnum($token)) { // token is a md5 hash
+            return false;
+        }
 
-		$file = PLUGIN_CALENDARIMPORTER_TMP_UPLOAD . "ics_" . $token . ".ics";
+        $file = PLUGIN_CALENDARIMPORTER_TMP_UPLOAD . "ics_" . $token . ".ics";
 
-		if (!file_exists($file)) { // invalid token
-			return false;
-		}
+        if (!file_exists($file)) { // invalid token
+            return false;
+        }
 
-		// set headers here
-		header('Content-Disposition: attachment; filename="' . $filename . '"');
+        // set headers here
+        header('Content-Disposition: attachment; filename="' . $filename . '"');
 
-		// no caching
-		header('Expires: 0'); // set expiration time
-		header('Content-Description: File Transfer');
-		header('Cache-Control: must-revalidate, post-check=0, pre-check=0');
-		header('Content-Length: ' . filesize($file));
-		header('Content-Type: application/octet-stream');
-		header('Pragma: public');
-		flush();
+        // no caching
+        header('Expires: 0'); // set expiration time
+        header('Content-Description: File Transfer');
+        header('Cache-Control: must-revalidate, post-check=0, pre-check=0');
+        header('Content-Length: ' . filesize($file));
+        header('Content-Type: application/octet-stream');
+        header('Pragma: public');
+        flush();
 
-		// print the downloaded file
-		readfile($file);
-		ignore_user_abort(true);
-		unlink($file);
-	}
+        // print the downloaded file
+        readfile($file);
+        ignore_user_abort(true);
+        unlink($file);
+    }
 }

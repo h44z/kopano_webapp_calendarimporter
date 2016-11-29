@@ -1,9 +1,9 @@
 <?php
 /**
- * plugin.calendarimporter.php, zarafa calender to ics im/exporter
+ * plugin.calendarimporter.php, Kopano calender to ics im/exporter
  *
  * Author: Christoph Haas <christoph.h@sprinternet.at>
- * Copyright (C) 2012-2014 Christoph Haas
+ * Copyright (C) 2012-2016 Christoph Haas
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -30,65 +30,65 @@ require_once __DIR__ . "/download.php";
  */
 class Plugincalendarimporter extends Plugin
 {
-	/**
-	 * Constructor
-	 */
-	function __construct() {}
+    /**
+     * Constructor
+     */
+    function __construct()
+    {
+    }
 
-	/**
-	 * Function initializes the Plugin and registers all hooks
-	 *
-	 * @return void
-	 */
-	function init()
-	{
-		$this->registerHook('server.core.settings.init.before');
-		$this->registerHook('server.index.load.custom');
-	}
+    /**
+     * Function initializes the Plugin and registers all hooks
+     *
+     * @return void
+     */
+    function init()
+    {
+        $this->registerHook('server.core.settings.init.before');
+        $this->registerHook('server.index.load.custom');
+    }
 
-	/**
-	 * Function is executed when a hook is triggered by the PluginManager
-	 *
-	 * @param string $eventID the id of the triggered hook
-	 * @param mixed $data object(s) related to the hook
-	 * @return void
-	 */
-	function execute($eventID, &$data)
-	{
-		switch ($eventID) {
-			case 'server.core.settings.init.before' :
-				$this->injectPluginSettings($data);
-				break;
-			case 'server.index.load.custom':
-				if ($data['name'] == 'download_ics') {
-					calendarimporter\DownloadHandler::doDownload();
-				}
-				break;
-		}
-	}
+    /**
+     * Function is executed when a hook is triggered by the PluginManager
+     *
+     * @param string $eventID the id of the triggered hook
+     * @param mixed $data object(s) related to the hook
+     * @return void
+     */
+    function execute($eventID, &$data)
+    {
+        switch ($eventID) {
+            case 'server.core.settings.init.before' :
+                $this->injectPluginSettings($data);
+                break;
+            case 'server.index.load.custom':
+                if ($data['name'] == 'download_ics') {
+                    calendarimporter\DownloadHandler::doDownload();
+                }
+                break;
+        }
+    }
 
-	/**
-	 * Called when the core Settings class is initialized and ready to accept sysadmin default
-	 * settings.
-	 * @param Array $data Reference to the data of the triggered hook
-	 */
-	function injectPluginSettings(&$data)
-	{
-		$data['settingsObj']->addSysAdminDefaults(Array(
-			'zarafa' => Array(
-				'v1' => Array(
-					'plugins' => Array(
-						'calendarimporter' => Array(
-							'enable' => PLUGIN_CALENDARIMPORTER_USER_DEFAULT_ENABLE,
-							'enable_sync' => PLUGIN_CALENDARIMPORTER_USER_DEFAULT_ENABLE_SYNC,
-							'default_calendar' => PLUGIN_CALENDARIMPORTER_DEFAULT,
-							'default_timezone' => PLUGIN_CALENDARIMPORTER_DEFAULT_TIMEZONE
-						)
-					)
-				)
-			)
-		));
-	}
+    /**
+     * Called when the core Settings class is initialized and ready to accept sysadmin default
+     * settings.
+     * @param Array $data Reference to the data of the triggered hook
+     */
+    function injectPluginSettings(&$data)
+    {
+        $data['settingsObj']->addSysAdminDefaults(Array(
+            'zarafa' => Array(
+                'v1' => Array(
+                    'plugins' => Array(
+                        'calendarimporter' => Array(
+                            'enable' => PLUGIN_CALENDARIMPORTER_USER_DEFAULT_ENABLE,
+                            'enable_sync' => PLUGIN_CALENDARIMPORTER_USER_DEFAULT_ENABLE_SYNC,
+                            'default_calendar' => PLUGIN_CALENDARIMPORTER_DEFAULT,
+                            'default_timezone' => PLUGIN_CALENDARIMPORTER_DEFAULT_TIMEZONE
+                        )
+                    )
+                )
+            )
+        ));
+    }
 }
-
-?>

@@ -1,5 +1,5 @@
 /**
- * ContectMenu.js zarafa calender to ics im/exporter
+ * ContectMenu.js, Kopano calender to ics im/exporter
  *
  * Author: Christoph Haas <christoph.h@sprinternet.at>
  * Copyright (C) 2012-2016 Christoph Haas
@@ -29,101 +29,105 @@ Ext.namespace('Zarafa.plugins.calendarimporter.ui');
  */
 Zarafa.plugins.calendarimporter.ui.ContextMenu = Ext.extend(Zarafa.hierarchy.ui.ContextMenu, {
 
-	/**
-	 * @constructor
-	 * @param {Object} config Configuration object
-	 */
-	constructor: function (config) {
-		config = config || {};
+    /**
+     * @constructor
+     * @param {Object} config Configuration object
+     */
+    constructor: function (config) {
+        config = config || {};
 
-		if (config.contextNode) {
-			config.contextTree = config.contextNode.getOwnerTree();
-		}
+        if (config.contextNode) {
+            config.contextTree = config.contextNode.getOwnerTree();
+        }
 
-		Zarafa.plugins.calendarimporter.ui.ContextMenu.superclass.constructor.call(this, config);
+        Zarafa.plugins.calendarimporter.ui.ContextMenu.superclass.constructor.call(this, config);
 
-		// add item to menu
-		var additionalItems = this.createAdditionalContextMenuItems(config);
-		for (var i = 0; i < additionalItems.length; i++) {
-			config.items[0].push(additionalItems[i]);
-		}
+        // add item to menu
+        var additionalItems = this.createAdditionalContextMenuItems(config);
+        for (var i = 0; i < additionalItems.length; i++) {
+            config.items[0].push(additionalItems[i]);
+        }
 
-		Zarafa.plugins.calendarimporter.ui.ContextMenu.superclass.constructor.call(this, config); // redo ... otherwise menu does not get published
-	},
+        Zarafa.plugins.calendarimporter.ui.ContextMenu.superclass.constructor.call(this, config); // redo ... otherwise menu does not get published
+    },
 
-	/**
-	 * Create the Action context menu items.
-	 * @param {Object} config Configuration object for the {@link Zarafa.plugins.calendarimporter.ui.ContextMenu ContextMenu}
-	 * @return {Zarafa.core.ui.menu.ConditionalItem[]} The list of Action context menu items
-	 * @private
-	 *
-	 * Note: All handlers are called within the scope of {@link Zarafa.plugins.calendarimporter.ui.ContextMenu HierarchyContextMenu}
-	 */
-	createAdditionalContextMenuItems: function (config) {
-		return [{
-			xtype: 'menuseparator'
-		}, {
-			text      : _('Import Calendar'),
-			iconCls   : 'icon_calendarimporter_import',
-			handler   : this.onContextItemImport,
-			beforeShow: function (item, record) {
-				var access = record.get('access') & Zarafa.core.mapi.Access.ACCESS_MODIFY;
-				if (!access || (record.isIPMSubTree() && !record.getMAPIStore().isDefaultStore())) {
-					item.setDisabled(true);
-				} else {
-					item.setDisabled(false);
-				}
-			}
-		}, {
-			text      : _('Export Calendar'),
-			iconCls   : 'icon_calendarimporter_export',
-			handler   : this.onContextItemExport,
-			beforeShow: function (item, record) {
-				var access = record.get('access') & Zarafa.core.mapi.Access.ACCESS_READ;
-				if (!access || (record.isIPMSubTree() && !record.getMAPIStore().isDefaultStore())) {
-					item.setDisabled(true);
-				} else {
-					item.setDisabled(false);
-				}
-			}
-		}];
-	},
+    /**
+     * Create the Action context menu items.
+     * @param {Object} config Configuration object for the {@link Zarafa.plugins.calendarimporter.ui.ContextMenu ContextMenu}
+     * @return {Zarafa.core.ui.menu.ConditionalItem[]} The list of Action context menu items
+     * @private
+     *
+     * Note: All handlers are called within the scope of {@link Zarafa.plugins.calendarimporter.ui.ContextMenu HierarchyContextMenu}
+     */
+    createAdditionalContextMenuItems: function (config) {
+        return [{
+            xtype: 'menuseparator'
+        }, {
+            text: dgettext('plugin_calendarimporter', 'Import Calendar'),
+            iconCls: 'icon_calendarimporter_import',
+            handler: this.onContextItemImport,
+            beforeShow: function (item, record) {
+                var access = record.get('access') & Zarafa.core.mapi.Access.ACCESS_MODIFY;
+                if (!access || (record.isIPMSubTree() && !record.getMAPIStore().isDefaultStore())) {
+                    item.setDisabled(true);
+                } else {
+                    item.setDisabled(false);
+                }
+            }
+        }, {
+            text: dgettext('plugin_calendarimporter', 'Export Calendar'),
+            iconCls: 'icon_calendarimporter_export',
+            handler: this.onContextItemExport,
+            beforeShow: function (item, record) {
+                var access = record.get('access') & Zarafa.core.mapi.Access.ACCESS_READ;
+                if (!access || (record.isIPMSubTree() && !record.getMAPIStore().isDefaultStore())) {
+                    item.setDisabled(true);
+                } else {
+                    item.setDisabled(false);
+                }
+            }
+        }];
+    },
 
-	/**
-	 * Fires on selecting 'Open' menu option from {@link Zarafa.plugins.calendarimporter.ui.ContextMenu ContextMenu}
-	 * @private
-	 */
-	onContextItemExport: function () {
-		var responseHandler = new Zarafa.plugins.calendarimporter.data.ResponseHandler({
-			successCallback: Zarafa.plugins.calendarimporter.data.Actions.downloadICS,
-			scope          : this
-		});
+    /**
+     * Fires on selecting 'Open' menu option from {@link Zarafa.plugins.calendarimporter.ui.ContextMenu ContextMenu}
+     * @private
+     */
+    onContextItemExport: function () {
+        var responseHandler = new Zarafa.plugins.calendarimporter.data.ResponseHandler({
+            successCallback: Zarafa.plugins.calendarimporter.data.Actions.downloadICS,
+            scope: this
+        });
 
-		// request attachment preperation
-		container.getRequest().singleRequest(
-			'calendarmodule',
-			'export',
-			{
-				storeid: this.records.get("store_entryid"),
-				folder : this.records.get("entryid")
-			},
-			responseHandler
-		);
-	},
+        // Notify user
+        // # TRANSLATORS: {0} will be replaced by the number of contacts that will be exported
+        container.getNotifier().notify('info', dgettext('plugin_contactimporter', 'Calendar Export'), String.format(dgettext('plugin_calendarimporter', 'Exporting {0} events. Please wait...'), this.records.get('content_count')));
 
-	/**
-	 * Fires on selecting 'Open' menu option from {@link Zarafa.plugins.calendarimporter.ui.ContextMenu ContextMenu}
-	 * @private
-	 */
-	onContextItemImport: function () {
-		var componentType = Zarafa.core.data.SharedComponentType['plugins.calendarimporter.dialogs.importevents'];
-		var config = {
-			modal : true,
-			folder: this.records.get("entryid")
-		};
+        // request attachment preperation
+        container.getRequest().singleRequest(
+            'calendarmodule',
+            'export',
+            {
+                storeid: this.records.get("store_entryid"),
+                folder: this.records.get("entryid")
+            },
+            responseHandler
+        );
+    },
 
-		Zarafa.core.data.UIFactory.openLayerComponent(componentType, undefined, config);
-	}
+    /**
+     * Fires on selecting 'Open' menu option from {@link Zarafa.plugins.calendarimporter.ui.ContextMenu ContextMenu}
+     * @private
+     */
+    onContextItemImport: function () {
+        var componentType = Zarafa.core.data.SharedComponentType['plugins.calendarimporter.dialogs.importevents'];
+        var config = {
+            modal: true,
+            folder: this.records.get("entryid")
+        };
+
+        Zarafa.core.data.UIFactory.openLayerComponent(componentType, undefined, config);
+    }
 });
 
 Ext.reg('calendarimporter.hierarchycontextmenu', Zarafa.plugins.calendarimporter.ui.ContextMenu);

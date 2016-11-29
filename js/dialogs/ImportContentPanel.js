@@ -1,5 +1,5 @@
 /**
- * ImportContentPanel.js zarafa calender to ics im/exporter
+ * ImportContentPanel.js, Kopano calender to ics im/exporter
  *
  * Author: Christoph Haas <christoph.h@sprinternet.at>
  * Copyright (C) 2012-2016 Christoph Haas
@@ -19,13 +19,13 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  *
  */
- 
+
 /**
  * ImportContentPanel
  *
  * Container for the importpanel.
  */
-Ext.namespace("Zarafa.plugins.calendarimporter.dialogs"); 
+Ext.namespace("Zarafa.plugins.calendarimporter.dialogs");
 
 /**
  * @class Zarafa.plugins.calendarimporter.dialogs.ImportContentPanel
@@ -36,31 +36,31 @@ Ext.namespace("Zarafa.plugins.calendarimporter.dialogs");
  */
 Zarafa.plugins.calendarimporter.dialogs.ImportContentPanel = Ext.extend(Zarafa.core.ui.ContentPanel, {
 
-	/**
-	 * @constructor
-	 * @param config Configuration structure
-	 */
-	constructor : function(config) {
-		config = config || {};
-		Ext.applyIf(config, {
-			layout		: 'fit',
-			title		: _('Import Calendar File'),
-			closeOnSave	: true,
-			width		: 800,
-			height		: 700,
-			//Add panel
-			items : [
-				{
-					xtype	 : 'calendarimporter.importpanel',
-					filename : config.filename,
-					folder  : config.folder
-				}
-			]
-		});
+    /**
+     * @constructor
+     * @param config Configuration structure
+     */
+    constructor: function (config) {
+        config = config || {};
+        Ext.applyIf(config, {
+            layout: 'fit',
+            title: dgettext('plugin_calendarimporter', 'Import Calendar File'),
+            closeOnSave: true,
+            width: 800,
+            height: 700,
+            //Add panel
+            items: [
+                {
+                    xtype: 'calendarimporter.importpanel',
+                    filename: config.filename,
+                    folder: config.folder
+                }
+            ]
+        });
 
-		Zarafa.plugins.calendarimporter.dialogs.ImportContentPanel.superclass.constructor.call(this, config);
-	}
+        Zarafa.plugins.calendarimporter.dialogs.ImportContentPanel.superclass.constructor.call(this, config);
+    }
 
 });
 
-Ext.reg('calendarimporter.contentpanel' ,Zarafa.plugins.calendarimporter.dialogs.ImportContentPanel);
+Ext.reg('calendarimporter.contentpanel', Zarafa.plugins.calendarimporter.dialogs.ImportContentPanel);

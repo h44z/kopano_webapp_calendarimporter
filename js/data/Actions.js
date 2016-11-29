@@ -34,96 +34,96 @@ Ext.namespace('Zarafa.plugins.calendarimporter.data');
  * @singleton
  */
 Zarafa.plugins.calendarimporter.data.Actions = {
-	/**
-	 * Callback for the export request.
-	 * @param {Object} response
-	 */
-	downloadICS: function (response) {
-		if (response.status == false) {
-			Zarafa.common.dialogs.MessageBox.show({
-				title  : dgettext('plugin_files', 'Warning'),
-				msg    : dgettext('plugin_files', response.message),
-				icon   : Zarafa.common.dialogs.MessageBox.WARNING,
-				buttons: Zarafa.common.dialogs.MessageBox.OK
-			});
-		} else {
-			var downloadFrame = Ext.getBody().createChild({
-				tag: 'iframe',
-				cls: 'x-hidden'
-			});
+    /**
+     * Callback for the export request.
+     * @param {Object} response
+     */
+    downloadICS: function (response) {
+        if (response.status == false) {
+            Zarafa.common.dialogs.MessageBox.show({
+                title: dgettext('plugin_calendarimporter', 'Warning'),
+                msg: response.message,
+                icon: Zarafa.common.dialogs.MessageBox.WARNING,
+                buttons: Zarafa.common.dialogs.MessageBox.OK
+            });
+        } else {
+            var downloadFrame = Ext.getBody().createChild({
+                tag: 'iframe',
+                cls: 'x-hidden'
+            });
 
-			var url = document.URL;
-			var link = url.substring(0, url.lastIndexOf('/') + 1);
+            var url = document.URL;
+            var link = url.substring(0, url.lastIndexOf('/') + 1);
 
-			link += "index.php?sessionid=" + container.getUser().getSessionId() + "&load=custom&name=download_ics";
-			link = Ext.urlAppend(link, "token=" + encodeURIComponent(response.download_token));
-			link = Ext.urlAppend(link, "filename=" + encodeURIComponent(response.filename));
+            link += "index.php?sessionid=" + container.getUser().getSessionId() + "&load=custom&name=download_ics";
+            link = Ext.urlAppend(link, "token=" + encodeURIComponent(response.download_token));
+            link = Ext.urlAppend(link, "filename=" + encodeURIComponent(response.filename));
 
-			downloadFrame.dom.contentWindow.location = link;
-		}
-	},
+            downloadFrame.dom.contentWindow.location = link;
+        }
+    },
 
-	/**
-	 * Get all calendar folders.
-	 * @param {boolean} asDropdownStore If true, a simple array store will be returned.
-	 * @returns {*}
-	 */
-	getAllCalendarFolders: function (asDropdownStore) {
-		asDropdownStore = Ext.isEmpty(asDropdownStore) ? false : asDropdownStore;
+    /**
+     * Get all calendar folders.
+     * @param {boolean} asDropdownStore If true, a simple array store will be returned.
+     * @returns {*}
+     */
+    getAllCalendarFolders: function (asDropdownStore) {
+        asDropdownStore = Ext.isEmpty(asDropdownStore) ? false : asDropdownStore;
 
-		var allFolders = [];
+        var allFolders = [];
 
-		var inbox = container.getHierarchyStore().getDefaultStore();
-		var pub = container.getHierarchyStore().getPublicStore();
+        var inbox = container.getHierarchyStore().getDefaultStore();
+        var pub = container.getHierarchyStore().getPublicStore();
 
-		if (!Ext.isEmpty(inbox.subStores) && inbox.subStores.folders.totalLength > 0) {
-			for (var i = 0; i < inbox.subStores.folders.totalLength; i++) {
-				var folder = inbox.subStores.folders.getAt(i);
-				if (!Ext.isEmpty(folder) && folder.get("container_class") == "IPF.Appointment") {
-					if (asDropdownStore) {
-						allFolders.push([
-							folder.get("entryid"),
-							folder.get("display_name")
-						]);
-					} else {
-						allFolders.push({
-							display_name : folder.get("display_name"),
-							entryid      : folder.get("entryid"),
-							store_entryid: folder.get("store_entryid"),
-							is_public    : false
-						});
-					}
-				}
-			}
-		}
+        if (!Ext.isEmpty(inbox.subStores) && inbox.subStores.folders.totalLength > 0) {
+            for (var i = 0; i < inbox.subStores.folders.totalLength; i++) {
+                var folder = inbox.subStores.folders.getAt(i);
+                if (!Ext.isEmpty(folder) && folder.get("container_class") == "IPF.Appointment") {
+                    if (asDropdownStore) {
+                        allFolders.push([
+                            folder.get("entryid"),
+                            folder.get("display_name")
+                        ]);
+                    } else {
+                        allFolders.push({
+                            display_name: folder.get("display_name"),
+                            entryid: folder.get("entryid"),
+                            store_entryid: folder.get("store_entryid"),
+                            is_public: false
+                        });
+                    }
+                }
+            }
+        }
 
-		if (!Ext.isEmpty(pub.subStores) && pub.subStores.folders.totalLength > 0) {
-			for (var j = 0; j < pub.subStores.folders.totalLength; j++) {
-				var folder = pub.subStores.folders.getAt(j);
-				if (!Ext.isEmpty(folder) && folder.get("container_class") == "IPF.Appointment") {
-					if (asDropdownStore) {
-						allFolders.push([
-							folder.get("entryid"),
-							folder.get("display_name") + " (Public)"
-						]);
-					} else {
-						allFolders.push({
-							display_name : folder.get("display_name"),
-							entryid      : folder.get("entryid"),
-							store_entryid: folder.get("store_entryid"),
-							is_public    : true
-						});
-					}
-				}
-			}
-		}
+        if (!Ext.isEmpty(pub.subStores) && pub.subStores.folders.totalLength > 0) {
+            for (var j = 0; j < pub.subStores.folders.totalLength; j++) {
+                var folder = pub.subStores.folders.getAt(j);
+                if (!Ext.isEmpty(folder) && folder.get("container_class") == "IPF.Appointment") {
+                    if (asDropdownStore) {
+                        allFolders.push([
+                            folder.get("entryid"),
+                            folder.get("display_name") + " (Public)"
+                        ]);
+                    } else {
+                        allFolders.push({
+                            display_name: folder.get("display_name"),
+                            entryid: folder.get("entryid"),
+                            store_entryid: folder.get("store_entryid"),
+                            is_public: true
+                        });
+                    }
+                }
+            }
+        }
 
-		if (asDropdownStore) {
-			return allFolders.sort(Zarafa.plugins.calendarimporter.data.Actions.dynamicSort(1));
-		} else {
-			return allFolders;
-		}
-	},
+        if (asDropdownStore) {
+            return allFolders.sort(Zarafa.plugins.calendarimporter.data.Actions.dynamicSort(1));
+        } else {
+            return allFolders;
+        }
+    },
 
     /**
      * Return a calendar folder element by name.
@@ -159,20 +159,20 @@ Zarafa.plugins.calendarimporter.data.Actions = {
         return container.getHierarchyStore().getDefaultFolder('calendar');
     },
 
-	/**
-	 * Dynamic sort function, sorts by property name.
-	 * @param {string|int} property
-	 * @returns {Function}
-	 */
-	dynamicSort: function (property) {
-		var sortOrder = 1;
-		if (property[0] === "-") {
-			sortOrder = -1;
-			property = property.substr(1);
-		}
-		return function (a, b) {
-			var result = (a[property].toLowerCase() < b[property].toLowerCase()) ? -1 : (a[property].toLowerCase() > b[property].toLowerCase()) ? 1 : 0;
-			return result * sortOrder;
-		}
-	}
+    /**
+     * Dynamic sort function, sorts by property name.
+     * @param {string|int} property
+     * @returns {Function}
+     */
+    dynamicSort: function (property) {
+        var sortOrder = 1;
+        if (property[0] === "-") {
+            sortOrder = -1;
+            property = property.substr(1);
+        }
+        return function (a, b) {
+            var result = (a[property].toLowerCase() < b[property].toLowerCase()) ? -1 : (a[property].toLowerCase() > b[property].toLowerCase()) ? 1 : 0;
+            return result * sortOrder;
+        }
+    }
 };

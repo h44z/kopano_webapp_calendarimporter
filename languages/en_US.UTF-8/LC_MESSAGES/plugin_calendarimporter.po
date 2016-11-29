@@ -1,0 +1,349 @@
+msgid ""
+msgstr ""
+"Project-Id-Version: Plugin Calendarimporter\n"
+"POT-Creation-Date: 2016-11-29 19:21+0100\n"
+"PO-Revision-Date: 2016-11-29 19:39+0100\n"
+"Last-Translator: \n"
+"Language-Team: Christoph Haas <christoph.h@sprinternet.at>\n"
+"Language: en_US\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"X-Generator: Poedit 1.8.7.1\n"
+"X-Poedit-Basepath: ../../..\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+"X-Poedit-SourceCharset: UTF-8\n"
+"X-Poedit-SearchPath-0: php\n"
+"X-Poedit-SearchPath-1: js\n"
+
+#: js/data/Actions.js:44
+msgid "Warning"
+msgstr "Warning"
+
+#: js/dialogs/ImportContentPanel.js:47
+msgid "Import Calendar File"
+msgstr "Import Calendar File"
+
+#: js/dialogs/ImportPanel.js:124
+msgid "Loading..."
+msgstr "Loading..."
+
+#: js/dialogs/ImportPanel.js:209
+msgid "Select events to import"
+msgstr "Select events to import"
+
+#: js/dialogs/ImportPanel.js:222
+msgid "Title"
+msgstr "Title"
+
+#: js/dialogs/ImportPanel.js:228
+msgid "Start"
+msgstr "Start"
+
+#: js/dialogs/ImportPanel.js:235
+msgid "End"
+msgstr "End"
+
+#: js/dialogs/ImportPanel.js:242
+msgid "Location"
+msgstr "Location"
+
+#: js/dialogs/ImportPanel.js:247
+msgid "Description"
+msgstr "Description"
+
+#: js/dialogs/ImportPanel.js:248
+msgid "Priority"
+msgstr "Priority"
+
+#: js/dialogs/ImportPanel.js:249
+msgid "Label"
+msgstr "Label"
+
+#: js/dialogs/ImportPanel.js:250
+msgid "Busystatus"
+msgstr "Busystatus"
+
+#: js/dialogs/ImportPanel.js:251
+msgid "Privacystatus"
+msgstr "Privacystatus"
+
+#: js/dialogs/ImportPanel.js:252
+msgid "Organizer"
+msgstr "Organizer"
+
+#: js/dialogs/ImportPanel.js:254
+msgid "Alarm"
+msgstr "Alarm"
+
+#: js/dialogs/ImportPanel.js:259 js/dialogs/ImportPanel.js:296
+msgid "Timezone"
+msgstr "Timezone"
+
+#: js/dialogs/ImportPanel.js:276
+msgid "Select folder"
+msgstr "Select folder"
+
+#: js/dialogs/ImportPanel.js:317
+msgid "Ignore DST"
+msgstr "Ignore DST"
+
+#: js/dialogs/ImportPanel.js:318
+msgid "This will ignore \"Daylight saving time\" offsets."
+msgstr "This will ignore \"Daylight saving time\" offsets."
+
+#: js/dialogs/ImportPanel.js:338
+msgid "Select an .ics calendar"
+msgstr "Select an .ics calendar"
+
+#: js/dialogs/ImportPanel.js:358
+msgid "Import"
+msgstr "Import"
+
+#: js/dialogs/ImportPanel.js:372
+msgid "Import All"
+msgstr "Import All"
+
+#: js/dialogs/ImportPanel.js:384 js/settings/SettingsWidget.js:165
+#: js/settings/dialogs/CalSyncEditPanel.js:61
+msgid "Cancel"
+msgstr "Cancel"
+
+#: js/dialogs/ImportPanel.js:428
+msgid "Uploading and parsing calendar..."
+msgstr "Uploading and parsing calendar..."
+
+#: js/dialogs/ImportPanel.js:434 js/dialogs/ImportPanel.js:524
+#: js/dialogs/ImportPanel.js:532 js/dialogs/ImportPanel.js:581
+#: js/plugin.calendarimporter.js:170
+msgid "Error"
+msgstr "Error"
+
+#: js/dialogs/ImportPanel.js:489
+msgid "Parser Error"
+msgstr "Parser Error"
+
+#: js/dialogs/ImportPanel.js:525
+msgid "You have to choose a calendar!"
+msgstr "You have to choose a calendar!"
+
+#: js/dialogs/ImportPanel.js:533
+msgid "You have to choose at least one event to import!"
+msgstr "You have to choose at least one event to import!"
+
+#: js/dialogs/ImportPanel.js:582
+msgid "Import failed: {0}"
+msgstr "Import failed: {0}"
+
+#: js/plugin.calendarimporter.js:76
+msgid "Export Event"
+msgstr "Export Event"
+
+#: js/plugin.calendarimporter.js:146
+msgid "Import to Calendar"
+msgstr "Import to Calendar"
+
+#: js/plugin.calendarimporter.js:183
+msgid "Please wait"
+msgstr "Please wait"
+
+#: js/plugin.calendarimporter.js:184
+msgid "Loading attachment..."
+msgstr "Loading attachment..."
+
+#: js/plugin.calendarimporter.js:185
+msgid "Initializing..."
+msgstr "Initializing..."
+
+#. TRANSLATORS: {0} will be replaced by the percentage value (0-100)
+#: js/plugin.calendarimporter.js:198
+msgid "{0}% loaded"
+msgstr "{0}% loaded"
+
+#: js/plugin.calendarimporter.js:316
+msgid "Calendarimporter Plugin"
+msgstr "Calendarimporter Plugin"
+
+#: js/settings/SettingsCalSyncWidget.js:64
+msgid "Calendar Sync settings"
+msgstr "Calendar Sync settings"
+
+#: js/settings/SettingsWidget.js:45
+msgid "Calendar Import/Export plugin settings"
+msgstr "Calendar Import/Export plugin settings"
+
+#: js/settings/SettingsWidget.js:52
+msgid "Enable ical sync"
+msgstr "Enable ical sync"
+
+#: js/settings/SettingsWidget.js:73
+msgid "Default calender"
+msgstr "Default calender"
+
+#: js/settings/SettingsWidget.js:92
+msgid "Default timezone"
+msgstr "Default timezone"
+
+#: js/settings/SettingsWidget.js:151
+msgid "Your WebApp needs to be reloaded to make the changes visible!"
+msgstr "Your WebApp needs to be reloaded to make the changes visible!"
+
+#: js/settings/SettingsWidget.js:153
+msgid ""
+"WebApp will automatically restart in order for these changes to take effect"
+msgstr ""
+"WebApp will automatically restart in order for these changes to take effect"
+
+#: js/settings/SettingsWidget.js:157
+msgid "Restart WebApp"
+msgstr "Restart WebApp"
+
+#: js/settings/SettingsWidget.js:162
+msgid "Restart"
+msgstr "Restart"
+
+#: js/settings/SettingsWidget.js:187
+msgid "Webapp is reloading, Please wait."
+msgstr "Webapp is reloading, Please wait."
+
+#: js/settings/dialogs/CalSyncEditContentPanel.js:49
+msgid "ICAL Sync"
+msgstr "ICAL Sync"
+
+#: js/settings/dialogs/CalSyncEditPanel.js:56
+msgid "Save"
+msgstr "Save"
+
+#: js/settings/dialogs/CalSyncEditPanel.js:139
+msgid "ICAL Information"
+msgstr "ICAL Information"
+
+#: js/settings/dialogs/CalSyncEditPanel.js:148
+msgid "ICS Url"
+msgstr "ICS Url"
+
+#: js/settings/dialogs/CalSyncEditPanel.js:156
+msgid "Destination Calendar"
+msgstr "Destination Calendar"
+
+#: js/settings/dialogs/CalSyncEditPanel.js:171
+msgid "Sync Intervall (minutes)"
+msgstr "Sync Intervall (minutes)"
+
+#: js/settings/dialogs/CalSyncEditPanel.js:180
+msgid "Authentication (optional)"
+msgstr "Authentication (optional)"
+
+#: js/settings/dialogs/CalSyncEditPanel.js:187
+msgid "Username"
+msgstr "Username"
+
+#: js/settings/dialogs/CalSyncEditPanel.js:194
+msgid "Password"
+msgstr "Password"
+
+#: js/settings/ui/CalSyncGrid.js:45
+msgid "No ICAL sync entry exists"
+msgstr "No ICAL sync entry exists"
+
+#: js/settings/ui/CalSyncGrid.js:97
+msgid "ICS File"
+msgstr "ICS File"
+
+#: js/settings/ui/CalSyncGrid.js:102
+msgid "Destination Calender"
+msgstr "Destination Calender"
+
+#: js/settings/ui/CalSyncGrid.js:107
+msgid "Authentication"
+msgstr "Authentication"
+
+#: js/settings/ui/CalSyncGrid.js:112
+msgid "Sync Intervall"
+msgstr "Sync Intervall"
+
+#: js/settings/ui/CalSyncGrid.js:116
+msgid "Last Synchronisation"
+msgstr "Last Synchronisation"
+
+#: js/settings/ui/CalSyncGrid.js:140
+msgid "Loading ics sync entries..."
+msgstr "Loading ics sync entries..."
+
+#: js/settings/ui/CalSyncGrid.js:159
+msgid "Alert"
+msgstr "Alert"
+
+#: js/settings/ui/CalSyncGrid.js:159
+msgid "Please select a ics sync entry."
+msgstr "Please select a ics sync entry."
+
+#: js/settings/ui/CalSyncPanel.js:68
+msgid "Setup calendars you want to subscribe to."
+msgstr "Setup calendars you want to subscribe to."
+
+#: js/settings/ui/CalSyncPanel.js:96
+msgid "Add"
+msgstr "Add"
+
+#: js/settings/ui/CalSyncPanel.js:105
+msgid "Remove"
+msgstr "Remove"
+
+#: js/ui/ContextMenu.js:66
+msgid "Import Calendar"
+msgstr "Import Calendar"
+
+#: js/ui/ContextMenu.js:78
+msgid "Export Calendar"
+msgstr "Export Calendar"
+
+#. TRANSLATORS: {0} will be replaced by the number of contacts that will be exported
+#: js/ui/ContextMenu.js:104
+msgid "Calendar Export"
+msgstr "Calendar Export"
+
+#: js/ui/ContextMenu.js:104
+msgid "Exporting {0} events. Please wait..."
+msgstr "Exporting {0} events. Please wait..."
+
+#. TRANSLATORS: Filename suffix for exported files
+#: php/module.calendar.php:341
+msgid "_events.ics"
+msgstr "_events.ics"
+
+#: php/module.calendar.php:344
+msgid "No events found. Export skipped!"
+msgstr "No events found. Export skipped!"
+
+#: php/module.calendar.php:456
+msgid "ICS file empty!"
+msgstr "ICS file empty!"
+
+#: php/module.calendar.php:594
+msgid "Store could not be opened!"
+msgstr "Store could not be opened!"
+
+#: php/module.calendar.php:600
+msgid "Wrong call, store and entryid have to be set!"
+msgstr "Wrong call, store and entryid have to be set!"
+
+#: php/module.calendar.php:634
+msgid "No event in ics file"
+msgstr "No event in ics file"
+
+#: php/module.calendar.php:647
+msgid "File could not be read by server"
+msgstr "File could not be read by server"
+
+#: php/upload.php:69
+msgid ""
+"File could not be moved to TMP path! Check plugin config and folder "
+"permissions!"
+msgstr ""
+"File could not be moved to TMP path! Check plugin config and folder "
+"permissions!"
+
+#: php/upload.php:72
+msgid "File could not be read by server, upload error!"
+msgstr "File could not be read by server, upload error!"
