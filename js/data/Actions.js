@@ -35,6 +35,59 @@ Ext.namespace('Zarafa.plugins.calendarimporter.data');
  */
 Zarafa.plugins.calendarimporter.data.Actions = {
     /**
+     * Generates a request to download the selected records as vCard.
+     *
+     * @param storeId
+     * @param recordIds
+     */
+    exportToICS: function (storeId, recordIds, recordFolder) {
+        if((typeof recordIds != "undefined" && recordIds.length < 1) || (typeof recordFolder != "undefined" && recordFolder.get('content_count') < 1)) {
+            Zarafa.common.dialogs.MessageBox.show({
+                title: dgettext('plugin_calendarimporter', 'Error'),
+                msg: dgettext('plugin_calendarimporter', 'No events found. Export skipped!'),
+                icon: Zarafa.common.dialogs.MessageBox.ERROR,
+                buttons: Zarafa.common.dialogs.MessageBox.OK
+            });
+        } else {
+
+            var responseHandler = new Zarafa.plugins.calendarimporter.data.ResponseHandler({
+                successCallback: Zarafa.plugins.calendarimporter.data.Actions.downloadICS
+            });
+
+            var recordcount = 0;
+            var exportPayload = {
+                storeid: storeId,
+                records: undefined,
+                folder: undefined
+            };
+
+            if(typeof recordIds != "undefined") {
+                exportPayload.records = recordIds;
+                recordcount = recordIds.length;
+            }
+
+            if(typeof recordFolder != "undefined") {
+                exportPayload.folder = recordFolder.get("entryid");
+                recordcount = recordFolder.get('content_count');
+            }
+
+            // Notify user
+            // # TRANSLATORS: {0} will be replaced by the number of contacts that will be exported
+            container.getNotifier().notify('info', dgettext('plugin_contactimporter', 'Calendar Export'), String.format(dgettext('plugin_calendarimporter', 'Exporting {0} events. Please wait...'), recordcount));
+
+
+
+            // request attachment preperation
+            container.getRequest().singleRequest(
+                'calendarmodule',
+                'export',
+                exportPayload,
+                responseHandler
+            );
+        }
+    },
+
+    /**
      * Callback for the export request.
      * @param {Object} response
      */

@@ -94,25 +94,7 @@ Zarafa.plugins.calendarimporter.ui.ContextMenu = Ext.extend(Zarafa.hierarchy.ui.
      * @private
      */
     onContextItemExport: function () {
-        var responseHandler = new Zarafa.plugins.calendarimporter.data.ResponseHandler({
-            successCallback: Zarafa.plugins.calendarimporter.data.Actions.downloadICS,
-            scope: this
-        });
-
-        // Notify user
-        // # TRANSLATORS: {0} will be replaced by the number of contacts that will be exported
-        container.getNotifier().notify('info', dgettext('plugin_contactimporter', 'Calendar Export'), String.format(dgettext('plugin_calendarimporter', 'Exporting {0} events. Please wait...'), this.records.get('content_count')));
-
-        // request attachment preperation
-        container.getRequest().singleRequest(
-            'calendarmodule',
-            'export',
-            {
-                storeid: this.records.get("store_entryid"),
-                folder: this.records.get("entryid")
-            },
-            responseHandler
-        );
+        Zarafa.plugins.calendarimporter.data.Actions.exportToICS(this.records.get("store_entryid"), undefined, this.records);
     },
 
     /**

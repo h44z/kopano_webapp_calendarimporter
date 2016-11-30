@@ -95,26 +95,7 @@ Zarafa.plugins.calendarimporter.ImportPlugin = Ext.extend(Zarafa.core.Plugin, {	
             recordIds.push(btn.records[i].get("entryid"));
         }
 
-        var responseHandler = new Zarafa.plugins.calendarimporter.data.ResponseHandler({
-            successCallback: Zarafa.plugins.calendarimporter.data.Actions.downloadICS,
-            scope: this
-        });
-
-        // Notify user
-        // # TRANSLATORS: {0} will be replaced by the number of contacts that will be exported
-        container.getNotifier().notify('info', dgettext('plugin_contactimporter', 'Calendar Export'), String.format(dgettext('plugin_calendarimporter', 'Exporting {0} events. Please wait...'), recordIds.length));
-
-
-        // request attachment preperation
-        container.getRequest().singleRequest(
-            'calendarmodule',
-            'export',
-            {
-                storeid: btn.records[0].get("store_entryid"),
-                records: recordIds
-            },
-            responseHandler
-        );
+        Zarafa.plugins.calendarimporter.data.Actions.exportToICS(btn.records[0].get("store_entryid"), recordIds, undefined);
     },
 
     /**
