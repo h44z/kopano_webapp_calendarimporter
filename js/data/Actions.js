@@ -41,7 +41,7 @@ Zarafa.plugins.calendarimporter.data.Actions = {
      * @param recordIds
      */
     exportToICS: function (storeId, recordIds, recordFolder) {
-        if((typeof recordIds != "undefined" && recordIds.length < 1) || (typeof recordFolder != "undefined" && recordFolder.get('content_count') < 1)) {
+        if ((typeof recordIds != "undefined" && recordIds.length < 1) || (typeof recordFolder != "undefined" && recordFolder.get('content_count') < 1)) {
             Zarafa.common.dialogs.MessageBox.show({
                 title: dgettext('plugin_calendarimporter', 'Error'),
                 msg: dgettext('plugin_calendarimporter', 'No events found. Export skipped!'),
@@ -61,12 +61,12 @@ Zarafa.plugins.calendarimporter.data.Actions = {
                 folder: undefined
             };
 
-            if(typeof recordIds != "undefined") {
+            if (typeof recordIds != "undefined") {
                 exportPayload.records = recordIds;
                 recordcount = recordIds.length;
             }
 
-            if(typeof recordFolder != "undefined") {
+            if (typeof recordFolder != "undefined") {
                 exportPayload.folder = recordFolder.get("entryid");
                 recordcount = recordFolder.get('content_count');
             }
@@ -74,7 +74,6 @@ Zarafa.plugins.calendarimporter.data.Actions = {
             // Notify user
             // # TRANSLATORS: {0} will be replaced by the number of contacts that will be exported
             container.getNotifier().notify('info', dgettext('plugin_contactimporter', 'Calendar Export'), String.format(dgettext('plugin_calendarimporter', 'Exporting {0} events. Please wait...'), recordcount));
-
 
 
             // request attachment preperation

@@ -3,8 +3,6 @@
   <component name="ChangeListManager">
     <list default="true" id="e7c9c2bb-66f1-4e37-904c-d33d8c113bde" name="Default" comment="">
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/js/data/Actions.js" afterPath="$PROJECT_DIR$/js/data/Actions.js" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/js/plugin.calendarimporter.js" afterPath="$PROJECT_DIR$/js/plugin.calendarimporter.js" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/js/ui/ContextMenu.js" afterPath="$PROJECT_DIR$/js/ui/ContextMenu.js" />
     </list>
     <ignored path="calendarimporter.iws" />
     <ignored path=".idea/workspace.xml" />
@@ -25,11 +23,11 @@
   </component>
   <component name="FileEditorManager">
     <leaf SIDE_TABS_SIZE_LIMIT_KEY="300">
-      <file leaf-file-name="plugin.calendarimporter.js" pinned="false" current-in-tab="false">
+      <file leaf-file-name="plugin.calendarimporter.js" pinned="false" current-in-tab="true">
         <entry file="file://$PROJECT_DIR$/js/plugin.calendarimporter.js">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="300">
-              <caret line="97" column="8" selection-start-line="97" selection-start-column="8" selection-end-line="97" selection-end-column="124" />
+            <state relative-caret-position="375">
+              <caret line="102" column="6" selection-start-line="102" selection-start-column="6" selection-end-line="102" selection-end-column="6" />
               <folding />
             </state>
           </provider>
@@ -45,24 +43,11 @@
           </provider>
         </entry>
       </file>
-      <file leaf-file-name="module.calendar.php" pinned="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/php/module.calendar.php">
-          <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="234">
-              <caret line="216" column="38" selection-start-line="216" selection-start-column="31" selection-end-line="216" selection-end-column="38" />
-              <folding>
-                <element signature="e#6#914#0#PHP" expanded="true" />
-                <element signature="e#1004#1022#0#PHP" expanded="true" />
-              </folding>
-            </state>
-          </provider>
-        </entry>
-      </file>
-      <file leaf-file-name="Actions.js" pinned="false" current-in-tab="true">
+      <file leaf-file-name="Actions.js" pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/js/data/Actions.js">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="369">
-              <caret line="52" column="92" selection-start-line="52" selection-start-column="92" selection-end-line="52" selection-end-column="92" />
+            <state relative-caret-position="675">
+              <caret line="65" column="47" selection-start-line="65" selection-start-column="47" selection-end-line="65" selection-end-column="47" />
               <folding />
             </state>
           </provider>
@@ -268,6 +253,24 @@
               <option name="myItemType" value="com.jetbrains.php.projectView.PhpTreeStructureProvider$1" />
             </PATH_ELEMENT>
             <PATH_ELEMENT>
+              <option name="myItemId" value="dialogs" />
+              <option name="myItemType" value="com.jetbrains.php.projectView.PhpTreeStructureProvider$1" />
+            </PATH_ELEMENT>
+          </PATH>
+          <PATH>
+            <PATH_ELEMENT>
+              <option name="myItemId" value="calendarimporter" />
+              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.ProjectViewProjectNode" />
+            </PATH_ELEMENT>
+            <PATH_ELEMENT>
+              <option name="myItemId" value="calendarimporter" />
+              <option name="myItemType" value="com.jetbrains.php.projectView.PhpTreeStructureProvider$1" />
+            </PATH_ELEMENT>
+            <PATH_ELEMENT>
+              <option name="myItemId" value="js" />
+              <option name="myItemType" value="com.jetbrains.php.projectView.PhpTreeStructureProvider$1" />
+            </PATH_ELEMENT>
+            <PATH_ELEMENT>
               <option name="myItemId" value="data" />
               <option name="myItemType" value="com.jetbrains.php.projectView.PhpTreeStructureProvider$1" />
             </PATH_ELEMENT>
@@ -344,12 +347,12 @@
       <option name="presentableId" value="Default" />
       <updated>1477949602474</updated>
       <workItem from="1477949603566" duration="9204000" />
-      <workItem from="1480441197414" duration="10980000" />
+      <workItem from="1480441197414" duration="11095000" />
     </task>
     <servers />
   </component>
   <component name="TimeTrackingManager">
-    <option name="totallyTimeSpent" value="20184000" />
+    <option name="totallyTimeSpent" value="20299000" />
   </component>
   <component name="ToolWindowManager">
     <frame x="65" y="24" width="1792" height="999" extended-state="6" />
@@ -726,14 +729,6 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/js/plugin.calendarimporter.js">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="300">
-          <caret line="97" column="8" selection-start-line="97" selection-start-column="8" selection-end-line="97" selection-end-column="124" />
-          <folding />
-        </state>
-      </provider>
-    </entry>
     <entry file="file://$PROJECT_DIR$/php/module.calendar.php">
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="234">
@@ -745,6 +740,14 @@
         </state>
       </provider>
     </entry>
+    <entry file="file://$PROJECT_DIR$/js/data/Actions.js">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="675">
+          <caret line="65" column="47" selection-start-line="65" selection-start-column="47" selection-end-line="65" selection-end-column="47" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
     <entry file="file://$PROJECT_DIR$/js/ui/ContextMenu.js">
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="534">
@@ -753,10 +756,10 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/js/data/Actions.js">
+    <entry file="file://$PROJECT_DIR$/js/plugin.calendarimporter.js">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="369">
-          <caret line="52" column="92" selection-start-line="52" selection-start-column="92" selection-end-line="52" selection-end-column="92" />
+        <state relative-caret-position="375">
+          <caret line="102" column="6" selection-start-line="102" selection-start-column="6" selection-end-line="102" selection-end-column="6" />
           <folding />
         </state>
       </provider>
