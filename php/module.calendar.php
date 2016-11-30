@@ -292,7 +292,8 @@ class CalendarModule extends Module
                 }
 
                 // Add alarms
-                if (!empty($this->getProp($messageProps, "reminder")) && $this->getProp($messageProps, "reminder") == 1) {
+                $reminder = $this->getProp($messageProps, "reminder");
+                if (!empty($reminder) && $this->getProp($messageProps, "reminder") == 1) {
                     $vAlarm = $vEvent->add('VALARM', [
                         'ACTION' => 'DISPLAY',
                         'DESCRIPTION' => $this->getProp($messageProps, "subject") // reuse the event summary
@@ -309,7 +310,8 @@ class CalendarModule extends Module
                 }
 
                 // Add location
-                if (!empty($this->getProp($messageProps, "location"))) {
+                $location = $this->getProp($messageProps, "location");
+                if (!empty($location)) {
                     $vEvent->add('LOCATION', $this->getProp($messageProps, "location"));
                 }
 
@@ -677,8 +679,9 @@ class CalendarModule extends Module
             //$properties["trigger"] = (string)$vEvent->COMMENT;
             $properties["priority"] = (string)$vEvent->PRIORITY;
             $properties["private"] = ((string)$vEvent->CLASS) == "PRIVATE" ? true : false;
-            if (!empty((string)$vEvent->{'X-ZARAFA-LABEL'})) {
-                $properties["label"] = array_search((string)$vEvent->{'X-ZARAFA-LABEL'}, $this->labels);
+            $zLabel = (string)$vEvent->{'X-ZARAFA-LABEL'};
+            if (!empty($zLabel)) {
+                $properties["label"] = array_search($zLabel, $this->labels);
             }
             $properties["last_modification_time"] = (string)$vEvent->{'LAST-MODIFIED'}->getDateTime()->getTimestamp();
             $properties["creation_time"] = (string)$vEvent->CREATED->getDateTime()->getTimestamp();
