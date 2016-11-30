@@ -2,30 +2,8 @@
 <project version="4">
   <component name="ChangeListManager">
     <list default="true" id="e7c9c2bb-66f1-4e37-904c-d33d8c113bde" name="Default" comment="">
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/backend/.htaccess" />
+      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/php/helper.php" />
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/.idea/workspace.xml" afterPath="$PROJECT_DIR$/.idea/workspace.xml" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/Makefile" afterPath="$PROJECT_DIR$/Makefile" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/build.xml" afterPath="$PROJECT_DIR$/build.xml" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/changelog.txt" afterPath="$PROJECT_DIR$/changelog.txt" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/config.php" afterPath="$PROJECT_DIR$/config.php" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/js/ABOUT.js" afterPath="$PROJECT_DIR$/js/ABOUT.js" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/js/data/Actions.js" afterPath="$PROJECT_DIR$/js/data/Actions.js" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/js/data/ResponseHandler.js" afterPath="$PROJECT_DIR$/js/data/ResponseHandler.js" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/js/data/timezones.js" afterPath="$PROJECT_DIR$/js/data/timezones.js" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/js/dialogs/ImportContentPanel.js" afterPath="$PROJECT_DIR$/js/dialogs/ImportContentPanel.js" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/js/dialogs/ImportPanel.js" afterPath="$PROJECT_DIR$/js/dialogs/ImportPanel.js" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/js/plugin.calendarimporter.js" afterPath="$PROJECT_DIR$/js/plugin.calendarimporter.js" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/js/settings/SettingsCalSyncWidget.js" afterPath="$PROJECT_DIR$/js/settings/SettingsCalSyncWidget.js" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/js/settings/SettingsWidget.js" afterPath="$PROJECT_DIR$/js/settings/SettingsWidget.js" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/js/settings/dialogs/CalSyncEditContentPanel.js" afterPath="$PROJECT_DIR$/js/settings/dialogs/CalSyncEditContentPanel.js" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/js/settings/dialogs/CalSyncEditPanel.js" afterPath="$PROJECT_DIR$/js/settings/dialogs/CalSyncEditPanel.js" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/js/settings/ui/CalSyncGrid.js" afterPath="$PROJECT_DIR$/js/settings/ui/CalSyncGrid.js" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/js/settings/ui/CalSyncPanel.js" afterPath="$PROJECT_DIR$/js/settings/ui/CalSyncPanel.js" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/js/ui/ContextMenu.js" afterPath="$PROJECT_DIR$/js/ui/ContextMenu.js" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/manifest.xml" afterPath="$PROJECT_DIR$/manifest.xml" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/php/download.php" afterPath="$PROJECT_DIR$/php/download.php" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/php/module.calendar.php" afterPath="$PROJECT_DIR$/php/module.calendar.php" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/php/plugin.calendarimporter.php" afterPath="$PROJECT_DIR$/php/plugin.calendarimporter.php" />
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/php/upload.php" afterPath="$PROJECT_DIR$/php/upload.php" />
     </list>
     <ignored path="calendarimporter.iws" />
@@ -47,22 +25,14 @@
   </component>
   <component name="FileEditorManager">
     <leaf SIDE_TABS_SIZE_LIMIT_KEY="300">
-      <file leaf-file-name="ContextMenu.js" pinned="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/js/ui/ContextMenu.js">
+      <file leaf-file-name="upload.php" pinned="false" current-in-tab="true">
+        <entry file="file://$PROJECT_DIR$/php/upload.php">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="504">
-              <caret line="101" column="8" selection-start-line="101" selection-start-column="8" selection-end-line="104" selection-end-column="0" />
-              <folding />
-            </state>
-          </provider>
-        </entry>
-      </file>
-      <file leaf-file-name="plugin.calendarimporter.js" pinned="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/js/plugin.calendarimporter.js">
-          <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="729">
-              <caret line="320" column="54" selection-start-line="320" selection-start-column="31" selection-end-line="320" selection-end-column="54" />
-              <folding />
+            <state relative-caret-position="360">
+              <caret line="24" column="38" selection-start-line="24" selection-start-column="38" selection-end-line="24" selection-end-column="38" />
+              <folding>
+                <element signature="e#6#905#0#PHP" expanded="true" />
+              </folding>
             </state>
           </provider>
         </entry>
@@ -70,47 +40,25 @@
       <file leaf-file-name="module.calendar.php" pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/php/module.calendar.php">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="301">
-              <caret line="329" column="17" selection-start-line="329" selection-start-column="17" selection-end-line="329" selection-end-column="17" />
+            <state relative-caret-position="300">
+              <caret line="20" column="2" selection-start-line="20" selection-start-column="2" selection-end-line="20" selection-end-column="2" />
               <folding>
-                <element signature="e#6#914#0#PHP" expanded="true" />
                 <element signature="n#__construct#0;n#CalendarModule#0;n#!!top" expanded="false" />
                 <element signature="n#execute#0;n#CalendarModule#0;n#!!top" expanded="false" />
-                <element signature="n#randomstring#0;n#CalendarModule#0;n#!!top" expanded="false" />
                 <element signature="n#getDurationStringFromMintues#0;n#CalendarModule#0;n#!!top" expanded="false" />
               </folding>
             </state>
           </provider>
         </entry>
       </file>
-      <file leaf-file-name="Makefile" pinned="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/Makefile">
+      <file leaf-file-name="helper.php" pinned="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/php/helper.php">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="15">
-              <caret line="1" column="92" selection-start-line="1" selection-start-column="92" selection-end-line="1" selection-end-column="92" />
-              <folding />
-            </state>
-          </provider>
-        </entry>
-      </file>
-      <file leaf-file-name="download.php" pinned="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/php/download.php">
-          <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="144">
-              <caret line="28" column="35" selection-start-line="28" selection-start-column="35" selection-end-line="28" selection-end-column="35" />
+            <state relative-caret-position="690">
+              <caret line="56" column="41" selection-start-line="56" selection-start-column="41" selection-end-line="56" selection-end-column="41" />
               <folding>
-                <element signature="e#7#908#0#PHP" expanded="true" />
+                <element signature="e#6#905#0#PHP" expanded="true" />
               </folding>
-            </state>
-          </provider>
-        </entry>
-      </file>
-      <file leaf-file-name="manifest.xml" pinned="false" current-in-tab="true">
-        <entry file="file://$PROJECT_DIR$/manifest.xml">
-          <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="135">
-              <caret line="9" column="62" selection-start-line="9" selection-start-column="62" selection-end-line="9" selection-end-column="62" />
-              <folding />
             </state>
           </provider>
         </entry>
@@ -136,7 +84,6 @@
         <option value="$PROJECT_DIR$/changelog.txt" />
         <option value="$PROJECT_DIR$/Makefile" />
         <option value="$PROJECT_DIR$/manifest.xml" />
-        <option value="$PROJECT_DIR$/php/upload.php" />
         <option value="$PROJECT_DIR$/php/download.php" />
         <option value="$PROJECT_DIR$/php/plugin.calendarimporter.php" />
         <option value="$PROJECT_DIR$/build.xml" />
@@ -157,6 +104,9 @@
         <option value="$PROJECT_DIR$/config.php" />
         <option value="$PROJECT_DIR$/js/plugin.calendarimporter.js" />
         <option value="$PROJECT_DIR$/php/module.calendar.php" />
+        <option value="$PROJECT_DIR$/php/Helper.php" />
+        <option value="$PROJECT_DIR$/php/helper.php" />
+        <option value="$PROJECT_DIR$/php/upload.php" />
       </list>
     </option>
   </component>
@@ -248,42 +198,6 @@
               <option name="myItemType" value="com.jetbrains.php.projectView.PhpTreeStructureProvider$1" />
             </PATH_ELEMENT>
           </PATH>
-          <PATH>
-            <PATH_ELEMENT>
-              <option name="myItemId" value="calendarimporter" />
-              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.ProjectViewProjectNode" />
-            </PATH_ELEMENT>
-            <PATH_ELEMENT>
-              <option name="myItemId" value="calendarimporter" />
-              <option name="myItemType" value="com.jetbrains.php.projectView.PhpTreeStructureProvider$1" />
-            </PATH_ELEMENT>
-            <PATH_ELEMENT>
-              <option name="myItemId" value="js" />
-              <option name="myItemType" value="com.jetbrains.php.projectView.PhpTreeStructureProvider$1" />
-            </PATH_ELEMENT>
-            <PATH_ELEMENT>
-              <option name="myItemId" value="ui" />
-              <option name="myItemType" value="com.jetbrains.php.projectView.PhpTreeStructureProvider$1" />
-            </PATH_ELEMENT>
-          </PATH>
-          <PATH>
-            <PATH_ELEMENT>
-              <option name="myItemId" value="calendarimporter" />
-              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.ProjectViewProjectNode" />
-            </PATH_ELEMENT>
-            <PATH_ELEMENT>
-              <option name="myItemId" value="calendarimporter" />
-              <option name="myItemType" value="com.jetbrains.php.projectView.PhpTreeStructureProvider$1" />
-            </PATH_ELEMENT>
-            <PATH_ELEMENT>
-              <option name="myItemId" value="js" />
-              <option name="myItemType" value="com.jetbrains.php.projectView.PhpTreeStructureProvider$1" />
-            </PATH_ELEMENT>
-            <PATH_ELEMENT>
-              <option name="myItemId" value="data" />
-              <option name="myItemType" value="com.jetbrains.php.projectView.PhpTreeStructureProvider$1" />
-            </PATH_ELEMENT>
-          </PATH>
         </subPane>
       </pane>
       <pane id="Scope" />
@@ -356,12 +270,12 @@
       <option name="presentableId" value="Default" />
       <updated>1477949602474</updated>
       <workItem from="1477949603566" duration="9204000" />
-      <workItem from="1480441197414" duration="4152000" />
+      <workItem from="1480441197414" duration="6911000" />
     </task>
     <servers />
   </component>
   <component name="TimeTrackingManager">
-    <option name="totallyTimeSpent" value="13356000" />
+    <option name="totallyTimeSpent" value="16115000" />
   </component>
   <component name="ToolWindowManager">
     <frame x="65" y="24" width="1792" height="999" extended-state="6" />
@@ -678,39 +592,11 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/php/plugin.calendarimporter.php">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="-90">
-          <caret line="36" column="5" selection-start-line="36" selection-start-column="5" selection-end-line="36" selection-end-column="5" />
-          <folding />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/php/upload.php">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="-314">
-          <caret line="0" column="0" selection-start-line="0" selection-start-column="0" selection-end-line="0" selection-end-column="0" />
-          <folding>
-            <element signature="e#6#905#0#PHP" expanded="true" />
-          </folding>
-        </state>
-      </provider>
-    </entry>
     <entry file="file://$PROJECT_DIR$/js/ui/ContextMenu.js">
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="504">
           <caret line="101" column="8" selection-start-line="101" selection-start-column="8" selection-end-line="104" selection-end-column="0" />
           <folding />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/php/download.php">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="144">
-          <caret line="28" column="35" selection-start-line="28" selection-start-column="35" selection-end-line="28" selection-end-column="35" />
-          <folding>
-            <element signature="e#7#908#0#PHP" expanded="true" />
-          </folding>
         </state>
       </provider>
     </entry>
@@ -730,20 +616,6 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/php/module.calendar.php">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="301">
-          <caret line="329" column="17" selection-start-line="329" selection-start-column="17" selection-end-line="329" selection-end-column="17" />
-          <folding>
-            <element signature="e#6#914#0#PHP" expanded="true" />
-            <element signature="n#__construct#0;n#CalendarModule#0;n#!!top" expanded="false" />
-            <element signature="n#execute#0;n#CalendarModule#0;n#!!top" expanded="false" />
-            <element signature="n#randomstring#0;n#CalendarModule#0;n#!!top" expanded="false" />
-            <element signature="n#getDurationStringFromMintues#0;n#CalendarModule#0;n#!!top" expanded="false" />
-          </folding>
-        </state>
-      </provider>
-    </entry>
     <entry file="file://$PROJECT_DIR$/Makefile">
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="15">
@@ -754,9 +626,59 @@
     </entry>
     <entry file="file://$PROJECT_DIR$/manifest.xml">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="135">
-          <caret line="9" column="62" selection-start-line="9" selection-start-column="62" selection-end-line="9" selection-end-column="62" />
+        <state relative-caret-position="75">
+          <caret line="5" column="30" selection-start-line="5" selection-start-column="14" selection-end-line="5" selection-end-column="30" />
           <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/php/plugin.calendarimporter.php">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="74">
+          <caret line="13" column="25" selection-start-line="13" selection-start-column="22" selection-end-line="13" selection-end-column="25" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/php/download.php">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="75">
+          <caret line="23" column="26" selection-start-line="23" selection-start-column="10" selection-end-line="23" selection-end-column="26" />
+          <folding>
+            <element signature="e#7#908#0#PHP" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/php/module.calendar.php">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="300">
+          <caret line="20" column="2" selection-start-line="20" selection-start-column="2" selection-end-line="20" selection-end-column="2" />
+          <folding>
+            <element signature="n#__construct#0;n#CalendarModule#0;n#!!top" expanded="false" />
+            <element signature="n#execute#0;n#CalendarModule#0;n#!!top" expanded="false" />
+            <element signature="n#getDurationStringFromMintues#0;n#CalendarModule#0;n#!!top" expanded="false" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/php/helper.php">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="690">
+          <caret line="56" column="41" selection-start-line="56" selection-start-column="41" selection-end-line="56" selection-end-column="41" />
+          <folding>
+            <element signature="e#6#905#0#PHP" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/php/upload.php">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="360">
+          <caret line="24" column="38" selection-start-line="24" selection-start-column="38" selection-end-line="24" selection-end-column="38" />
+          <folding>
+            <element signature="e#6#905#0#PHP" expanded="true" />
+          </folding>
         </state>
       </provider>
     </entry>
