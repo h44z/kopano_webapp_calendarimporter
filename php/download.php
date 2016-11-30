@@ -27,6 +27,7 @@ class DownloadHandler
 {
     /**
      * Download the given vcf file.
+     * @return boolean
      */
     public static function doDownload()
     {
@@ -43,7 +44,7 @@ class DownloadHandler
         }
 
         // validate token
-        if (!ctype_alnum($token)) { // token is a md5 hash
+        if (!preg_match('/^[a-zA-Z0-9]+$/', $token)) { // token is a md5 hash
             return false;
         }
 
@@ -69,5 +70,7 @@ class DownloadHandler
         readfile($file);
         ignore_user_abort(true);
         unlink($file);
+
+        return true;
     }
 }
