@@ -21,20 +21,22 @@
  *
  */
 
-include_once('vendor/autoload.php');
+include_once(__DIR__ . "/vendor/autoload.php");
+include_once(__DIR__ . "/helper.php");
 
 use Sabre\VObject;
+use calendarimporter\Helper;
 
 class CalendarModule extends Module
 {
 
     private $DEBUG = false;    // enable error_log debugging
 
-    private $busystates = null;
+    private $busyStates = null;
 
     private $labels = null;
 
-    private $attendeetype = null;
+    private $attendeeType = null;
 
     /**
      * @constructor
@@ -49,7 +51,7 @@ class CalendarModule extends Module
         date_default_timezone_set(PLUGIN_CALENDARIMPORTER_DEFAULT_TIMEZONE);
 
         // init mappings
-        $this->busystates = array(
+        $this->busyStates = array(
             "FREE",
             "TENTATIVE",
             "BUSY",
@@ -70,7 +72,7 @@ class CalendarModule extends Module
             "PHONE INTERVIEW"
         );
 
-        $this->attendeetype = array(
+        $this->attendeeType = array(
             "NON-PARTICIPANT", // needed as zarafa starts counting at 1
             "REQ-PARTICIPANT",
             "OPT-PARTICIPANT",
@@ -81,6 +83,7 @@ class CalendarModule extends Module
     /**
      * Executes all the actions in the $data variable.
      * Exception part is used for authentication errors also
+     *
      * @return boolean true on success or false on failure.
      */
     public function execute()
@@ -131,57 +134,43 @@ class CalendarModule extends Module
     }
 
     /**
-     * Generates a random string with variable length.
-     * @param $length the lenght of the generated string
-     * @return string a random string
-     */
-    private function randomstring($length = 6)
-    {
-        // $chars - all allowed charakters
-        $chars = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890";
-
-        srand((double)microtime() * 1000000);
-        $i = 0;
-        $pass = "";
-        while ($i < $length) {
-            $num = rand() % strlen($chars);
-            $tmp = substr($chars, $num, 1);
-            $pass = $pass . $tmp;
-            $i++;
-        }
-        return $pass;
-    }
-
-    /**
      * Get a property from the array.
+     *
      * @param $props
-     * @param $propname
+     * @param $propName
      * @return string
      */
-    private function getProp($props, $propname)
+    private function getProp($props, $propName)
     {
-        if (isset($props["props"][$propname])) {
-            return $props["props"][$propname];
+        if (isset($props["props"][$propName])) {
+            return $props["props"][$propName];
         }
         return "";
     }
 
-    private function getDurationStringFromMintues($minutes, $pos = false)
+    /**
+     * Get a duration string form given minutes
+     *
+     * @param $minutes
+     * @param bool $pos
+     * @return string
+     */
+    private function getDurationStringFromMinutes($minutes, $pos = false)
     {
         $pos = $pos === true ? "+" : "-";
         $str = $pos . "P";
 
 
         // variables for holding values
-        $mins = intval($minutes);
+        $min = intval($minutes);
         $hours = 0;
         $days = 0;
         $weeks = 0;
 
         // calculations
-        if ($mins >= 60) {
-            $hours = (int)($mins / 60);
-            $mins = $mins % 60;
+        if ($min >= 60) {
+            $hours = (int)($min / 60);
+            $min = $min % 60;
         }
         if ($hours >= 24) {
             $days = (int)($hours / 24);
@@ -202,8 +191,8 @@ class CalendarModule extends Module
         if ($hours) {
             $str .= "{$hours}H";
         }
-        if ($mins) {
-            $str .= "{$mins}M";
+        if ($min) {
+            $str .= "{$min}M";
         }
 
         return $str;
@@ -211,15 +200,16 @@ class CalendarModule extends Module
 
     /**
      * The main export function, creates the ics file for download
+     *
      * @param $actionType
      * @param $actionData
      */
     private function exportCalendar($actionType, $actionData)
     {
         // Get store id
-        $storeid = false;
+        $storeId = false;
         if (isset($actionData["storeid"])) {
-            $storeid = $actionData["storeid"];
+            $storeId = $actionData["storeid"];
         }
 
         // Get records
@@ -239,17 +229,17 @@ class CalendarModule extends Module
         $error_msg = "";
 
         // write csv
-        $token = $this->randomstring(16);
+        $token = Helper::randomstring(16);
         $file = PLUGIN_CALENDARIMPORTER_TMP_UPLOAD . "ics_" . $token . ".ics";
         file_put_contents($file, "");
 
-        $store = $GLOBALS["mapisession"]->openMessageStore(hex2bin($storeid));
+        $store = $GLOBALS["mapisession"]->openMessageStore(hex2bin($storeId));
         if ($store) {
             // load folder first
             if ($folder !== false) {
-                $mapifolder = mapi_msgstore_openentry($store, hex2bin($folder));
+                $mapiFolder = mapi_msgstore_openentry($store, hex2bin($folder));
 
-                $table = mapi_folder_getcontentstable($mapifolder);
+                $table = mapi_folder_getcontentstable($mapiFolder);
                 $list = mapi_table_queryallrows($table, array(PR_ENTRYID));
 
                 foreach ($list as $item) {
@@ -257,12 +247,12 @@ class CalendarModule extends Module
                 }
             }
 
-            $vcalendar = new VObject\Component\VCalendar();
+            $vCalendar = new VObject\Component\VCalendar();
 
-            // Add static stuff to vcalendar
-            $vcalendar->add('METHOD', 'PUBLISH');
-            $vcalendar->add('X-WR-CALDESC', 'Exported Zarafa Calendar');
-            $vcalendar->add('X-WR-TIMEZONE', date_default_timezone_get());
+            // Add static stuff to vCalendar
+            $vCalendar->add('METHOD', 'PUBLISH');
+            $vCalendar->add('X-WR-CALDESC', 'Exported Kopano Calendar');
+            $vCalendar->add('X-WR-TIMEZONE', date_default_timezone_get());
 
             // TODO: add VTIMEZONE object to ical.
 
@@ -274,43 +264,43 @@ class CalendarModule extends Module
                 $plaintext = true;
                 $messageProps = $GLOBALS['operations']->getMessageProps($store, $message, $properties, $plaintext);
 
-                $vevent = $vcalendar->add('VEVENT', [
+                $vEvent = $vCalendar->add('VEVENT', [
                     'SUMMARY' => $this->getProp($messageProps, "subject"),
                     'DTSTART' => date_timestamp_set(new DateTime(), $this->getProp($messageProps, "startdate")),
                     'DTEND' => date_timestamp_set(new DateTime(), $this->getProp($messageProps, "duedate")),
                     'CREATED' => date_timestamp_set(new DateTime(), $this->getProp($messageProps, "creation_time")),
                     'LAST-MODIFIED' => date_timestamp_set(new DateTime(), $this->getProp($messageProps, "last_modification_time")),
                     'PRIORITY' => $this->getProp($messageProps, "importance"),
-                    'X-MICROSOFT-CDO-INTENDEDSTATUS' => $this->busystates[intval($this->getProp($messageProps, "busystatus"))], // both seem to be valid...
-                    'X-MICROSOFT-CDO-BUSYSTATUS' => $this->busystates[intval($this->getProp($messageProps, "busystatus"))], // both seem to be valid...
+                    'X-MICROSOFT-CDO-INTENDEDSTATUS' => $this->busyStates[intval($this->getProp($messageProps, "busystatus"))], // both seem to be valid...
+                    'X-MICROSOFT-CDO-BUSYSTATUS' => $this->busyStates[intval($this->getProp($messageProps, "busystatus"))], // both seem to be valid...
                     'X-ZARAFA-LABEL' => $this->labels[intval($this->getProp($messageProps, "label"))],
                     'CLASS' => $this->getProp($messageProps, "private") ? "PRIVATE" : "PUBLIC",
                     'COMMENT' => "eid:" . $records[$index]
                 ]);
 
                 // Add organizer
-                $vevent->add('ORGANIZER', 'mailto:' . $this->getProp($messageProps, "sender_email_address"));
-                $vevent->ORGANIZER['CN'] = $this->getProp($messageProps, "sender_name");
+                $vEvent->add('ORGANIZER', 'mailto:' . $this->getProp($messageProps, "sender_email_address"));
+                $vEvent->ORGANIZER['CN'] = $this->getProp($messageProps, "sender_name");
 
                 // Add Attendees
                 if (isset($messageProps["recipients"]) && count($messageProps["recipients"]["item"]) > 0) {
                     foreach ($messageProps["recipients"]["item"] as $attendee) {
-                        $att = $vevent->add('ATTENDEE', "mailto:" . $this->getProp($attendee, "email_address"));
+                        $att = $vEvent->add('ATTENDEE', "mailto:" . $this->getProp($attendee, "email_address"));
                         $att["CN"] = $this->getProp($attendee, "display_name");
-                        $att["ROLE"] = $this->attendeetype[intval($this->getProp($attendee, "recipient_type"))];
+                        $att["ROLE"] = $this->attendeeType[intval($this->getProp($attendee, "recipient_type"))];
                     }
                 }
 
                 // Add alarms
                 if (!empty($this->getProp($messageProps, "reminder")) && $this->getProp($messageProps, "reminder") == 1) {
-                    $valarm = $vevent->add('VALARM', [
+                    $vAlarm = $vEvent->add('VALARM', [
                         'ACTION' => 'DISPLAY',
                         'DESCRIPTION' => $this->getProp($messageProps, "subject") // reuse the event summary
                     ]);
 
                     // Add trigger
-                    $durationValue = $this->getDurationStringFromMintues($this->getProp($messageProps, "reminder_minutes"), false);
-                    $valarm->add('TRIGGER', $durationValue); // default trigger type is duration (see 4.8.6.3)
+                    $durationValue = $this->getDurationStringFromMinutes($this->getProp($messageProps, "reminder_minutes"), false);
+                    $vAlarm->add('TRIGGER', $durationValue); // default trigger type is duration (see 4.8.6.3)
 
                     /*
                     $valarm->add('TRIGGER', date_timestamp_set(new DateTime(), $this->getProp($messageProps, "reminder_time"))); // trigger type "DATE-TIME"
@@ -320,18 +310,18 @@ class CalendarModule extends Module
 
                 // Add location
                 if (!empty($this->getProp($messageProps, "location"))) {
-                    $vevent->add('LOCATION', $this->getProp($messageProps, "location"));
+                    $vEvent->add('LOCATION', $this->getProp($messageProps, "location"));
                 }
 
                 // Add description
                 $body = $this->getProp($messageProps, "isHTML") ? $this->getProp($messageProps, "html_body") : $this->getProp($messageProps, "body");
                 if (!empty($body)) {
-                    $vevent->add('DESCRIPTION', $body);
+                    $vEvent->add('DESCRIPTION', $body);
                 }
             }
 
             // write combined ics file
-            file_put_contents($file, file_get_contents($file) . $vcalendar->serialize());
+            file_put_contents($file, file_get_contents($file) . $vCalendar->serialize());
         }
 
         if (count($records) > 0) {
@@ -356,9 +346,9 @@ class CalendarModule extends Module
     private function importCalendar($actionType, $actionData)
     {
         // Get uploaded vcf path
-        $icsfile = false;
+        $icsFile = false;
         if (isset($actionData["ics_filepath"])) {
-            $icsfile = $actionData["ics_filepath"];
+            $icsFile = $actionData["ics_filepath"];
         }
 
         // Get store id
@@ -368,9 +358,9 @@ class CalendarModule extends Module
         }
 
         // Get folder entryid
-        $folderid = false;
+        $folderId = false;
         if (isset($actionData["folderid"])) {
-            $folderid = $actionData["folderid"];
+            $folderId = $actionData["folderid"];
         }
 
         // Get uids
@@ -387,7 +377,7 @@ class CalendarModule extends Module
         $parser = null;
         try {
             $parser = VObject\Reader::read(
-                fopen($icsfile, 'r')
+                fopen($icsFile, 'r')
             );
         } catch (Exception $e) {
             $error = true;
@@ -398,11 +388,11 @@ class CalendarModule extends Module
         if (count($parser->VEVENT) > 0) {
             $events = $this->parseCalendarToArray($parser);
             $store = $GLOBALS["mapisession"]->openMessageStore(hex2bin($storeid));
-            $folder = mapi_msgstore_openentry($store, hex2bin($folderid));
+            $folder = mapi_msgstore_openentry($store, hex2bin($folderId));
 
-            $importall = false;
+            $importAll = false;
             if (count($uids) == count($events)) {
-                $importall = true;
+                $importAll = true;
             }
 
             $propValuesMAPI = array();
@@ -414,7 +404,7 @@ class CalendarModule extends Module
 
             // iterate through all events and import them :)
             foreach ($events as $event) {
-                if (isset($event["startdate"]) && ($importall || in_array($event["internal_fields"]["event_uid"], $uids))) {
+                if (isset($event["startdate"]) && ($importAll || in_array($event["internal_fields"]["event_uid"], $uids))) {
 
                     $message = mapi_folder_createmessage($folder);
 
@@ -469,15 +459,15 @@ class CalendarModule extends Module
     private function getAttachmentPath($actionType, $actionData)
     {
         // Get store id
-        $storeid = false;
+        $storeId = false;
         if (isset($actionData["store"])) {
-            $storeid = $actionData["store"];
+            $storeId = $actionData["store"];
         }
 
         // Get message entryid
-        $entryid = false;
+        $entryId = false;
         if (isset($actionData["entryid"])) {
-            $entryid = $actionData["entryid"];
+            $entryId = $actionData["entryid"];
         }
 
         // Check which type isset
@@ -490,13 +480,13 @@ class CalendarModule extends Module
         }
 
         // Check if storeid and entryid isset
-        if ($storeid && $entryid) {
+        if ($storeId && $entryId) {
             // Open the store
-            $store = $GLOBALS["mapisession"]->openMessageStore(hex2bin($storeid));
+            $store = $GLOBALS["mapisession"]->openMessageStore(hex2bin($storeId));
 
             if ($store) {
                 // Open the message
-                $message = mapi_msgstore_openentry($store, hex2bin($entryid));
+                $message = mapi_msgstore_openentry($store, hex2bin($entryId));
 
                 if ($message) {
                     $attachment = false;
@@ -506,10 +496,10 @@ class CalendarModule extends Module
                         // Loop through the attachNums, message in message in message ...
                         for ($i = 0; $i < (count($attachNum) - 1); $i++) {
                             // Open the attachment
-                            $tempattach = mapi_message_openattach($message, (int)$attachNum[$i]);
-                            if ($tempattach) {
+                            $tempAttach = mapi_message_openattach($message, (int)$attachNum[$i]);
+                            if ($tempAttach) {
                                 // Open the object in the attachment
-                                $message = mapi_attach_openobj($tempattach);
+                                $message = mapi_attach_openobj($tempAttach);
                             }
                         }
 
@@ -553,7 +543,7 @@ class CalendarModule extends Module
                                     $ext_found = false;
                                     while (!feof($fh) && !$ext_found) {
                                         $line = fgets($fh);
-                                        preg_match("/(\.[a-z0-9]+)[ \t]+([^ \t\n\r]*)/i", $line, $result);
+                                        preg_match('/(\.[a-z0-9]+)[ \t]+([^ \t\n\r]*)/i', $line, $result);
                                         if ($extension == $result[1]) {
                                             $ext_found = true;
                                             $contentType = $result[2];
@@ -565,25 +555,26 @@ class CalendarModule extends Module
                         }
 
 
-                        $tmpname = tempnam(TMP_PATH, stripslashes($filename));
+                        $tmpName = tempnam(TMP_PATH, stripslashes($filename));
 
                         // Open a stream to get the attachment data
                         $stream = mapi_openpropertytostream($attachment, PR_ATTACH_DATA_BIN);
                         $stat = mapi_stream_stat($stream);
                         // File length =  $stat["cb"]
 
-                        $fhandle = fopen($tmpname, 'w');
+                        $fHandle = fopen($tmpName, 'w');
                         $buffer = null;
                         for ($i = 0; $i < $stat["cb"]; $i += BLOCK_SIZE) {
                             // Write stream
                             $buffer = mapi_stream_read($stream, BLOCK_SIZE);
-                            fwrite($fhandle, $buffer, strlen($buffer));
+                            fwrite($fHandle, $buffer, strlen($buffer));
                         }
-                        fclose($fhandle);
+                        fclose($fHandle);
 
                         $response = array();
-                        $response['tmpname'] = $tmpname;
+                        $response['tmpname'] = $tmpName;
                         $response['filename'] = $filename;
+                        $response['contenttype'] = $contentType;
                         $response['status'] = true;
                         $this->addActionData($actionType, $response);
                         $GLOBALS["bus"]->addData($this->getResponseData());
@@ -611,7 +602,7 @@ class CalendarModule extends Module
     private function loadCalendar($actionType, $actionData)
     {
         $error = false;
-        $error_msg = "";
+        $errorMsg = "";
 
         if (is_readable($actionData["ics_filepath"])) {
             $parser = null;
@@ -623,11 +614,11 @@ class CalendarModule extends Module
                 //error_log(print_r($parser->VTIMEZONE, true));
             } catch (Exception $e) {
                 $error = true;
-                $error_msg = $e->getMessage();
+                $errorMsg = $e->getMessage();
             }
             if ($error) {
                 $response['status'] = false;
-                $response['message'] = $error_msg;
+                $response['message'] = $errorMsg;
             } else {
                 if (count($parser->VEVENT) == 0) {
                     $response['status'] = false;
@@ -681,7 +672,7 @@ class CalendarModule extends Module
             $properties["comment"] = (string)$vEvent->COMMENT;
             $properties["timezone"] = (string)$vEvent->DTSTART["TZID"];
             $properties["organizer"] = (string)$vEvent->ORGANIZER;
-            $properties["busystatus"] = array_search((string)$vEvent->{'X-MICROSOFT-CDO-INTENDEDSTATUS'}, $this->busystates); // X-MICROSOFT-CDO-BUSYSTATUS
+            $properties["busystatus"] = array_search((string)$vEvent->{'X-MICROSOFT-CDO-INTENDEDSTATUS'}, $this->busyStates); // X-MICROSOFT-CDO-BUSYSTATUS
             $properties["transp"] = (string)$vEvent->TRANSP;
             //$properties["trigger"] = (string)$vEvent->COMMENT;
             $properties["priority"] = (string)$vEvent->PRIORITY;

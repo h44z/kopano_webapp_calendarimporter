@@ -432,7 +432,7 @@ Zarafa.plugins.calendarimporter.dialogs.ImportPanel = Ext.extend(Ext.Panel, {
                     this.submitAllButton.disable();
                     Zarafa.common.dialogs.MessageBox.show({
                         title: _('Error'),
-                        msg: _(action.result.error),
+                        msg: action.result.error,
                         icon: Zarafa.common.dialogs.MessageBox.ERROR,
                         buttons: Zarafa.common.dialogs.MessageBox.OK
                     });
