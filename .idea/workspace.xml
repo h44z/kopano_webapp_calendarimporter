@@ -2,9 +2,7 @@
 <project version="4">
   <component name="ChangeListManager">
     <list default="true" id="e7c9c2bb-66f1-4e37-904c-d33d8c113bde" name="Default" comment="">
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/.idea/dictionaries/osboxes.xml" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/.idea/workspace.xml" afterPath="$PROJECT_DIR$/.idea/workspace.xml" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/php/module.calendar.php" afterPath="$PROJECT_DIR$/php/module.calendar.php" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/resources/css/calendarimporter-main.css" afterPath="$PROJECT_DIR$/resources/css/calendarimporter-main.css" />
     </list>
     <ignored path="calendarimporter.iws" />
     <ignored path=".idea/workspace.xml" />
@@ -37,15 +35,12 @@
           </provider>
         </entry>
       </file>
-      <file leaf-file-name="module.calendar.php" pinned="false" current-in-tab="true">
-        <entry file="file://$PROJECT_DIR$/php/module.calendar.php">
+      <file leaf-file-name="calendarimporter-main.css" pinned="false" current-in-tab="true">
+        <entry file="file://$PROJECT_DIR$/resources/css/calendarimporter-main.css">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="0">
-              <caret line="0" column="0" selection-start-line="0" selection-start-column="0" selection-end-line="0" selection-end-column="0" />
-              <folding>
-                <element signature="e#6#914#0#PHP" expanded="true" />
-                <element signature="e#1004#1022#0#PHP" expanded="true" />
-              </folding>
+            <state relative-caret-position="15">
+              <caret line="1" column="56" selection-start-line="1" selection-start-column="56" selection-end-line="1" selection-end-column="56" />
+              <folding />
             </state>
           </provider>
         </entry>
@@ -94,6 +89,7 @@
         <option value="$PROJECT_DIR$/php/download.php" />
         <option value="$PROJECT_DIR$/php/upload.php" />
         <option value="$PROJECT_DIR$/php/module.calendar.php" />
+        <option value="$PROJECT_DIR$/resources/css/calendarimporter-main.css" />
       </list>
     </option>
   </component>
@@ -154,6 +150,38 @@
             </PATH_ELEMENT>
             <PATH_ELEMENT>
               <option name="myItemId" value="calendarimporter" />
+              <option name="myItemType" value="com.jetbrains.php.projectView.PhpTreeStructureProvider$1" />
+            </PATH_ELEMENT>
+          </PATH>
+          <PATH>
+            <PATH_ELEMENT>
+              <option name="myItemId" value="calendarimporter" />
+              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.ProjectViewProjectNode" />
+            </PATH_ELEMENT>
+            <PATH_ELEMENT>
+              <option name="myItemId" value="calendarimporter" />
+              <option name="myItemType" value="com.jetbrains.php.projectView.PhpTreeStructureProvider$1" />
+            </PATH_ELEMENT>
+            <PATH_ELEMENT>
+              <option name="myItemId" value="resources" />
+              <option name="myItemType" value="com.jetbrains.php.projectView.PhpTreeStructureProvider$1" />
+            </PATH_ELEMENT>
+          </PATH>
+          <PATH>
+            <PATH_ELEMENT>
+              <option name="myItemId" value="calendarimporter" />
+              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.ProjectViewProjectNode" />
+            </PATH_ELEMENT>
+            <PATH_ELEMENT>
+              <option name="myItemId" value="calendarimporter" />
+              <option name="myItemType" value="com.jetbrains.php.projectView.PhpTreeStructureProvider$1" />
+            </PATH_ELEMENT>
+            <PATH_ELEMENT>
+              <option name="myItemId" value="resources" />
+              <option name="myItemType" value="com.jetbrains.php.projectView.PhpTreeStructureProvider$1" />
+            </PATH_ELEMENT>
+            <PATH_ELEMENT>
+              <option name="myItemId" value="css" />
               <option name="myItemType" value="com.jetbrains.php.projectView.PhpTreeStructureProvider$1" />
             </PATH_ELEMENT>
           </PATH>
@@ -257,12 +285,12 @@
       <option name="presentableId" value="Default" />
       <updated>1477949602474</updated>
       <workItem from="1477949603566" duration="9204000" />
-      <workItem from="1480441197414" duration="8737000" />
+      <workItem from="1480441197414" duration="9140000" />
     </task>
     <servers />
   </component>
   <component name="TimeTrackingManager">
-    <option name="totallyTimeSpent" value="17941000" />
+    <option name="totallyTimeSpent" value="18344000" />
   </component>
   <component name="ToolWindowManager">
     <frame x="65" y="24" width="1792" height="999" extended-state="6" />
@@ -645,6 +673,17 @@
         </state>
       </provider>
     </entry>
+    <entry file="file://$PROJECT_DIR$/php/module.calendar.php">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="0">
+          <caret line="0" column="0" selection-start-line="0" selection-start-column="0" selection-end-line="0" selection-end-column="0" />
+          <folding>
+            <element signature="e#6#914#0#PHP" expanded="true" />
+            <element signature="e#1004#1022#0#PHP" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
     <entry file="file://$PROJECT_DIR$/php/helper.php">
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="690">
@@ -655,14 +694,11 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/php/module.calendar.php">
+    <entry file="file://$PROJECT_DIR$/resources/css/calendarimporter-main.css">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="0">
-          <caret line="0" column="0" selection-start-line="0" selection-start-column="0" selection-end-line="0" selection-end-column="0" />
-          <folding>
-            <element signature="e#6#914#0#PHP" expanded="true" />
-            <element signature="e#1004#1022#0#PHP" expanded="true" />
-          </folding>
+        <state relative-caret-position="15">
+          <caret line="1" column="56" selection-start-line="1" selection-start-column="56" selection-end-line="1" selection-end-column="56" />
+          <folding />
         </state>
       </provider>
     </entry>
