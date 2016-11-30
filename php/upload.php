@@ -34,7 +34,7 @@ ini_set('display_errors', '0');
 
 // check session
 // otherwise a DOS attack might be possible
-if (!WebAppAuthentication::getUserName() || WebAppAuthentication::getUserName() == ""){
+if (!WebAppAuthentication::getUserName() || WebAppAuthentication::getUserName() == "") {
     Helper::respondJSON(array('success' => false, 'error' => dgettext("plugin_calendarimporter", "Not authenticated!")));
     die();
 }

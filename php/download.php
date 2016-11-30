@@ -1,5 +1,4 @@
 <?php
-
 /**
  * download.php, Kopano calendar to ics im/exporter
  *
