@@ -693,12 +693,16 @@ class CalendarModule extends Module
             $properties["comment"] = (string)$vEvent->COMMENT;
             $properties["timezone"] = (string)$vEvent->DTSTART["TZID"];
             $properties["organizer"] = (string)$vEvent->ORGANIZER;
-            if(!empty((string)$vEvent->FBTYPE)) {
-                $properties["busystatus"] = array_search((string)$vEvent->FBTYPE, $this->freeBusyStates);
-            } else if(!empty((string)$vEvent->{'X-MICROSOFT-CDO-INTENDEDSTATUS'})) {
-                $properties["busystatus"] = array_search((string)$vEvent->{'X-MICROSOFT-CDO-INTENDEDSTATUS'}, $this->busyStates);
-            } else if(!empty((string)$vEvent->{'X-MICROSOFT-CDO-BUSYSTATUS'})) {
-                $properties["busystatus"] = array_search((string)$vEvent->{'X-MICROSOFT-CDO-BUSYSTATUS'}, $this->busyStates);
+
+            $fbType = (string)$vEvent->FBTYPE;
+            $msIntendedStatus = (string)$vEvent->{'X-MICROSOFT-CDO-INTENDEDSTATUS'};
+            $msBusyStatus = (string)$vEvent->{'X-MICROSOFT-CDO-BUSYSTATUS'};
+            if(!empty($fbType)) {
+                $properties["busystatus"] = array_search($fbType, $this->freeBusyStates);
+            } else if(!empty($msIntendedStatus)) {
+                $properties["busystatus"] = array_search($msIntendedStatus, $this->busyStates);
+            } else if(!empty($msBusyStatus)) {
+                $properties["busystatus"] = array_search($msBusyStatus, $this->busyStates);
             } else {
                 $properties["busystatus"] = array_search("BUSY", $this->busyStates);
             }
@@ -710,12 +714,14 @@ class CalendarModule extends Module
             if (!empty($zLabel)) {
                 $properties["label"] = array_search($zLabel, $this->labels);
             }
-            if (!empty((string)$vEvent->{'LAST-MODIFIED'})) {
+            $lastModified = (string)$vEvent->{'LAST-MODIFIED'};
+            if (!empty($lastModified)) {
                 $properties["last_modification_time"] = (string)$vEvent->{'LAST-MODIFIED'}->getDateTime()->getTimestamp();
             } else {
                 $properties["last_modification_time"] = time();
             }
-            if (!empty((string)$vEvent->CREATED)) {
+            $created = (string)$vEvent->CREATED;
+            if (!empty($created)) {
                 $properties["creation_time"] = (string)$vEvent->CREATED->getDateTime()->getTimestamp();
             } else {
                 $properties["creation_time"] = time();
