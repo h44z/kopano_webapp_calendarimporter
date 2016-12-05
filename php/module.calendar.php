@@ -287,8 +287,9 @@ class CalendarModule extends Module
                 ]);
 
                 // Add organizer
-                if(!empty( $this->getProp($messageProps, "sender_email_address"))) {
-                    $vEvent->add('ORGANIZER', 'mailto:' . $this->getProp($messageProps, "sender_email_address"));
+                $organizer = $this->getProp($messageProps, "sender_email_address");
+                if(!empty($organizer)) {
+                    $vEvent->add('ORGANIZER', 'mailto:' . $organizer);
                     $vEvent->ORGANIZER['CN'] = $this->getProp($messageProps, "sender_name");
                 }
 
@@ -332,10 +333,11 @@ class CalendarModule extends Module
                 }
 
                 // Add categories
-                if (!empty($this->getProp($messageProps, "categories"))) {
-                    $categories = array_map('trim', explode(';', trim($this->getProp($messageProps, "categories"), " ;")));
+                $categories = $this->getProp($messageProps, "categories");
+                if (!empty($categories)) {
+                    $categoryArray = array_map('trim', explode(';', trim($categories, " ;")));
 
-                    $vEvent->add('CATEGORIES', $categories);
+                    $vEvent->add('CATEGORIES', $categoryArray);
                 }
             }
 
