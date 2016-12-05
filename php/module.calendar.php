@@ -680,8 +680,16 @@ class CalendarModule extends Module
             if (!empty((string)$vEvent->{'X-ZARAFA-LABEL'})) {
                 $properties["label"] = array_search((string)$vEvent->{'X-ZARAFA-LABEL'}, $this->labels);
             }
-            $properties["last_modification_time"] = (string)$vEvent->{'LAST-MODIFIED'}->getDateTime()->getTimestamp();
-            $properties["creation_time"] = (string)$vEvent->CREATED->getDateTime()->getTimestamp();
+            if (!empty((string)$vEvent->{'LAST-MODIFIED'})) {
+                $properties["last_modification_time"] = (string)$vEvent->{'LAST-MODIFIED'}->getDateTime()->getTimestamp();
+            } else {
+                $properties["last_modification_time"] = time();
+            }
+            if (!empty((string)$vEvent->CREATED)) {
+                $properties["creation_time"] = (string)$vEvent->CREATED->getDateTime()->getTimestamp();
+            } else {
+                $properties["creation_time"] = time();
+            }
             $properties["rrule"] = (string)$vEvent->RRULE;
 
             // Attendees
