@@ -58,6 +58,13 @@ class CalendarModule extends Module
             "OOF"
         );
 
+        $this->freeBusyStates = array( // http://www.kanzaki.com/docs/ical/fbtype.html
+            "FREE",
+            "BUSY-TENTATIVE",
+            "BUSY",
+            "BUSY-UNAVAILABLE"
+        );
+
         $this->labels = array(
             "NONE",
             "IMPORTANT",
@@ -270,17 +277,20 @@ class CalendarModule extends Module
                     'DTEND' => date_timestamp_set(new DateTime(), $this->getProp($messageProps, "duedate")),
                     'CREATED' => date_timestamp_set(new DateTime(), $this->getProp($messageProps, "creation_time")),
                     'LAST-MODIFIED' => date_timestamp_set(new DateTime(), $this->getProp($messageProps, "last_modification_time")),
-                    'PRIORITY' => $this->getProp($messageProps, "importance"),
+                    'PRIORITY' => intval($this->getProp($messageProps, "importance")),
                     'X-MICROSOFT-CDO-INTENDEDSTATUS' => $this->busyStates[intval($this->getProp($messageProps, "busystatus"))], // both seem to be valid...
                     'X-MICROSOFT-CDO-BUSYSTATUS' => $this->busyStates[intval($this->getProp($messageProps, "busystatus"))], // both seem to be valid...
+                    'FBTYPE' => $this->freeBusyStates[intval($this->getProp($messageProps, "busystatus"))],
                     'X-ZARAFA-LABEL' => $this->labels[intval($this->getProp($messageProps, "label"))],
                     'CLASS' => $this->getProp($messageProps, "private") ? "PRIVATE" : "PUBLIC",
                     'COMMENT' => "eid:" . $records[$index]
                 ]);
 
                 // Add organizer
-                $vEvent->add('ORGANIZER', 'mailto:' . $this->getProp($messageProps, "sender_email_address"));
-                $vEvent->ORGANIZER['CN'] = $this->getProp($messageProps, "sender_name");
+                if(!empty( $this->getProp($messageProps, "sender_email_address"))) {
+                    $vEvent->add('ORGANIZER', 'mailto:' . $this->getProp($messageProps, "sender_email_address"));
+                    $vEvent->ORGANIZER['CN'] = $this->getProp($messageProps, "sender_name");
+                }
 
                 // Add Attendees
                 if (isset($messageProps["recipients"]) && count($messageProps["recipients"]["item"]) > 0) {
@@ -319,6 +329,13 @@ class CalendarModule extends Module
                 $body = $this->getProp($messageProps, "isHTML") ? $this->getProp($messageProps, "html_body") : $this->getProp($messageProps, "body");
                 if (!empty($body)) {
                     $vEvent->add('DESCRIPTION', $body);
+                }
+
+                // Add categories
+                if (!empty($this->getProp($messageProps, "categories"))) {
+                    $categories = array_map('trim', explode(';', trim($this->getProp($messageProps, "categories"), " ;")));
+
+                    $vEvent->add('CATEGORIES', $categories);
                 }
             }
 
@@ -674,7 +691,15 @@ class CalendarModule extends Module
             $properties["comment"] = (string)$vEvent->COMMENT;
             $properties["timezone"] = (string)$vEvent->DTSTART["TZID"];
             $properties["organizer"] = (string)$vEvent->ORGANIZER;
-            $properties["busystatus"] = array_search((string)$vEvent->{'X-MICROSOFT-CDO-INTENDEDSTATUS'}, $this->busyStates); // X-MICROSOFT-CDO-BUSYSTATUS
+            if(!empty((string)$vEvent->FBTYPE)) {
+                $properties["busystatus"] = array_search((string)$vEvent->FBTYPE, $this->freeBusyStates);
+            } else if(!empty((string)$vEvent->{'X-MICROSOFT-CDO-INTENDEDSTATUS'})) {
+                $properties["busystatus"] = array_search((string)$vEvent->{'X-MICROSOFT-CDO-INTENDEDSTATUS'}, $this->busyStates);
+            } else if(!empty((string)$vEvent->{'X-MICROSOFT-CDO-BUSYSTATUS'})) {
+                $properties["busystatus"] = array_search((string)$vEvent->{'X-MICROSOFT-CDO-BUSYSTATUS'}, $this->busyStates);
+            } else {
+                $properties["busystatus"] = array_search("BUSY", $this->busyStates);
+            }
             $properties["transp"] = (string)$vEvent->TRANSP;
             //$properties["trigger"] = (string)$vEvent->COMMENT;
             $properties["priority"] = (string)$vEvent->PRIORITY;
@@ -683,9 +708,26 @@ class CalendarModule extends Module
             if (!empty($zLabel)) {
                 $properties["label"] = array_search($zLabel, $this->labels);
             }
-            $properties["last_modification_time"] = (string)$vEvent->{'LAST-MODIFIED'}->getDateTime()->getTimestamp();
-            $properties["creation_time"] = (string)$vEvent->CREATED->getDateTime()->getTimestamp();
+            if (!empty((string)$vEvent->{'LAST-MODIFIED'})) {
+                $properties["last_modification_time"] = (string)$vEvent->{'LAST-MODIFIED'}->getDateTime()->getTimestamp();
+            } else {
+                $properties["last_modification_time"] = time();
+            }
+            if (!empty((string)$vEvent->CREATED)) {
+                $properties["creation_time"] = (string)$vEvent->CREATED->getDateTime()->getTimestamp();
+            } else {
+                $properties["creation_time"] = time();
+            }
             $properties["rrule"] = (string)$vEvent->RRULE;
+
+            if (isset($vEvent->CATEGORIES) && count($vEvent->CATEGORIES) > 0) {
+                $categories = array();
+                foreach ($vEvent->CATEGORIES as $category) {
+                    $categories[] = (string) $category;
+                }
+
+                $properties["categories"] = $categories;
+            }
 
             // Attendees
             $properties["attendees"] = array();
