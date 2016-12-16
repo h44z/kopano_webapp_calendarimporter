@@ -1,7 +1,7 @@
 Backend setup:
 
-1. Create a Admin User in Zarafa:
-zarafa-admin -c adminuser -e admin@domain.com -f "Calendar Sync Admin" -p topsecretpw -a 1
+1. Create a Admin User in Kopano:
+kopano-admin -c adminuser -e admin@domain.com -f "Calendar Sync Admin" -p topsecretpw -a 1
 
 2. Edit the config.php to fit your needs.
 

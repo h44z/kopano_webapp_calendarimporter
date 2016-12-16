@@ -1,6 +1,6 @@
 <?php
 /**
- * functions.php, zarafa calender to ics im/exporter backend
+ * functions.php, Kopano calender to ics im/exporter backend
  *
  * Author: Christoph Haas <christoph.h@sprinternet.at>
  * Copyright (C) 2012-2016 Christoph Haas
@@ -18,10 +18,16 @@
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
- *
  */
  
-/* gets the data from a URL */
+/**
+ * gets the data from a URL
+ *
+ * @param $url
+ * @param null $username
+ * @param null $password
+ * @return mixed|null
+ */
 function curl_get_data($url, $username = NULL, $password = NULL) {
 	$ch = curl_init();
 	$timeout = 5;
@@ -44,7 +50,12 @@ function curl_get_data($url, $username = NULL, $password = NULL) {
 	return $data;
 }
 
-/* gets all zarafa users */
+/**
+ * gets all zarafa users
+ *
+ * @param $userStore
+ * @return null|void
+ */
 function get_user_ics_list($userStore) {
 	// get settings
 	// first check if property exist and we can open that using mapi_openproperty
@@ -89,7 +100,13 @@ function get_user_ics_list($userStore) {
 	}
 }
 
-/* updates the webapp settings */
+/**
+ * updates the webapp settings
+ *
+ * @param $userStore
+ * @param $icsentry
+ * @return bool|void
+ */
 function update_last_sync_date($userStore, $icsentry) {
 	// get settings
 	// first check if property exist and we can open that using mapi_openproperty
@@ -134,7 +151,17 @@ function update_last_sync_date($userStore, $icsentry) {
 	return false;
 }
 
-/* upload a file */
+/**
+ * upload a file
+ *
+ * @param $filename
+ * @param $caldavurl
+ * @param $username
+ * @param $calendarname
+ * @param null $authuser
+ * @param null $authpass
+ * @return int
+ */
 function upload_ics_to_caldav($filename, $caldavurl, $username, $calendarname, $authuser = NULL, $authpass = NULL) {
 	$url = $caldavurl . $username . "/" . rawurlencode($calendarname) . "/";
 	$post = array('file'=>'@'.$filename);
@@ -162,4 +189,3 @@ function upload_ics_to_caldav($filename, $caldavurl, $username, $calendarname, $
 	
 	return $http_status;
 }
-?>

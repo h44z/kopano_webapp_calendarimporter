@@ -1,7 +1,7 @@
 #!/usr/bin/php
 <?php
 /**
- * sync.php, zarafa calender to ics im/exporter backend
+ * sync.php, Kopano calender to ics im/exporter backend
  *
  * Author: Christoph Haas <christoph.h@sprinternet.at>
  * Copyright (C) 2012-2016 Christoph Haas
@@ -26,7 +26,7 @@ if(php_sapi_name() !== 'cli') {
 }
 
 /**
- * Make sure that the zarafa mapi extension is enabled in cli mode:
+ * Make sure that the kopano mapi extension is enabled in cli mode:
  * Add: /etc/php5/cli/conf.d/50-mapi.ini
  * Content: extension=mapi.so
  */
@@ -147,4 +147,3 @@ foreach($userList as $userName => $userData) {
 	
 	echo "###Done sync for user: " . $userName . "\n\n";
 }
-?>
