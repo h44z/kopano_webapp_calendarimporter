@@ -4,7 +4,7 @@
  * sync.php, Kopano calender to ics im/exporter backend
  *
  * Author: Christoph Haas <christoph.h@sprinternet.at>
- * Copyright (C) 2012-2016 Christoph Haas
+ * Copyright (C) 2012-2017 Christoph Haas
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -32,11 +32,11 @@ if(php_sapi_name() !== 'cli') {
  */
 
 // MAPI includes
-include('/usr/share/php/mapi/mapi.util.php');
-include('/usr/share/php/mapi/mapidefs.php');
-include('/usr/share/php/mapi/mapicode.php');
-include('/usr/share/php/mapi/mapitags.php');
-include('/usr/share/php/mapi/mapiguid.php');
+include('mapi/mapi.util.php');
+include('mapi/mapidefs.php');
+include('mapi/mapicode.php');
+include('mapi/mapitags.php');
+include('mapi/mapiguid.php');
 include('config.php');
 include('functions.php');
 
@@ -134,7 +134,7 @@ foreach($userList as $userName => $userData) {
 						echo "Import completed: $result\n";
 						$result = update_last_sync_date($userStore, $syncItemName);
 						$res = $result ? "true":"false";
-						echo "Updated Zarafa settings: " . $res . "\n";
+						echo "Updated Kopano settings: " . $res . "\n";
 					} else {
 						echo "Uploading failed: " . $result . "\n";
 					}
