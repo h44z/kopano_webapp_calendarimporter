@@ -1,3 +1,6 @@
+calendarimporter 2.2.2:
+ - updated documentation
+
 calendarimporter 2.2.1:
  - finally supporting Kopano Webapp 3.1.x
  - translation to german added

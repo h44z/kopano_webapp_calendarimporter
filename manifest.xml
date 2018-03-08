@@ -2,12 +2,12 @@
 <!DOCTYPE plugin SYSTEM "manifest.dtd">
 <plugin version="2">
     <info>
-        <version>2.2.1</version>
+        <version>2.2.2</version>
         <name>calendarimporter</name>
         <title>ICS Calendar Importer/Exporter</title>
         <author>Christoph Haas</author>
         <authorURL>http://www.sprinternet.at</authorURL>
-        <description>Import or Export a ICS file to/from the Kopano calendar</description>
+        <description>Import or export a ICS file to/from the Kopano calendar</description>
     </info>
     <translations>
         <translationsdir>languages</translationsdir>
